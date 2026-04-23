@@ -1,0 +1,8 @@
+{
+  "id": "structured-data",
+  "name": "Strukturierte Daten",
+  "description": "JSON-LD Schemas prüfen & einsehen",
+  "icon": "mdiCodeJson",
+  "active": true,
+  "order": 2
+}

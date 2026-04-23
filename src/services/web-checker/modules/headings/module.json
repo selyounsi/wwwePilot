@@ -1,0 +1,7 @@
+{
+  "id": "headings",
+  "name": "Headings",
+  "description": "H1-H6 Struktur prüfen",
+  "icon": "mdiFormatHeader1",
+  "active": true
+}

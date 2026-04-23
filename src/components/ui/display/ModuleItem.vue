@@ -1,0 +1,165 @@
+<script setup>
+import { ref, inject, computed, useSlots } from 'vue'
+import { useRouter } from 'vue-router'
+import { highlightElement } from '@/composables/highlight/index.js'
+import { useChat } from '@/services/chatbot/composables/useChat.js'
+
+const props = defineProps({
+  item:    { type: Object, required: true },
+  variant: { type: String, default: 'box' },
+})
+const emit = defineEmits(['click'])
+
+const router  = useRouter()
+const { send } = useChat()
+const slots   = useSlots()
+const open    = ref(false)
+
+const { labelFn = () => '', allowChatBot = false } = inject('moduleOverlay', {})
+
+const highlight = (clickType) => {
+  highlightElement(props.item, labelFn(props.item), clickType)
+  emit('click', clickType)
+}
+
+async function openInChat() {
+  const issues = (props.item.issues ?? []).filter(i => i.type !== 'success')
+  const label  = labelFn(props.item) || props.item.title || props.item.text || props.item.name || ''
+  const name   = props.item.name || ''
+  const hasErrors = issues.some(i => i.type === 'error')
+  const typ = hasErrors ? 'Fehler' : 'Warnung'
+
+  const nameInfo = name && name !== label ? `\n**Dateiname:** ${name}` : ''
+
+  const msg = issues.length
+    ? `Ich habe folgende ${typ} auf der Seite gefunden:\n\n**Element:** ${label}${nameInfo}\n**Probleme:**\n${issues.map(i => `- [${i.type === 'error' ? 'Fehler' : 'Warnung'}] ${i.message}`).join('\n')}\n\nWas kann ich dagegen tun?`
+    : `Was kannst du mir zu diesem Element sagen?\n\n**Element:** ${label}${nameInfo}`
+
+  send(msg)
+  router.push('/service/chatbot')
+}
+
+const title   = computed(() => props.item.title   ?? props.item.text ?? props.item.name ?? props.item.href ?? '')
+const details = computed(() => props.item.details ?? props.item.tag  ?? props.item.href ?? '')
+const image   = computed(() => props.item.image   ?? props.item.src  ?? '')
+const indent  = computed(() => props.item.indent  ?? '')
+
+const status = computed(() =>
+  props.item.issues?.some(i => i.type === 'error')   ? 'error'   :
+  props.item.issues?.some(i => i.type === 'warning') ? 'warning' :
+  'success'
+)
+
+const borderColor = { error: 'border-error/80', warning: 'border-alert/50', success: 'border-border' }
+const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         success: 'bg-success'   }
+</script>
+
+<template>
+  <div
+    :class="[
+      !item.visible ? 'opacity-40' : '',
+      indent,
+      variant === 'box'
+        ? ['rounded-xl border overflow-hidden', borderColor[status]]
+        : 'border-b border-border/50 last:border-b-0',
+    ]"
+  >
+    <!-- Main row -->
+    <div
+      @click="highlight('click')"
+      @dblclick.stop="highlight('dblclick')"
+      :class="[
+        'flex items-center gap-3 cursor-pointer transition-colors group relative',
+        variant === 'box'
+          ? 'p-3 hover:bg-surface-soft-hover'
+          : 'py-2 px-1 hover:bg-surface-soft-hover/50',
+      ]"
+    >
+      <div v-if="image"
+        style="width:64px; height:64px; flex-shrink:0;"
+        class="rounded-lg overflow-hidden bg-surface-soft flex items-center justify-center"
+      >
+        <img
+          :src="image"
+          :style="`width:64px; height:64px; object-fit:${image.endsWith('.svg') ? 'contain' : 'cover'}; padding:${image.endsWith('.svg') ? '6px' : '0'}`"
+          loading="eager"
+          crossorigin="anonymous"
+        />
+      </div>
+
+      <div class="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
+        <p class="text-xs font-medium truncate group-hover:text-primary transition-colors">
+          {{ title }}
+        </p>
+        <template v-if="item.issues?.length">
+          <p v-for="(issue, i) in item.issues" :key="i"
+            class="text-xs truncate"
+            :class="issue.type === 'error' ? 'text-error' : issue.type === 'warning' ? 'text-alert' : 'text-muted'">
+            {{ issue.message }}
+          </p>
+        </template>
+        <slot v-else />
+        <p v-if="details" class="text-xs text-muted/60 truncate">{{ details }}</p>
+      </div>
+
+      <div class="flex flex-col items-end justify-between shrink-0" :class="image ? 'h-16' : 'h-8'">
+        <span class="w-1.5 h-1.5 rounded-full" :class="dotColor[status]" />
+        <div class="flex items-center gap-1">
+          <Icon v-if="!item.visible" name="mdiEyeOff" :size="12" class="text-muted/40" title="Element nicht sichtbar" />
+          <button
+            v-if="allowChatBot && item.issues?.some(i => i.type === 'error' || i.type === 'warning')"
+            @click.stop="openInChat"
+            class="transition-all text-muted/40 hover:text-primary hover:bg-primary/10 rounded p-0.5 hover:scale-110"
+            title="Im Chat analysieren"
+          >
+            <Icon name="mdiRobot" :size="13" />
+          </button>
+          <slot name="trailing" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Expand toggle -->
+    <button
+      @click.stop="open = !open"
+      class="w-full flex items-center justify-center gap-1.5 border-t transition-colors"
+      :class="[
+        open
+          ? 'bg-primary/5 border-primary/20 text-primary/70 hover:bg-primary/10'
+          : 'border-border/30 text-muted/50 hover:bg-surface-soft-hover hover:text-muted',
+        variant === 'box' ? 'px-3 py-1.5' : 'px-1 py-1.5',
+      ]"
+    >
+      <Icon
+        name="mdiChevronDown"
+        :size="13"
+        class="transition-transform duration-200"
+        :class="open ? 'rotate-180' : ''"
+      />
+      <span class="text-[11px] font-medium tracking-wide">
+        {{ open ? 'Details ausblenden' : 'Weitere Details ansehen' }}
+      </span>
+    </button>
+
+    <!-- Expand content -->
+    <div v-if="open">
+      <slot v-if="slots.expand" name="expand" />
+      <div v-else class="bg-surface-soft border-t border-border/40 px-3 py-2.5 flex flex-col gap-2">
+        <div v-if="title" class="flex gap-3 items-start">
+          <span class="text-xs text-muted/60 shrink-0 w-20">Element</span>
+          <span class="text-xs text-light break-all">{{ title }}</span>
+        </div>
+        <div v-if="details" class="flex gap-3 items-start">
+          <span class="text-xs text-muted/60 shrink-0 w-20">Details</span>
+          <span class="text-xs text-light break-all">{{ details }}</span>
+        </div>
+        <div
+          v-for="issue in item.issues"
+          :key="issue.message"
+          class="text-xs"
+          :class="issue.type === 'error' ? 'text-error' : issue.type === 'warning' ? 'text-alert' : 'text-success'"
+        >{{ issue.message }}</div>
+      </div>
+    </div>
+  </div>
+</template>

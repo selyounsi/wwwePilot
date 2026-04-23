@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "wwwePilot",
+  "version": "1.0.0",
+  "action": {
+    "default_icon": {
+      "192": "icons/android-chrome-192x192.png",
+      "512": "icons/android-chrome-512x512.png"
+    }
+  },
+  "icons": {
+    "192": "icons/android-chrome-192x192.png",
+    "512": "icons/android-chrome-512x512.png"
+  },
+  "side_panel": {
+    "default_path": "index.html"
+  },
+  "permissions": ["sidePanel", "scripting", "tabs", "activeTab", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "src/background.js"
+  }
+}

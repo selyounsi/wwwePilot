@@ -1,0 +1,7 @@
+{
+  "id": "contrast",
+  "name": "Kontrast",
+  "description": "Farbkontrast & Lesbarkeit prüfen",
+  "icon": "mdiContrast",
+  "active": true
+}

@@ -1,0 +1,7 @@
+{
+  "id": "images",
+  "name": "Bilder",
+  "description": "Alt-Texte & Bildqualität prüfen",
+  "icon": "mdiImage",
+  "active": true
+}

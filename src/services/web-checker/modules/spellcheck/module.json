@@ -1,0 +1,8 @@
+{
+  "id": "spellcheck",
+  "name": "Spellchecker",
+  "description": "Rechtschreibung & Grammatik prüfen",
+  "icon": "mdiSpellcheck",
+  "active": true,
+  "order": 4
+}
