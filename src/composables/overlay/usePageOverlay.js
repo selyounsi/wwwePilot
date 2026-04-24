@@ -21,7 +21,7 @@ function buildOverlayScript() {
 
     // ── _overlayFrontend.js ───────────────────────────────────
     function findElementFrontend(id) {
-      const el = document.querySelector(`[data-wwwepilot-id="${id}"]`)
+      const el = document.querySelector(`[data-wwwebar-id="${id}"]`)
       if (el) return { el, offsetX: 0, offsetY: 0 }
       return null
     }
@@ -65,7 +65,7 @@ function buildOverlayScript() {
         try {
           const iDoc = iframe.contentDocument
           if (!iDoc) continue
-          const found = iDoc.querySelector(`[data-wwwepilot-id="${id}"]`) ?? findByMeta(iDoc, meta)
+          const found = iDoc.querySelector(`[data-wwwebar-id="${id}"]`) ?? findByMeta(iDoc, meta)
           if (!found) continue
           const iRect = iframe.getBoundingClientRect()
           return { el: found, offsetX: iRect.left, offsetY: iRect.top }
@@ -213,7 +213,7 @@ function buildOverlayScript() {
         for (const iframe of document.querySelectorAll('iframe')) {
           try {
             const iDoc  = iframe.contentDocument
-            const found = iDoc?.querySelector(`[data-wwwepilot-id="${item.id}"]`)
+            const found = iDoc?.querySelector(`[data-wwwebar-id="${item.id}"]`)
                        ?? findByMeta(iDoc, item.meta ?? {})
             if (found) {
               found.scrollIntoView({ behavior: 'smooth', block: 'center' })

@@ -35,10 +35,10 @@ chrome.runtime.onConnect.addListener(port => {
             document.getElementById('__wp-overlays')?.remove()
             document.getElementById('__wp-single')?.remove()
             ;[document, ...Array.from(document.querySelectorAll('iframe')).map(f => { try { return f.contentDocument } catch { return null } }).filter(Boolean)]
-              .forEach(doc => doc.querySelectorAll('[data-wwwepilot-highlight]').forEach(el => {
+              .forEach(doc => doc.querySelectorAll('[data-wwwebar-highlight]').forEach(el => {
                 el.style.outline = ''
                 el.style.outlineOffset = ''
-                el.removeAttribute('data-wwwepilot-highlight')
+                el.removeAttribute('data-wwwebar-highlight')
               }))
             window.removeEventListener('scroll', window.__wpOverlayUpdate)
             window.removeEventListener('resize', window.__wpOverlayUpdate)

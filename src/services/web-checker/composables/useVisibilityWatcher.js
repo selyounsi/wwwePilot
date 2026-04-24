@@ -26,13 +26,13 @@ export function useVisibilityWatcher(moduleId) {
 
     return ids.map(id => {
       // 1. Hauptdokument
-      const el = document.querySelector(`[data-wwwepilot-id="${id}"]`)
+      const el = document.querySelector(`[data-w-id="${id}"]`)
       if (el) return { id, visible: isVisible(el, window) }
 
       // 2. iFrames (Live Editor) – nutzt contentWindow für korrektes getComputedStyle
       for (const iframe of document.querySelectorAll('iframe')) {
         try {
-          const found = iframe.contentDocument?.querySelector(`[data-wwwepilot-id="${id}"]`)
+          const found = iframe.contentDocument?.querySelector(`[data-wwwebar-id="${id}"]`)
           if (found) return { id, visible: isVisible(found, iframe.contentWindow) }
         } catch {}
       }

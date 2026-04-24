@@ -27,7 +27,7 @@ const checkerWarnings = computed(() => {
 
 <template>
   <div class="min-h-screen bg-background flex flex-col">
-    <AppHeader title="wwwePilot" subtitle="Wähle einen Service" />
+    <AppHeader title="wwweBar" subtitle="Wähle einen Service" />
 
     <div class="flex-1 px-4 py-4 flex flex-col gap-2">
       <SectionLabel>Services</SectionLabel>

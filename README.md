@@ -1,6 +1,6 @@
-# wwwePilot – Chrome Extension
+# wwweBar – Chrome Extension
 
-wwwePilot ist eine Chrome Extension für Webagenturen und Entwickler, die Webseiten auf SEO, Qualität, Barrierefreiheit und Performance prüft – direkt im Browser, ohne externe Tools.
+wwweBar ist eine Chrome Extension für Webagenturen und Entwickler, die Webseiten auf SEO, Qualität, Barrierefreiheit und Performance prüft – direkt im Browser, ohne externe Tools.
 
 Die Extension analysiert die aktuell geöffnete Seite und zeigt Fehler, Warnungen und Hinweise übersichtlich in einer Seitenleiste an. Ergebnisse können direkt auf der Seite visualisiert werden (Overlay). Ein integrierter KI-Assistent hilft bei der Analyse und Behebung von Problemen.
 
@@ -32,7 +32,7 @@ Die Extension analysiert die aktuell geöffnete Seite und zeigt Fehler, Warnunge
 
 - [Node.js](https://nodejs.org/) v18 oder neuer
 - Google Chrome
-- Das wwwePilot Backend (separates Projekt) – nur nötig für Spellcheck, PageSpeed und KI-Assistent
+- Das wwweBar Backend (separates Projekt) – nur nötig für Spellcheck, PageSpeed und KI-Assistent
 
 ---
 
@@ -42,7 +42,7 @@ Die Extension analysiert die aktuell geöffnete Seite und zeigt Fehler, Warnunge
 
 ```bash
 git clone <repo-url>
-cd wwwePilot
+cd wwweBar
 ```
 
 ### 2. Abhängigkeiten installieren
@@ -91,7 +91,7 @@ Die Extension erscheint in der Toolbar. Klick auf das Icon öffnet die Seitenlei
 ## Projektstruktur
 
 ```
-wwwePilot/
+wwweBar/
 ├── src/
 │   ├── config/
 │   │   └── api.js                    # Backend-URL Konfiguration

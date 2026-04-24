@@ -30,13 +30,13 @@ export function useModuleAttributes(moduleId) {
         func: (payload, moduleId) => {
 
           // Bestehende Attribute entfernen
-          document.querySelectorAll('[data-wwwepilot-id]').forEach(el => {
-            el.removeAttribute('data-wwwepilot-id')
-            el.removeAttribute('data-wwwepilot-module')
-            el.removeAttribute('data-wwwepilot-type')
-            el.removeAttribute('data-wwwepilot-meta')
-            el.removeAttribute('data-wwwepilot-title')
-            el.removeAttribute('data-wwwepilot-desc')
+          document.querySelectorAll('[data-wwwebar-id]').forEach(el => {
+            el.removeAttribute('data-wwwebar-id')
+            el.removeAttribute('data-wwwebar-module')
+            el.removeAttribute('data-wwwebar-type')
+            el.removeAttribute('data-wwwebar-meta')
+            el.removeAttribute('data-wwwebar-title')
+            el.removeAttribute('data-wwwebar-desc')
           })
 
           /**
@@ -45,7 +45,7 @@ export function useModuleAttributes(moduleId) {
            * Priorität:
            * 1. meta.selector → direkter CSS-Selektor
            *    Für Module, die eigene Spans in den DOM injizieren (z.B. Spellcheck).
-           *    Das Modul setzt data-wwwepilot-ref als stabilen Anker,
+           *    Das Modul setzt data-wwwebar-ref als stabilen Anker,
            *    den meta.selector hier findet.
            * 2. meta.tag + meta.idx → n-tes Element des Tag-Typs
            * 3. meta.text + meta.tag → Text-Fallback
@@ -97,12 +97,12 @@ export function useModuleAttributes(moduleId) {
             const topIssue = item.issues.find(i => i.type !== 'success')
             const desc     = item.issues.map(i => i.message).join(' · ')
 
-            el.setAttribute('data-wwwepilot-id',     item.id)
-            el.setAttribute('data-wwwepilot-module', moduleId)
-            el.setAttribute('data-wwwepilot-type',   item.type)
-            el.setAttribute('data-wwwepilot-meta',   JSON.stringify(item.meta))
-            if (topIssue) el.setAttribute('data-wwwepilot-title', topIssue.message)
-            if (desc)     el.setAttribute('data-wwwepilot-desc',  desc)
+            el.setAttribute('data-wwwebar-id',     item.id)
+            el.setAttribute('data-wwwebar-module', moduleId)
+            el.setAttribute('data-wwwebar-type',   item.type)
+            el.setAttribute('data-wwwebar-meta',   JSON.stringify(item.meta))
+            if (topIssue) el.setAttribute('data-wwwebar-title', topIssue.message)
+            if (desc)     el.setAttribute('data-wwwebar-desc',  desc)
           })
         },
         args: [payload, moduleId],
@@ -117,16 +117,16 @@ export function useModuleAttributes(moduleId) {
         target: { tabId },
         func: (moduleId) => {
           // Attribute von bestehenden Elementen entfernen
-          document.querySelectorAll(`[data-wwwepilot-module="${moduleId}"]`).forEach(el => {
-            el.removeAttribute('data-wwwepilot-id')
-            el.removeAttribute('data-wwwepilot-module')
-            el.removeAttribute('data-wwwepilot-type')
-            el.removeAttribute('data-wwwepilot-meta')
-            el.removeAttribute('data-wwwepilot-title')
-            el.removeAttribute('data-wwwepilot-desc')
+          document.querySelectorAll(`[data-wwwebar-module="${moduleId}"]`).forEach(el => {
+            el.removeAttribute('data-wwwebar-id')
+            el.removeAttribute('data-wwwebar-module')
+            el.removeAttribute('data-wwwebar-type')
+            el.removeAttribute('data-wwwebar-meta')
+            el.removeAttribute('data-wwwebar-title')
+            el.removeAttribute('data-wwwebar-desc')
           })
 
-          document.querySelectorAll(`[data-wwwepilot-injected="${moduleId}"]`).forEach(span => {
+          document.querySelectorAll(`[data-wwwebar-injected="${moduleId}"]`).forEach(span => {
             const parent = span.parentNode
             if (!parent) return
             parent.replaceChild(document.createTextNode(span.textContent), span)

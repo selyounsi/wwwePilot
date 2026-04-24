@@ -51,11 +51,11 @@ async function applyColors() {
     target: { tabId: tab.id },
     func: (id, fgVal, bgVal) => {
       function findEl(id) {
-        const el = document.querySelector(`[data-wwwepilot-id="${id}"]`)
+        const el = document.querySelector(`[data-wwwebar-id="${id}"]`)
         if (el) return el
         for (const iframe of document.querySelectorAll('iframe')) {
           try {
-            const found = iframe.contentDocument?.querySelector(`[data-wwwepilot-id="${id}"]`)
+            const found = iframe.contentDocument?.querySelector(`[data-wwwebar-id="${id}"]`)
             if (found) return found
           } catch {}
         }
