@@ -13,7 +13,7 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
-    "@crxjs/vite-plugin": "^2.0.0-beta.33",
+    "@crxjs/vite-plugin": "2.0.0-beta.33",
     "@tailwindcss/vite": "^4.2.1",
     "@vitejs/plugin-vue": "^6.0.2",
     "tailwindcss": "^4.2.1",
