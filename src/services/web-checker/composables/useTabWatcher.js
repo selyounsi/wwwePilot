@@ -28,7 +28,11 @@ export function useTabWatcher(modules) {
       if (!tab?.url || ['chrome://', 'chrome-extension://', 'edge://'].some(p => tab.url.startsWith(p))) return
 
       await injectHelper(tab.id)
-      await Promise.all(reloadModules.map(mod => runModule(tab.id, mod)))
+      // Sequenziell — siehe useWebChecker.js für Begründung (Race auf __wpCurrentModule)
+      reloadModules.forEach(mod => setRunning(mod.id))
+      for (const mod of reloadModules) {
+        await runModule(tab.id, mod)
+      }
       setCheckedTab(tab)
     } catch {}
   }

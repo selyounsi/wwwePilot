@@ -84,10 +84,14 @@ export function useWebChecker() {
     if (modulesToRun === modules) reset()
     await injectHelper(tab.id)
 
-    // Jedes Modul läuft als eigene unabhängige Promise-Kette
-    // prepareModule + checker sind pro Modul sequenziell → kein Race Condition
-    // Module laufen parallel zueinander → Ergebnisse erscheinen sofort
-    await Promise.all(modulesToRun.map(mod => runModule(tab.id, mod)))
+    // Alle Module sofort als running markieren — UX: Spinner sofort sichtbar.
+    // Module sequenziell ausführen — sonst Race Condition auf window.__wpCurrentModule:
+    // bei parallelen Promise.all könnte prepareModule(B) den globalen State überschreiben
+    // bevor checker(A) liest → falsche IDs (A bekommt B's Counter).
+    modulesToRun.forEach(mod => setRunning(mod.id))
+    for (const mod of modulesToRun) {
+      await runModule(tab.id, mod)
+    }
 
     setCheckedTab(tab)
     tabStatus.value  = 'current'

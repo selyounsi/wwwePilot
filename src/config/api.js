@@ -1,6 +1,13 @@
-const BACKEND = import.meta.env.VITE_ENV === 'production'
-  ? (import.meta.env.VITE_BACKEND_URL   ?? 'https://dein-server.de')
-  : (import.meta.env.VITE_BACKEND_LOCAL ?? 'http://localhost:3000')
+const isProd = import.meta.env.VITE_ENV === 'production'
+const BACKEND = isProd
+  ? import.meta.env.VITE_BACKEND_URL
+  : import.meta.env.VITE_BACKEND_LOCAL
+
+if (!BACKEND) {
+  console.error(
+    `[wwweBar] Backend-URL fehlt — ${isProd ? 'VITE_BACKEND_URL' : 'VITE_BACKEND_LOCAL'} in .env setzen.`
+  )
+}
 
 export const API = {
   chatbot: {
