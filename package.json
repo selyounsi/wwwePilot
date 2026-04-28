@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@mdi/js": "^7.4.47",
+    "axe-core": "^4.10.0",
     "vue": "^3.5.25",
     "vue-router": "^4.6.4"
   },

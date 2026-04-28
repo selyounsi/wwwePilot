@@ -1,0 +1,8 @@
+{
+  "id": "accessibility",
+  "name": "Accessibility (axe)",
+  "description": "WCAG-Audit via axe-core",
+  "icon": "mdiWheelchairAccessibility",
+  "active": true,
+  "order": 99
+}

@@ -61,7 +61,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!handler) return
 
   Promise.resolve()
-    .then(() => handler(msg, sendResponse))
+    .then(() => handler(msg, sendResponse, sender))
     .catch(e => {
       console.error(`[background] Handler ${msg.type} Fehler:`, e)
       sendResponse({ error: e.message })

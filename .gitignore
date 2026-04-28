@@ -13,6 +13,10 @@ dist-ssr
 .env
 *.local
 
+# auto-copied from node_modules at build time
+public/axe.min.js
+public/axe-locale-de.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
