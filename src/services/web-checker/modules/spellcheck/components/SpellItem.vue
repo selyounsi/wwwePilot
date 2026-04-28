@@ -6,7 +6,7 @@ const emit  = defineEmits(['ignore', 'addWord'])
 
 const loading    = ref(false)
 const done       = ref(null)
-const confirming = ref(null) // 'add' | 'ignore' | null
+const confirming = ref(null)
 
 const normalized = computed(() => ({
   ...props.item,
@@ -75,7 +75,6 @@ async function addToDict() {
 
           <div v-if="!done && (canIgnore || canAddWord)" class="flex flex-col gap-2">
 
-            <!-- Confirmation bar -->
             <div v-if="confirming" class="flex items-center gap-2 bg-background border border-border rounded-lg px-3 py-2">
               <p class="flex-1 text-xs text-muted">
                 {{ confirming === 'add' ? `„${item.fehler}" zum Wörterbuch hinzufügen?` : `Fehler dauerhaft ignorieren?` }}
@@ -97,7 +96,6 @@ async function addToDict() {
               </button>
             </div>
 
-            <!-- Action buttons -->
             <div v-else class="flex gap-2">
               <button
                 v-if="canAddWord"

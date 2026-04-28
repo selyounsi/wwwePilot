@@ -5,12 +5,8 @@ export const overlay       = null
 export default async function check() {
   const head = document.head
 
-  // Schema.org-Typen die Google als eigenständige Rich Results zählt.
-  // MUSS innerhalb von check() stehen — chrome.scripting.executeScript
-  // serialisiert nur den Funktions-Body in den Page-Kontext, Modul-Scope
-  // ist dort nicht verfügbar.
-  // Helper-Typen wie PostalAddress, GeoCoordinates, Rating werden bewusst
-  // nicht aufgenommen — die sind nur Properties anderer Entities.
+  // Must live inside check() — executeScript serializes only the function body,
+  // module scope isn't available in the page context.
   const RICH_RESULT_TYPES = new Set([
     'Article', 'NewsArticle', 'BlogPosting', 'TechArticle', 'ScholarlyArticle', 'Report',
     'Book',
@@ -40,13 +36,8 @@ export default async function check() {
     'WebPage', 'WebSite', 'AboutPage', 'CollectionPage', 'ContactPage', 'ItemPage', 'ProfilePage',
   ])
 
-  // Rekursiv alle Entities mit @type aus einem JSON-LD-Baum sammeln.
-  // - Arrays werden ausgeflatten
-  // - @graph-Container werden ausgeflatten
-  // - Nested Sub-Entities (z.B. review[] in einem LocalBusiness) werden als
-  //   eigene Items gezählt — wie Google's Rich Results Test.
-  // - Nur Typen aus RICH_RESULT_TYPES werden aufgenommen, Helper wie
-  //   PostalAddress/GeoCoordinates/Rating werden ignoriert.
+  // Walks the JSON-LD tree, flattening arrays and @graph; nested entities
+  // (review[], aggregateRating, ...) become their own items like Google does.
   function collectEntities(node) {
     if (!node) return []
     if (Array.isArray(node)) return node.flatMap(collectEntities)
@@ -76,8 +67,8 @@ export default async function check() {
 
   const { addItem, finish } = createCheckResult()
 
-  // Bild-Erreichbarkeit über <img> prüfen (nicht fetch) — umgeht CORS-Restriktionen.
-  // naturalWidth/Height sind auch ohne crossOrigin='anonymous' lesbar.
+  // Use <img> probe instead of fetch — works for cross-origin images
+  // without CORS headers. naturalWidth/Height are readable either way.
   async function checkSchemaImage(block) {
     const raw = block.image
     if (!raw) return { url: null, reachable: null, width: 0, height: 0 }
@@ -104,7 +95,7 @@ export default async function check() {
     return finish()
   }
 
-  // Nach primärem @type gruppieren — wie Google Rich Results Test
+  // Group by primary @type — one item per type, entities listed in _meta.
   const grouped = new Map()
   for (const block of jsonLdBlocks) {
     const rawType = block['@type']
@@ -113,7 +104,6 @@ export default async function check() {
     grouped.get(primary).push(block)
   }
 
-  // Pro Gruppe ein Item — alle Entities mit ihren Image-Checks im _meta
   for (const [type, entities] of grouped) {
     const imgInfos = await Promise.all(entities.map(checkSchemaImage))
 

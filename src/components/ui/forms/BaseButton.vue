@@ -1,6 +1,6 @@
 <script setup>
 defineProps({
-  variant:  { type: String, default: 'primary' }, // 'primary' | 'secondary' | 'ghost'
+  variant:  { type: String, default: 'primary' },
   loading:  { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
 })

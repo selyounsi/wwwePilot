@@ -137,7 +137,6 @@ function handleProviderChange(p) {
       </template>
     </AppHeader>
 
-    <!-- History panel -->
     <div v-if="showHistory" class="border-b border-border bg-surface px-3 py-2 flex flex-col gap-1 max-h-44 overflow-y-auto">
       <p class="text-xs text-muted uppercase tracking-widest mb-1">Verlauf</p>
       <div v-for="c in chats" :key="c.id" class="flex items-center gap-1.5 group">
@@ -159,10 +158,8 @@ function handleProviderChange(p) {
       </div>
     </div>
 
-    <!-- Messages -->
     <div ref="messagesEl" data-chat-messages class="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-4">
 
-      <!-- Empty state -->
       <div v-if="!messages.length" class="flex-1 flex flex-col items-center justify-center text-center gap-4 py-12">
         <div
           class="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
@@ -204,14 +201,12 @@ function handleProviderChange(p) {
         </div>
       </div>
 
-      <!-- Messages -->
       <template v-else>
         <div
           v-for="msg in messages" :key="msg.id"
           class="flex gap-2.5 group"
           :class="msg.role === 'user' ? 'justify-end' : 'justify-start'"
         >
-          <!-- Bot avatar -->
           <div
             v-if="msg.role === 'assistant'"
             class="w-7 h-7 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
@@ -220,7 +215,6 @@ function handleProviderChange(p) {
             <Icon name="mdiRobot" :size="15" color="white" />
           </div>
 
-          <!-- Bubble + meta -->
           <div class="flex flex-col gap-1 max-w-[82%]" :class="msg.role === 'user' ? 'items-end' : 'items-start'">
             <div
               class="rounded-2xl px-4 py-2.5 text-xs leading-relaxed"
@@ -232,7 +226,6 @@ function handleProviderChange(p) {
               v-html="format(msg.content)"
             />
 
-            <!-- Timestamp + Aktionen -->
             <div
               class="flex items-center gap-2 px-1 opacity-0 group-hover:opacity-100 transition-opacity"
               :class="msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'"
@@ -256,7 +249,6 @@ function handleProviderChange(p) {
             </div>
           </div>
 
-          <!-- User avatar -->
           <div
             v-if="msg.role === 'user'"
             class="w-7 h-7 rounded-xl bg-light/10 border border-light/20 flex items-center justify-center shrink-0 mt-0.5 text-light"
@@ -265,7 +257,6 @@ function handleProviderChange(p) {
           </div>
         </div>
 
-        <!-- Typing indicator -->
         <div v-if="isLoading" class="flex gap-2.5 justify-start">
           <div
             class="w-7 h-7 rounded-xl flex items-center justify-center shrink-0"
@@ -282,7 +273,6 @@ function handleProviderChange(p) {
       </template>
     </div>
 
-    <!-- Input -->
     <div class="px-4 pb-5 pt-3 border-t border-border bg-surface">
       <div
         class="flex gap-2 items-end bg-background border rounded-2xl px-3.5 py-2.5 transition-colors duration-150"
@@ -316,7 +306,6 @@ function handleProviderChange(p) {
       </div>
     </div>
 
-    <!-- API Key Modal -->
     <ApiKeyModal v-if="showKeyModal" @close="showKeyModal = false" />
   </div>
 </template>

@@ -44,13 +44,11 @@ function toggle(idx) { openMap[idx] = !openMap[idx] }
     <template #expand>
       <div class="bg-surface-soft border-t border-border/40">
 
-        <!-- Pro Entity ein Sub-Collapsible -->
         <div
           v-for="(entity, idx) in entities"
           :key="idx"
           class="border-b border-border/40 last:border-b-0"
         >
-          <!-- Klickbarer Entity-Header -->
           <button
             @click="toggle(idx)"
             class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-soft-hover transition-colors"
@@ -66,10 +64,8 @@ function toggle(idx) { openMap[idx] = !openMap[idx] }
             <span class="text-xs text-light truncate flex-1">{{ entityLabel(entity.schema) || item.name }}</span>
           </button>
 
-          <!-- Entity-Body -->
           <div v-if="openMap[idx]" class="bg-surface/30">
 
-            <!-- Image-Details -->
             <div v-if="entity.image?.url" class="flex gap-3 px-3 py-2.5 border-b border-border/40">
               <span class="text-xs text-muted/60 shrink-0 w-28 font-mono">image</span>
               <div class="flex gap-3 min-w-0 flex-1">
@@ -98,7 +94,6 @@ function toggle(idx) { openMap[idx] = !openMap[idx] }
               </div>
             </div>
 
-            <!-- Schema key-value -->
             <div
               v-for="entry in schemaEntries(entity.schema)"
               :key="entry.key"
@@ -111,7 +106,6 @@ function toggle(idx) { openMap[idx] = !openMap[idx] }
           </div>
         </div>
 
-        <!-- Fallback wenn keine Entities -->
         <div
           v-if="!entities.length"
           class="px-3 py-2.5 text-xs text-muted/60"

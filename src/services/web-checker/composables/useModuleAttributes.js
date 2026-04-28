@@ -30,7 +30,6 @@ export function useModuleAttributes(moduleId) {
         target: { tabId },
         func: (payload, moduleId, prefix) => {
 
-          // Bestehende Attribute entfernen
           document.querySelectorAll(`[data-${prefix}-id]`).forEach(el => {
             el.removeAttribute(`data-${prefix}-id`)
             el.removeAttribute(`data-${prefix}-module`)
@@ -40,16 +39,7 @@ export function useModuleAttributes(moduleId) {
             el.removeAttribute(`data-${prefix}-desc`)
           })
 
-          /**
-           * Element per _meta finden.
-           *
-           * Priorität:
-           * 1. meta.selector → direkter CSS-Selektor
-           *    Für Module, die eigene Spans in den DOM injizieren (z.B. Spellcheck).
-           * 2. meta.tag + meta.idx → n-tes Element des Tag-Typs
-           * 3. meta.text + meta.tag → Text-Fallback
-           * 4. meta.src / meta.name / meta.alt → Bilder
-           */
+          // resolution order: selector (modules that inject their own spans, e.g. spellcheck) → tag+idx → text+tag → image attrs
           function findEl(meta) {
             if (meta.selector) {
               return document.querySelector(meta.selector) ?? null
@@ -115,7 +105,6 @@ export function useModuleAttributes(moduleId) {
       chrome.scripting.executeScript({
         target: { tabId },
         func: (moduleId, prefix) => {
-          // Attribute von bestehenden Elementen entfernen
           document.querySelectorAll(`[data-${prefix}-module="${moduleId}"]`).forEach(el => {
             el.removeAttribute(`data-${prefix}-id`)
             el.removeAttribute(`data-${prefix}-module`)

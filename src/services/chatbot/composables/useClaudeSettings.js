@@ -2,7 +2,6 @@ import { ref } from 'vue'
 
 const keyExists = ref(false)
 
-// Check at module load whether an API key is already stored
 chrome.runtime.sendMessage({ type: 'CLAUDE_KEY_EXISTS' }, (res) => {
   keyExists.value = res?.exists ?? false
 })

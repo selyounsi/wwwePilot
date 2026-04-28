@@ -13,27 +13,26 @@ function buildOverlayScript() {
     }
 
     const colors = { error: '#991b1b', warning: '#92400e', success: '#3a5c09' }
-    const fg     = '#ffffff' // Weiß auf allen dunklen Farben
+    const fg     = '#ffffff'
 
     const container = document.createElement('div')
     container.id = '__wp-overlays'
     container.style.cssText = 'position:fixed;top:0;left:0;pointer-events:none;z-index:999999;width:100%;height:100%;'
     document.body.appendChild(container)
 
-    // ── _overlayFrontend.js ───────────────────────────────────
     function findElementFrontend(id) {
       const el = document.querySelector(`[data-${prefix}-id="${id}"]`)
       if (el) return { el, offsetX: 0, offsetY: 0 }
       return null
     }
 
-    // ── _overlayLiveEditor.js ─────────────────────────────────
+    // live-editor lookup: data-* attrs may be missing inside the iframe, so fall back to meta
     function findByMeta(doc, meta) {
       if (meta.tag !== undefined && meta.idx !== undefined) {
         const byIdx = doc.querySelectorAll(meta.tag)[meta.idx] ?? null
         if (byIdx) return byIdx
       }
-      // Text-Fallback – für Kontrast und andere text-basierte Elemente
+      // text-based fallback for contrast and similar text checks
       if (meta.text && meta.tag) {
         const needle = meta.text.trim().toLowerCase()
         const found = Array.from(doc.querySelectorAll(meta.tag)).find(el =>
@@ -87,7 +86,6 @@ function buildOverlayScript() {
       }
       return () => wins.forEach(w => { try { w.removeEventListener('scroll', updateFn) } catch {} })
     }
-    // ─────────────────────────────────────────────────────────
 
     function renderBadge(hit, item) {
       const { el, offsetX, offsetY } = hit
@@ -169,7 +167,7 @@ function buildOverlayScript() {
       left = Math.max(4, left)
       top  = Math.max(4, top)
 
-      // Sprechblasen-Pfeil
+      // speech-bubble arrow
       const arrow = document.createElement('div')
       const arrowSize = 10
       arrow.style.cssText = `
@@ -204,7 +202,7 @@ function buildOverlayScript() {
       })
     }
 
-    // Single: zum Element scrollen
+    // single-item mode: scroll the element into view
     if (items.length === 1) {
       const item = items[0]
       const fe   = findElementFrontend(item.id)
@@ -248,7 +246,7 @@ export function usePageOverlay() {
   const active       = ref(false)
   const { state }    = useCheckStore()
 
-  // Aktiver Tab + gecheckte Tab (falls verschieden) → Sync Frontend ↔ Live Editor
+  // inject into both the active tab and (if different) the originally checked tab to keep frontend and live editor in sync
   async function getTargetTabIds() {
     const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true })
     const ids = new Set()

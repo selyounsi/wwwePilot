@@ -1,6 +1,5 @@
 import { APP_NAME_LOWER } from './config/app.js'
 
-// ── Handler automatisch aus allen Modulen & Services laden ───────────────
 const moduleHandlers  = import.meta.glob('./services/*/modules/*/background.js', { eager: true })
 const serviceHandlers = import.meta.glob('./services/*/background.js',            { eager: true })
 const handlerModules  = { ...moduleHandlers, ...serviceHandlers }
@@ -20,10 +19,9 @@ for (const [path, mod] of Object.entries(handlerModules)) {
 
 console.log('[background] Registrierte Handler:', Object.keys(handlerMap))
 
-// ── Sidebar öffnen ────────────────────────────────────────────
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
 
-// ── Cleanup beim Schließen der Sidebar ────────────────────────
+// strip overlays + listeners injected by modules when sidebar disconnects
 chrome.runtime.onConnect.addListener(port => {
   if (port.name !== 'sidebar') return
 
@@ -58,7 +56,6 @@ chrome.runtime.onConnect.addListener(port => {
   })
 })
 
-// ── Message Router ────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   const handler = handlerMap[msg.type]
   if (!handler) return

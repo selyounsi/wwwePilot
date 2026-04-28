@@ -64,7 +64,6 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
         : 'border-b border-border/50 last:border-b-0',
     ]"
   >
-    <!-- Main row -->
     <div
       @click="highlight('click')"
       @dblclick.stop="highlight('dblclick')"
@@ -118,7 +117,6 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
       </div>
     </div>
 
-    <!-- Expand toggle -->
     <button
       @click.stop="open = !open"
       class="w-full flex items-center justify-center gap-1.5 border-t transition-colors"
@@ -140,7 +138,6 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
       </span>
     </button>
 
-    <!-- Expand content -->
     <div v-if="open">
       <slot v-if="slots.expand" name="expand" />
       <div v-else class="bg-surface-soft border-t border-border/40 px-3 py-2.5 flex flex-col gap-2">

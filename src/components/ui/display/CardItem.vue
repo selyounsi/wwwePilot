@@ -17,9 +17,7 @@ defineEmits(['click'])
     ]"
   >
     <div class="flex items-center gap-3 min-w-0">
-      <!-- MDI Icon-Name (z.B. "mdiRobot") → Icon-Komponente -->
       <Icon v-if="icon?.startsWith('mdi')" :name="icon" :size="20" class="text-muted shrink-0" />
-      <!-- Emoji-Fallback -->
       <span v-else-if="icon" class="text-xl shrink-0">{{ icon }}</span>
 
       <div class="text-left min-w-0">

@@ -7,12 +7,11 @@ export const apiConfig     = { prefix: APP_NAME_LOWER }
 
 export default async function check(config) {
 
-  // ── Alle Konstanten HIER drin – chrome.scripting serialisiert nur den
-  // Funktionskörper, kein Modul-Scope. Externe Variablen wären undefined. ──
+  // constants must live inside check() — chrome.scripting only serializes the function body
   const prefix            = config.prefix
   const SEO_OFFSET_MARKER = 2_000_000
 
-  // ── Cleanup ───────────────────────────────────────────────────────────────
+  // remove spans injected by a previous run
   document.querySelectorAll(`[data-${prefix}-injected="spellcheck"]`).forEach(span => {
     const parent = span.parentNode
     if (!parent) return
@@ -20,7 +19,6 @@ export default async function check(config) {
     parent.normalize()
   })
 
-  // ── Text + Bilder sammeln ─────────────────────────────────────────────────
   const text = document.body.innerText?.trim()
   if (!text) {
     return { errors: [{ message: 'Kein Text gefunden' }], warnings: [], errorCount: 1, warningCount: 0, items: [] }
@@ -48,8 +46,6 @@ export default async function check(config) {
 
   const matches = result?.matches ?? []
   const { errors, warnings, items, addItem, finish } = createCheckResult()
-
-  // ── Hilfsfunktionen ───────────────────────────────────────────────────────
 
   function severityToType(severity) {
     return severity === 'error' ? 'error' : 'warning'
@@ -150,10 +146,9 @@ export default async function check(config) {
     return null
   }
 
-  // ── Node-Map einmalig bauen ───────────────────────────────────────────────
   const nodeMap = buildNodeMap()
 
-  // Absteigend nach Offset sortieren – verhindert Offset-Verschiebung durch DOM-Splits
+  // sort descending so DOM splits from earlier injections don't shift later offsets
   const orderedMatches = matches
     .map((m, originalIndex) => ({ ...m, originalIndex }))
     .sort((a, b) => b.offset - a.offset)
@@ -163,7 +158,7 @@ export default async function check(config) {
   orderedMatches.forEach(m => {
     const id = `spellcheck-${m.originalIndex}`
 
-    // SEO / Bild-Issues: Offset >= Marker → img per alt-Attribut suchen
+    // SEO/image issues are tagged with offset >= marker; resolve target via alt attribute
     if (m.offset >= SEO_OFFSET_MARKER) {
       elementMap[m.originalIndex] = m.fehler
         ? (document.querySelector(`img[alt="${m.fehler}"]`) ?? document.body)
@@ -171,7 +166,6 @@ export default async function check(config) {
       return
     }
 
-    // Text-Match über Offset-Map
     const hit = nodeMap.find(e => e.start <= m.offset && m.offset < e.end)
     if (hit) {
       const localOffset = m.offset - hit.start
@@ -183,11 +177,11 @@ export default async function check(config) {
       }
     }
 
-    // Fallback: Text-basierte Suche
+    // fallback: text-based lookup
     elementMap[m.originalIndex] = injectFallback(m.fehler, id) ?? document.body
   })
 
-  // ── addItem in Original-Reihenfolge ──────────────────────────────────────
+  // emit items in the original match order to keep the UI stable
   matches.forEach((m, i) => {
     const el    = elementMap[i] ?? document.body
     const type  = severityToType(m.severity)

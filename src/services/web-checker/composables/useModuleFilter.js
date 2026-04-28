@@ -17,8 +17,7 @@ export function useModuleFilter(result, defaultFilter = 'issues') {
     if (filter.value === 'warnings') return { ...r, items: (r.items ?? []).filter(i => i.type === 'warning') }
     if (filter.value === 'issues')   return { ...r, items: (r.items ?? []).filter(i => i.type === 'error' || i.type === 'warning') }
 
-    // 'all' — Errors zuerst, dann Warnings, dann Success. Stable sort behält
-    // Original-Reihenfolge innerhalb gleicher Severity.
+    // Sort by severity; stable sort keeps original order within each group.
     if (filter.value === 'all') {
       const sev = { error: 0, warning: 1, success: 2 }
       return { ...r, items: [...(r.items ?? [])].sort((a, b) => (sev[a.type] ?? 3) - (sev[b.type] ?? 3)) }

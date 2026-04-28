@@ -19,7 +19,6 @@ const allIssues = computed(() => [
 <template>
   <div class="mb-4 flex flex-col gap-2">
 
-    <!-- Stat-Kacheln -->
     <div class="grid gap-2" style="grid-template-columns: repeat(auto-fit, minmax(72px, 1fr))">
 
       <div v-if="total" class="bg-surface-soft border border-border rounded-xl p-3 text-center">
@@ -40,7 +39,6 @@ const allIssues = computed(() => [
       <slot />
     </div>
 
-    <!-- Collapsible Hinweise -->
     <div v-if="allIssues.length" class="rounded-xl border overflow-hidden" :class="open ? 'border-border' : 'border-border/50'">
 
       <button

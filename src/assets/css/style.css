@@ -1,39 +1,32 @@
 @import "tailwindcss";
 @source inline("justify-start justify-end justify-center items-start items-end items-center flex-row flex-col flex-row-reverse");
 
-/* ─── Farbpalette ─────────────────────────────────────────────── */
 @theme {
-  /* Brand */
   --color-primary:    #bad32c;
   --color-secondary:  #22272e;
 
-  /* Hintergründe */
   --color-background: #1c2128;
   --color-surface:    #22272e;
 
-  /* Typografie & UI */
   --color-muted:      #a7b4c1;
   --color-light:      #ffffff;
   --color-border:     #373e47;
 
-  /* States */
   --color-error:      #f87171;
   --color-alert:      #f59e0b;
   --color-success:    #4ade80;
 }
 
-/* ─── bg-* setzt automatisch die passende Textfarbe ──────────── */
+/* bg-* utilities pair each background with its readable foreground */
 @layer components {
   .bg-primary    { background-color: var(--color-primary);    color: #1c2128; }
   .bg-secondary  { background-color: var(--color-secondary);  color: #ffffff; }
   .bg-background { background-color: var(--color-background); color: #ffffff; }
   .bg-surface    { background-color: var(--color-surface);    color: #ffffff; }
 
-  /* Halbtransparente Hilfsflächen */
   .bg-surface-soft       { background-color: rgba(255, 255, 255, 0.03); }
   .bg-surface-soft-hover { background-color: rgba(255, 255, 255, 0.06); }
 
-  /* Soft-States */
   .bg-primary-soft { background-color: rgba(186, 211,  44, 0.12); color: var(--color-primary); }
   .bg-error-soft   { background-color: rgba(248, 113, 113, 0.10); color: var(--color-error);   }
   .bg-alert-soft   { background-color: rgba(245, 158,  11, 0.10); color: var(--color-alert);   }

@@ -16,7 +16,7 @@ const resolvedIcon     = computed(() => props.icon     || route.meta.icon       
 const resolvedTitle    = computed(() => props.title    || route.meta.moduleName  || route.meta.serviceName || '')
 const resolvedSubtitle = computed(() => props.subtitle || route.meta.description || '')
 
-// Breadcrumb ausblenden sobald gescrollt wird
+// hide breadcrumb once scrolled past 30px
 const scrolled = ref(false)
 
 function onScroll() {
@@ -31,14 +31,12 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
 <template>
   <div class="bg-primary sticky top-0 z-50">
 
-    <!-- Breadcrumb – Platz fährt ein/aus, kein Layout-Loop -->
     <div v-if="showBack"
       class="px-4 overflow-hidden transition-all duration-200 ease-in-out"
       :style="scrolled ? 'max-height:0; opacity:0; padding-top:0' : 'max-height:40px; opacity:1; padding-top:12px'">
       <BreadCrumb />
     </div>
 
-    <!-- Hauptzeile -->
     <div class="px-4 pt-3 flex items-center gap-3" :class="$slots.below ? 'pb-2' : 'pb-4'">
       <button v-if="showBack" @click="router.back()"
         class="w-8 h-8 flex items-center justify-center rounded-lg bg-black/10 hover:bg-black/20 transition-colors text-lg shrink-0">
@@ -51,7 +49,6 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
       <slot />
     </div>
 
-    <!-- Optionale Aktionsleiste unter dem Titel -->
     <div v-if="$slots.below" class="px-4 pb-3 flex items-center gap-1.5 flex-wrap">
       <slot name="below" />
     </div>

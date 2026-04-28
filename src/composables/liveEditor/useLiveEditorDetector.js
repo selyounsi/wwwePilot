@@ -23,16 +23,13 @@ export async function detectLiveEditor(tabId, checkedUrl) {
     const checkedDomain = new URL(checkedUrl).hostname
     if (le.domain !== checkedDomain) return 'editor-domain-mismatch'
 
-    // Normalisiert einen Pfad:
-    // - Trailing slash entfernen
-    // - /index am Ende entfernen
-    // - Sprachprefix (/de/, /en/, /fr/ etc.) entfernen
+    // strip trailing slash, /index suffix, and 2-letter language prefix like /de/, /en/
     function normalizePath(path) {
       return path
-        .replace(/\/$/, '')              // trailing slash: /foo/ → /foo
-        .replace(/\/index$/, '')         // /index suffix: /foo/index → /foo
-        .replace(/^\/[a-z]{2}(\/|$)/, '/') // sprachprefix: /de/foo → /foo, /de → /
-        .replace(/\/$/, '')              // nochmal trailing slash falls entstanden
+        .replace(/\/$/, '')
+        .replace(/\/index$/, '')
+        .replace(/^\/[a-z]{2}(\/|$)/, '/')
+        .replace(/\/$/, '')
         || '/'
     }
 

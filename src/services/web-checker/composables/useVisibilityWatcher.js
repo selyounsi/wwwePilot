@@ -7,7 +7,7 @@ export function useVisibilityWatcher(moduleId) {
   let pollInterval  = null
   let lastTabId     = null
 
-  // ── Läuft im Seiten-Kontext ───────────────────────────────
+  // runs in the page context via executeScript
   const VISIBILITY_SCRIPT = (ids, prefix) => {
     function isVisible(el, win) {
       const style = win.getComputedStyle(el)
@@ -26,11 +26,10 @@ export function useVisibilityWatcher(moduleId) {
     }
 
     return ids.map(id => {
-      // 1. Hauptdokument
       const el = document.querySelector(`[data-${prefix}-id="${id}"]`)
       if (el) return { id, visible: isVisible(el, window) }
 
-      // 2. iFrames (Live Editor) – nutzt contentWindow für korrektes getComputedStyle
+      // live-editor iframe: contentWindow is required so getComputedStyle resolves correctly
       for (const iframe of document.querySelectorAll('iframe')) {
         try {
           const found = iframe.contentDocument?.querySelector(`[data-${prefix}-id="${id}"]`)
@@ -38,10 +37,9 @@ export function useVisibilityWatcher(moduleId) {
         } catch {}
       }
 
-      return { id, visible: null } // null = nicht gefunden, Wert nicht ändern
+      return { id, visible: null } // null = not found, do not overwrite previous value
     })
   }
-  // ─────────────────────────────────────────────────────────
 
   async function recheckVisibility(tabId) {
     const result = state.results[moduleId]
@@ -96,7 +94,6 @@ export function useVisibilityWatcher(moduleId) {
     return res?.result ?? false
   }
 
-  // Tab-Wechsel → sofort neu prüfen
   async function onTabActivated({ tabId }) {
     lastTabId = tabId
     await injectDirtyListener(tabId)
@@ -110,10 +107,10 @@ export function useVisibilityWatcher(moduleId) {
 
     await injectDirtyListener(tab.id)
     await recheckVisibility(tab.id)
-    // Zweite Prüfung nach 600ms – gibt lazy-loaded Elementen Zeit sich zu rendern
+    // second pass: gives lazy-loaded elements a chance to render
     setTimeout(() => recheckVisibility(tab.id), 600)
 
-    // Polling: nur bei Scroll/Resize
+    // re-check only after scroll/resize, otherwise idle
     pollInterval = setInterval(async () => {
       if (!lastTabId) return
       if (await isDirty(lastTabId)) recheckVisibility(lastTabId)

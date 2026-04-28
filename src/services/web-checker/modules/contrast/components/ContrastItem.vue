@@ -75,7 +75,6 @@ async function applyColors() {
 <template>
   <ModuleItem :item="normalized" variant="box">
 
-    <!-- Farbpunkte als Preview im Hauptbereich -->
     <div class="flex items-center gap-1.5 mt-0.5">
       <span class="w-3 h-3 rounded-full border border-white/10 shrink-0" :style="`background:${item.fgHex}`" />
       <span class="w-3 h-3 rounded-full border border-white/10 shrink-0" :style="`background:${item.bgHex}`" />
@@ -84,7 +83,6 @@ async function applyColors() {
     <template #expand>
       <div class="bg-surface-soft border-t border-border/40 px-3 py-3 flex flex-col gap-3">
 
-        <!-- Vorschau -->
         <div
           class="rounded-lg px-3 py-2 text-sm font-medium text-center transition-colors"
           :style="`background:${bg}; color:${fg}`"
@@ -92,7 +90,6 @@ async function applyColors() {
           {{ item.text || 'Beispieltext' }}
         </div>
 
-        <!-- Color Picker -->
         <div class="grid grid-cols-2 gap-2">
           <div class="flex flex-col gap-1">
             <p class="text-xs text-muted">Text</p>
@@ -110,7 +107,6 @@ async function applyColors() {
           </div>
         </div>
 
-        <!-- Kontrastverhältnis -->
         <div class="flex items-center justify-between px-1">
           <span class="text-xl font-bold">{{ ratio }}:1</span>
           <span class="text-lg font-bold" :class="level.cls">{{ level.label }}</span>

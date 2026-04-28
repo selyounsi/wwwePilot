@@ -14,7 +14,6 @@ export default async function check(config = {}) {
     return `${(bytes / 1048576).toFixed(1)} MB`
   }
 
-  // ── 1. Lokale Ressourcen-Statistiken ──────────────────────────────
   let resources = 0, totalBytes = 0, scripts = 0, images = 0, cssFiles = 0
   try {
     const entries = performance.getEntriesByType('resource')
@@ -25,7 +24,6 @@ export default async function check(config = {}) {
     cssFiles   = entries.filter(r => r.initiatorType === 'link').length
   } catch {}
 
-  // ── 2. PageSpeed Insights ─────────────────────────────────────────
   async function fetchPageSpeed(pageUrl) {
     const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(:\d+)?/.test(pageUrl)
     if (isLocal) return { mobile: null, desktop: null, local: true }
@@ -76,7 +74,6 @@ export default async function check(config = {}) {
 
   const psi = await fetchPageSpeed(document.location.href)
 
-  // ── Checks zusammenstellen ────────────────────────────────────────
   const { addItem, finish } = createCheckResult()
   const head = document.head
 
@@ -84,7 +81,6 @@ export default async function check(config = {}) {
     addItem(head, checks, { id, name, details: details || '', category: 'Performance', visible: true, _meta: meta ?? {} })
   }
 
-  // ── PageSpeed Mobile ──────────────────────────────────────────────
   const mob = psi.mobile
   add('psi-mobile', 'PageSpeed Mobile',
     mob?.score !== null && mob?.score !== undefined ? `${mob.score}/100` : '–', [
@@ -94,7 +90,6 @@ export default async function check(config = {}) {
     { when: mob?.score !== null && mob?.score !== undefined && mob.score >= 50 && mob.score < 90, type: 'warning', title: `${mob.score}/100 – Optimierungsbedarf` },
   ], mob ?? {})
 
-  // ── PageSpeed Desktop ─────────────────────────────────────────────
   const desk = psi.desktop
   add('psi-desktop', 'PageSpeed Desktop',
     desk?.score !== null && desk?.score !== undefined ? `${desk.score}/100` : '–', [
@@ -104,7 +99,6 @@ export default async function check(config = {}) {
     { when: desk?.score !== null && desk?.score !== undefined && desk.score >= 50 && desk.score < 90, type: 'warning', title: `${desk.score}/100 – Optimierungsbedarf` },
   ], desk ?? {})
 
-  // ── Lokale Ressourcen ─────────────────────────────────────────────
   add('resources-total', 'Ressourcen gesamt', `${resources} Dateien`, [
     { when: resources > 150,                    type: 'error',   title: `Sehr viele Ressourcen (${resources} Dateien)` },
     { when: resources > 80 && resources <= 150, type: 'warning', title: `Viele Ressourcen (${resources} Dateien)` },

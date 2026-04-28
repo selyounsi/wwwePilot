@@ -21,7 +21,7 @@ export default function check() {
     const text    = (h.innerText || h.textContent || '').trim()
     const h1Index = level === 1 ? Array.from(h1s).indexOf(h) : -1
 
-    // Index innerhalb des gleichen Tag-Typs (für findByMeta im Live Editor)
+    // index relative to the same tag — required by findByMeta in the live editor
     const tagIdx = Array.from(document.querySelectorAll(h.tagName)).indexOf(h)
 
     const isEmpty    = !text
@@ -65,7 +65,7 @@ export default function check() {
       text:  text || '(leer)',
       tag:   h.tagName,
       name:  text || h.tagName,
-      _meta: { tag: h.tagName, idx: tagIdx }, // ← idx pro Tag-Typ, nicht global
+      _meta: { tag: h.tagName, idx: tagIdx }, // idx is per tag-type, not global
     })
 
     lastLevel = level

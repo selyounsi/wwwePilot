@@ -33,7 +33,7 @@ export default function check() {
     return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('')
   }
 
-  // Blended background – traversiert DOM und mischt Alpha-Farben korrekt
+  // walk ancestors and composite alpha-blended bg colours for the true effective background
   function getBgColor(el) {
     let r = 255, g = 255, b = 255
 
@@ -74,7 +74,7 @@ export default function check() {
     const bgColor  = getBgColor(el)
     if (!fgColor) return
 
-    // Vordergrundfarbe mit eigenem Alpha blenden
+    // pre-multiply foreground alpha against the resolved background
     const fg = {
       r: Math.round(fgColor.r * fgColor.a + bgColor.r * (1 - fgColor.a)),
       g: Math.round(fgColor.g * fgColor.a + bgColor.g * (1 - fgColor.a)),

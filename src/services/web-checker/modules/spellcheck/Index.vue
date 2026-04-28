@@ -2,8 +2,7 @@
 import { ref } from 'vue'
 import SpellItem from './components/SpellItem.vue'
 
-// Kein direkter Store-Zugriff mehr – grouped wird aus slotResult.items berechnet,
-// damit das Filter-Dropdown von ModuleSection greift.
+// derive groups from slotResult.items so ModuleSection's filter dropdown still applies
 function groupItems(items) {
   const map = {}
   for (const item of items ?? []) {

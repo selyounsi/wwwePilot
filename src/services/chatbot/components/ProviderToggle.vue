@@ -1,6 +1,6 @@
 <script setup>
 defineProps({
-  modelValue: { type: String, required: true }, // 'wwwe' | 'claude'
+  modelValue: { type: String, required: true },
 })
 defineEmits(['update:modelValue'])
 </script>

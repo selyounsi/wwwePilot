@@ -4,7 +4,6 @@ export const overlay       = null
 
 export default async function check() {
 
-  // ── 1. Website-Identität aus DOM ─────────────────────────────────
   const html = document.documentElement
   const head = document.head
 
@@ -12,13 +11,12 @@ export default async function check() {
   const fwVersion    = html.dataset.fwVersion                                                     || ''
   const websiteBrand = document.querySelector('script[data-website-brand]')?.dataset.websiteBrand || ''
 
-  // Counter – usecurez.js mit k=XXXX Parameter
+  // counter id is the k=XXXX query param on the usecurez.js script
   const counterEl  = document.querySelector('script[src*="usecurez"]')
   const counterSrc = counterEl?.src || counterEl?.getAttribute('src') || ''
   let counterId = ''
   try { counterId = new URL(counterSrc, location.origin).searchParams.get('k') || '' } catch {}
 
-  // Meta-Tags
   const metaTitle       = document.title                                                          || ''
   const metaDescription = document.querySelector('meta[name="description"]')?.content            || ''
   const canonical       = document.querySelector('link[rel="canonical"]')?.href                  || ''
@@ -27,11 +25,10 @@ export default async function check() {
   const ogImage         = document.querySelector('meta[property="og:image"]')?.content           || ''
   const viewport        = document.querySelector('meta[name="viewport"]')?.content               || ''
 
-  // Privacy Control
   let privacyControlVersion = ''
   try { privacyControlVersion = window.privacyControl?.version || '' } catch {}
 
-  // ── 2. Server-Checks via direktem Fetch (same-origin, kein CORS-Problem) ──
+  // same-origin fetch — runs in page context so no CORS preflight
   async function fetchCheck(url, method = 'GET') {
     try {
       const res  = await fetch(url, { method, cache: 'reload' })
@@ -67,14 +64,12 @@ export default async function check() {
     favicon: { ...faviconRaw, width: faviconDims.width, height: faviconDims.height },
   }
 
-  // ── 3. Check-Items aufbauen ───────────────────────────────────────
   const { addItem, finish } = createCheckResult()
 
   function add(id, name, details, category, checks) {
     addItem(head, checks, { id, name, details: details || '', category, visible: true, _meta: {} })
   }
 
-  // — Technik ────────────────────────────────────────────────────────
   add('robots', 'robots.txt', server.robots?.ok ? `HTTP ${server.robots.status}` : 'Nicht erreichbar', 'Technik', [
     { when: !server.robots?.ok,                                    type: 'error',   title: 'robots.txt nicht erreichbar' },
     { when: server.robots?.ok && !server.robots?.hasSitemapRef,    type: 'warning', title: 'robots.txt hat keinen Sitemap-Verweis' },
@@ -112,7 +107,6 @@ export default async function check() {
     { when: !!privacyControlVersion,                               type: 'success', title: `privacyControl v${privacyControlVersion}` },
   ])
 
-  // — SEO ────────────────────────────────────────────────────────────
   const titleLen = metaTitle.length
   add('meta-title', 'Meta Title',
     metaTitle ? `${titleLen} Zeichen: ${metaTitle.slice(0, 50)}${titleLen > 50 ? '…' : ''}` : '–', 'SEO', [
@@ -143,7 +137,6 @@ export default async function check() {
     { when: ogMissing.length === 0,                                type: 'success', title: 'Open Graph vollständig' },
   ])
 
-  // — HTML ───────────────────────────────────────────────────────────
   add('html-lang', 'Sprache (lang)', lang || '–', 'HTML', [
     { when: !lang,                                                 type: 'warning', title: 'lang-Attribut fehlt am <html>-Tag' },
     { when: !!lang,                                                type: 'success', title: `Sprache gesetzt: ${lang}` },

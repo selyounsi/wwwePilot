@@ -4,7 +4,6 @@ import { APP_NAME_LOWER } from '@/config/app.js'
 
 const STORAGE_KEY = `${APP_NAME_LOWER}-chats-v2`
 
-// ── Helpers ───────────────────────────────────────────────
 function now() {
   return new Date().toLocaleTimeString('de', { hour: '2-digit', minute: '2-digit' })
 }
@@ -23,7 +22,6 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
-      // Validate expected shape
       if (parsed.wwwe && parsed.claude) return parsed
     }
   } catch {}
@@ -37,7 +35,6 @@ function save(state) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)) } catch {}
 }
 
-// ── Singleton State ───────────────────────────────────────
 const allChats      = ref(load())
 const activeProvider = ref('wwwe')
 const activeChatIds = ref({

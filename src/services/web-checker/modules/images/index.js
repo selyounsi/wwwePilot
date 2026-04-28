@@ -14,9 +14,7 @@ export default function check() {
   const { errors, warnings, items, addItem, finish } = createCheckResult()
   const IMAGE_EXTS = /\.(gif|jpe?g|png|webp|svg|bmp|mp4)(\?.*)?$/i
 
-  // ── 1. Background-Bilder ─────────────────────────────────────────
-  // Fehler: Bild per CSS background-image eingebunden (inline style)
-  // Fehler: data-cms-src auf einem Nicht-<img>-Element (div-Container)
+  // flags inline `background-image` styles and `data-cms-src` on non-img elements
   function checkBackgroundImages() {
     const bgEls  = Array.from(document.querySelectorAll('[style*="background-image"]')).filter(el => el.tagName !== 'IMG')
     const cmsEls = Array.from(document.querySelectorAll('[data-cms-src]:not(img)'))
@@ -37,13 +35,7 @@ export default function check() {
     })
   }
 
-  // ── 2. Alt-Text + Lightbox (zusammengeführt am <img>) ────────────
-  // Lightbox-Check wird direkt am <img> mitgeprüft wenn das Bild
-  // innerhalb eines .cms-image a[href=Bilddatei] liegt.
-  // → Ein ModuleItem pro Bild, keine Doppelung mehr.
-  //
-  // Lightbox-Regel: Zuerst prüfen ob der <a>-Link selbst die Klasse/
-  // das Attribut hat, wenn nicht → direktes Elternelement prüfen.
+  // alt-text + lightbox check folded into a single item per <img> to avoid duplicates
   function checkImages() {
     const BLACKLIST      = ['shutterstock', 'gettyimages', 'istock', 'screenshot', 'depositphotos', 'adobe-stock', 'dreamstime']
     const processedLinks = new Set()
@@ -70,7 +62,6 @@ export default function check() {
         || /(resized|large|small|medium|_x[12]_)/i.test(alt)
       )
 
-      // Lightbox: nächstes <a href> das innerhalb .cms-image liegt
       let inLightbox = false, lightboxOk = true
       const parentLink = img.closest('a[href]')
       if (parentLink && parentLink.closest('.cms-image')) {
@@ -78,8 +69,7 @@ export default function check() {
         if (IMAGE_EXTS.test(hrefAttr)) {
           inLightbox = true
           processedLinks.add(parentLink)
-          // Der .cms-image-Container muss lightbox-zoom-image haben,
-          // nicht der Link selbst (BaguetteBox sucht am Gallery-Container)
+          // BaguetteBox checks the gallery container, not the link itself
           const galleryEl = parentLink.closest('.cms-image')
           lightboxOk = !!(
             galleryEl?.classList.contains('lightbox-zoom-image') ||
@@ -102,9 +92,7 @@ export default function check() {
     return processedLinks
   }
 
-  // ── 3. Lightbox-Links ohne <img> (Sonderfall) ────────────────────
-  // Links auf Bilddateien die kein <img> enthalten und damit nicht
-  // über checkImages() erfasst wurden.
+  // links to image files that contain no <img> (skipped by checkImages)
   function checkOrphanLightboxLinks(processedLinks) {
     const links = Array.from(document.querySelectorAll('.cms-image a[href]'))
 
@@ -129,7 +117,6 @@ export default function check() {
     })
   }
 
-  // ── Ausführen ─────────────────────────────────────────────────────
   const hasAnyImage = !!(
     document.querySelector('img') ||
     document.querySelector('[style*="background-image"]') ||

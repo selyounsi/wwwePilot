@@ -2,7 +2,7 @@
 import * as mdi from '@mdi/js'
 
 const props = defineProps({
-  name:  { type: String, required: true }, // z.B. "mdiRobot"
+  name:  { type: String, required: true },
   size:  { type: [Number, String], default: 16 },
   color: { type: String, default: 'currentColor' },
 })
@@ -10,13 +10,7 @@ const props = defineProps({
 const path = mdi[props.name] ?? null
 </script>
 
-<!--
-  Verwendung (name = camelCase MDI Icon-Name):
-    <Icon name="mdiRobot" />
-    <Icon name="mdiArrowLeft" :size="20" />
-
-  Alle Icons: https://pictogrammers.com/library/mdi/
--->
+<!-- icon catalogue: https://pictogrammers.com/library/mdi/ -->
 <template>
   <svg
     v-if="path"

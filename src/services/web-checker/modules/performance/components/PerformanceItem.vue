@@ -41,14 +41,12 @@ function oppIcon(score) {
     <template v-if="isPsi" #expand>
       <div class="border-t border-border/40 bg-surface-soft">
 
-        <!-- Keine Daten -->
         <div v-if="!vitals.length && !opportunities.length" class="px-3 py-3 text-xs text-muted/60">
           Keine Detaildaten verfügbar.
         </div>
 
         <template v-else>
 
-          <!-- Core Web Vitals -->
           <div v-if="vitals.length" class="px-3 pt-3 pb-2">
             <p class="text-[10px] uppercase tracking-widest font-semibold text-muted/50 mb-2">Core Web Vitals</p>
             <div class="flex flex-col gap-1.5">
@@ -69,10 +67,8 @@ function oppIcon(score) {
             </div>
           </div>
 
-          <!-- Divider -->
           <div v-if="vitals.length && opportunities.length" class="mx-3 border-t border-border/30" />
 
-          <!-- Optimierungshinweise -->
           <div v-if="opportunities.length" class="px-3 pt-2.5 pb-3">
             <p class="text-[10px] uppercase tracking-widest font-semibold text-muted/50 mb-2">Optimierungshinweise</p>
             <div class="flex flex-col gap-1.5">

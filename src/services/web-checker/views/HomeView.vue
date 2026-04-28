@@ -27,7 +27,7 @@ const sortedModules = computed(() => {
   return [...modules].sort((a, b) => order(a) - order(b))
 })
 
-// Nur editor-match = wirklich die geprüfte Seite im Live Editor
+// only editor-match means the live editor is showing the actual checked page
 const isLiveEditor   = computed(() => tabStatus.value === 'editor-match')
 const alreadyChecked = computed(() => tabStatus.value === 'current' || tabStatus.value === 'url-changed' || tabStatus.value === 'reloaded')
 
@@ -39,7 +39,7 @@ const buttonLabel = computed(() => {
 
 async function handleCheck() {
   if (isLiveEditor.value) {
-    // Aktiven Tab (Live Editor) neu laden → useTabWatcher startet Check automatisch
+    // reloading the live editor tab triggers useTabWatcher to re-run checks automatically
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     if (tab?.id) chrome.tabs.reload(tab.id)
     return
