@@ -24,6 +24,7 @@ export default async function check() {
   const ogDescription   = document.querySelector('meta[property="og:description"]')?.content     || ''
   const ogImage         = document.querySelector('meta[property="og:image"]')?.content           || ''
   const viewport        = document.querySelector('meta[name="viewport"]')?.content               || ''
+  const themeColor      = document.querySelector('meta[name="theme-color"]')?.content            || ''
 
   let privacyControlVersion = ''
   try { privacyControlVersion = window.privacyControl?.version || '' } catch {}
@@ -145,6 +146,13 @@ export default async function check() {
   add('viewport', 'Viewport Meta', viewport ? 'Vorhanden' : '–', 'HTML', [
     { when: !viewport,                                             type: 'warning', title: 'Viewport-Meta-Tag fehlt' },
     { when: !!viewport,                                            type: 'success', title: 'Viewport-Meta vorhanden' },
+  ])
+
+  const isDefaultThemeColor = ['#000', '#000000', 'black'].includes(themeColor.trim().toLowerCase())
+  add('theme-color', 'Theme-Color', themeColor || '–', 'HTML', [
+    { when: !themeColor,                                           type: 'warning', title: 'theme-color Meta-Tag fehlt' },
+    { when: themeColor && isDefaultThemeColor,                     type: 'warning', title: `theme-color hat Standardfarbe "${themeColor}" – sollte an Brand angepasst werden` },
+    { when: themeColor && !isDefaultThemeColor,                    type: 'success', title: `theme-color: ${themeColor}` },
   ])
 
   return finish()
