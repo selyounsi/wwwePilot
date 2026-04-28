@@ -5,8 +5,9 @@ import { useModuleFilter } from '@/services/web-checker/composables/useModuleFil
 import { useCheckStore }   from '@/services/web-checker/composables/useCheckStore.js'
 
 const props = defineProps({
-  label:    { type: String, required: true },
-  moduleId: { type: String, default: null },
+  label:         { type: String, required: true },
+  moduleId:      { type: String, default: null },
+  defaultFilter: { type: String, default: 'issues' },
 })
 
 const allModules = import.meta.glob('@/services/*/modules/*/index.js', { eager: true })
@@ -26,7 +27,8 @@ const setup = props.moduleId
 const overlay = setup?.moduleOverlay ?? inject('moduleOverlay', null)
 
 const { state } = useCheckStore()
-const { filter, hasIssues, filteredResult } = useModuleFilter(setup?.result ?? null)
+const { filter, hasIssues, filteredResult } = useModuleFilter(setup?.result ?? null, props.defaultFilter)
+const rawResult = computed(() => setup?.result?.value ?? null)
 
 const hasOverlay    = computed(() =>
   (overlay?.hasOverlay ?? false) &&
@@ -80,7 +82,7 @@ function recheck()  { setup?.recheck?.() }
     </div>
 
     <div class="flex flex-col gap-1">
-      <slot :result="filteredResult" />
+      <slot :result="filteredResult" :raw="rawResult" />
     </div>
   </div>
 </template>

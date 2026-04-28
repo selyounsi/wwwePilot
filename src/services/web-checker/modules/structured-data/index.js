@@ -5,13 +5,79 @@ export const overlay       = null
 export default async function check() {
   const head = document.head
 
+  // Schema.org-Typen die Google als eigenständige Rich Results zählt.
+  // MUSS innerhalb von check() stehen — chrome.scripting.executeScript
+  // serialisiert nur den Funktions-Body in den Page-Kontext, Modul-Scope
+  // ist dort nicht verfügbar.
+  // Helper-Typen wie PostalAddress, GeoCoordinates, Rating werden bewusst
+  // nicht aufgenommen — die sind nur Properties anderer Entities.
+  const RICH_RESULT_TYPES = new Set([
+    'Article', 'NewsArticle', 'BlogPosting', 'TechArticle', 'ScholarlyArticle', 'Report',
+    'Book',
+    'BreadcrumbList',
+    'Course',
+    'Dataset',
+    'Event', 'BusinessEvent', 'EducationEvent', 'SocialEvent', 'SportsEvent',
+    'FAQPage', 'Question', 'QAPage',
+    'HowTo',
+    'ImageObject',
+    'JobPosting',
+    'LearningResource',
+    'LocalBusiness', 'Restaurant', 'Store', 'Hotel', 'AutoDealer', 'AutoRepair',
+    'Bakery', 'Bank', 'Dentist', 'Florist', 'Pharmacy', 'BeautySalon',
+    'GeneralContractor', 'HomeAndConstructionBusiness', 'EmploymentAgency',
+    'Logo',
+    'Movie', 'TVSeries', 'TVEpisode',
+    'Organization', 'Corporation', 'EducationalOrganization', 'GovernmentOrganization',
+    'NewsMediaOrganization', 'NGO', 'PerformingGroup', 'SportsOrganization', 'OnlineBusiness',
+    'Product',
+    'Recipe',
+    'Review', 'CriticReview', 'UserReview', 'EmployerReview',
+    'AggregateRating',
+    'Service',
+    'SoftwareApplication', 'MobileApplication', 'WebApplication',
+    'VideoObject',
+    'WebPage', 'WebSite', 'AboutPage', 'CollectionPage', 'ContactPage', 'ItemPage', 'ProfilePage',
+  ])
+
+  // Rekursiv alle Entities mit @type aus einem JSON-LD-Baum sammeln.
+  // - Arrays werden ausgeflatten
+  // - @graph-Container werden ausgeflatten
+  // - Nested Sub-Entities (z.B. review[] in einem LocalBusiness) werden als
+  //   eigene Items gezählt — wie Google's Rich Results Test.
+  // - Nur Typen aus RICH_RESULT_TYPES werden aufgenommen, Helper wie
+  //   PostalAddress/GeoCoordinates/Rating werden ignoriert.
+  function collectEntities(node) {
+    if (!node) return []
+    if (Array.isArray(node)) return node.flatMap(collectEntities)
+    if (typeof node !== 'object') return []
+
+    const results = []
+    const rawType = node['@type']
+    const types   = Array.isArray(rawType) ? rawType : rawType ? [rawType] : []
+    if (types.some(t => RICH_RESULT_TYPES.has(t))) results.push(node)
+
+    if (Array.isArray(node['@graph'])) {
+      results.push(...node['@graph'].flatMap(collectEntities))
+    }
+
+    for (const [key, value] of Object.entries(node)) {
+      if (key === '@graph' || key === '@type' || key === '@context' || key === '@id') continue
+      results.push(...collectEntities(value))
+    }
+
+    return results
+  }
+
   const jsonLdBlocks = []
   document.querySelectorAll('script[type="application/ld+json"]').forEach(s => {
-    try { jsonLdBlocks.push(JSON.parse(s.textContent)) } catch {}
+    try { jsonLdBlocks.push(...collectEntities(JSON.parse(s.textContent))) } catch {}
   })
 
   const { addItem, finish } = createCheckResult()
 
+  // Bild-Erreichbarkeit über <img> prüfen (nicht fetch) — umgeht CORS-Restriktionen.
+  // naturalWidth/Height sind auch ohne crossOrigin='anonymous' lesbar.
   async function checkSchemaImage(block) {
     const raw = block.image
     if (!raw) return { url: null, reachable: null, width: 0, height: 0 }
@@ -23,51 +89,63 @@ export default async function check() {
     try { url = new URL(rawUrl, document.baseURI).href }
     catch { return { url: rawUrl, reachable: false, width: 0, height: 0 } }
 
-    try {
-      const res = await fetch(url, { method: 'HEAD', cache: 'reload' })
-      if (!res.ok) return { url, reachable: false, width: 0, height: 0 }
-    } catch {
-      return { url, reachable: false, width: 0, height: 0 }
-    }
-
-    const dims = await new Promise(resolve => {
+    return new Promise(resolve => {
       const img = new Image()
-      img.onload  = () => resolve({ width: img.naturalWidth, height: img.naturalHeight })
-      img.onerror = () => resolve({ width: 0, height: 0 })
-      img.crossOrigin = 'anonymous'
+      img.onload  = () => resolve({ url, reachable: true,  width: img.naturalWidth, height: img.naturalHeight })
+      img.onerror = () => resolve({ url, reachable: false, width: 0, height: 0 })
       img.src = url
     })
-
-    return { url, reachable: true, ...dims }
   }
 
   if (jsonLdBlocks.length === 0) {
     addItem(head, [
       { when: true, type: 'warning', title: 'Keine strukturierten Daten (JSON-LD) gefunden' },
-    ], { id: 'no-json-ld', name: 'Keine JSON-LD Daten', details: '', category: 'JSON-LD', visible: true, _meta: { schema: null, image: null } })
-  } else {
-    await Promise.all(jsonLdBlocks.map(async (block, i) => {
-      const rawType = block['@type']
-      const typeStr = Array.isArray(rawType) ? rawType.join(', ') : (rawType || 'Unbekannt')
+    ], { id: 'no-json-ld', name: 'Keine JSON-LD Daten', details: '', category: 'JSON-LD', visible: true, _meta: null })
+    return finish()
+  }
 
-      const imgInfo  = await checkSchemaImage(block)
-      const filename = imgInfo.url ? imgInfo.url.split('/').pop().split('?')[0] : ''
-      const isSocialBranding = filename.toLowerCase().includes('social_branding')
+  // Nach primärem @type gruppieren — wie Google Rich Results Test
+  const grouped = new Map()
+  for (const block of jsonLdBlocks) {
+    const rawType = block['@type']
+    const primary = Array.isArray(rawType) ? rawType[0] : rawType
+    if (!grouped.has(primary)) grouped.set(primary, [])
+    grouped.get(primary).push(block)
+  }
 
-      addItem(head, [
-        { when: !!imgInfo.url && imgInfo.reachable === false,
-          type: 'error', title: `Bild nicht erreichbar: ${filename || imgInfo.url}` },
-        { when: isSocialBranding && imgInfo.reachable === true && (imgInfo.width < 250 || imgInfo.height < 250),
-          type: 'error', title: `social_branding zu klein: ${imgInfo.width}×${imgInfo.height}px (min. 250×250)` },
-      ], {
-        id:       `schema-${i}`,
-        name:     typeStr,
-        details:  imgInfo.url && imgInfo.reachable ? `${imgInfo.width}×${imgInfo.height}px` : '',
-        category: 'JSON-LD',
-        visible:  true,
-        _meta:    { schema: block, image: imgInfo },
+  // Pro Gruppe ein Item — alle Entities mit ihren Image-Checks im _meta
+  for (const [type, entities] of grouped) {
+    const imgInfos = await Promise.all(entities.map(checkSchemaImage))
+
+    const checks = []
+    imgInfos.forEach(info => {
+      if (!info.url) return
+      const filename = info.url.split('/').pop().split('?')[0]
+      checks.push({
+        when: info.reachable === false,
+        type: 'error',
+        title: `Bild nicht erreichbar: ${filename}`,
       })
-    }))
+      const isSocialBranding = filename.toLowerCase().includes('social_branding')
+      checks.push({
+        when: isSocialBranding && info.reachable === true && (info.width < 250 || info.height < 250),
+        type: 'error',
+        title: `social_branding zu klein: ${info.width}×${info.height}px (min. 250×250)`,
+      })
+    })
+
+    addItem(head, checks, {
+      id:       `type-${type}`,
+      name:     type,
+      details:  `${entities.length} ${entities.length === 1 ? 'Element' : 'Elemente'}`,
+      category: 'JSON-LD',
+      visible:  true,
+      _meta: {
+        type,
+        count:    entities.length,
+        entities: entities.map((schema, i) => ({ schema, image: imgInfos[i] })),
+      },
+    })
   }
 
   return finish()

@@ -1,8 +1,8 @@
 import { ref, computed } from 'vue'
 
-export function useModuleFilter(result) {
+export function useModuleFilter(result, defaultFilter = 'issues') {
 
-  const filter = ref('issues')
+  const filter = ref(defaultFilter)
 
   const hasIssues = computed(() =>
     ((result?.value?.errorCount ?? 0) + (result?.value?.warningCount ?? 0)) > 0
@@ -16,6 +16,13 @@ export function useModuleFilter(result) {
     if (filter.value === 'errors')   return { ...r, items: (r.items ?? []).filter(i => i.type === 'error') }
     if (filter.value === 'warnings') return { ...r, items: (r.items ?? []).filter(i => i.type === 'warning') }
     if (filter.value === 'issues')   return { ...r, items: (r.items ?? []).filter(i => i.type === 'error' || i.type === 'warning') }
+
+    // 'all' — Errors zuerst, dann Warnings, dann Success. Stable sort behält
+    // Original-Reihenfolge innerhalb gleicher Severity.
+    if (filter.value === 'all') {
+      const sev = { error: 0, warning: 1, success: 2 }
+      return { ...r, items: [...(r.items ?? [])].sort((a, b) => (sev[a.type] ?? 3) - (sev[b.type] ?? 3)) }
+    }
 
     return r
   })

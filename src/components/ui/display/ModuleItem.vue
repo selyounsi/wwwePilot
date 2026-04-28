@@ -83,7 +83,6 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
           :src="image"
           :style="`width:64px; height:64px; object-fit:${image.endsWith('.svg') ? 'contain' : 'cover'}; padding:${image.endsWith('.svg') ? '6px' : '0'}`"
           loading="eager"
-          crossorigin="anonymous"
         />
       </div>
 
