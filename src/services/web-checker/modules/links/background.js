@@ -5,6 +5,8 @@ export async function handle(msg, sendResponse) {
     msg.urls.map(async (url) => {
       if (!url) return { url, broken: false }
       try {
+        const u = new URL(url)
+        if (u.protocol !== 'http:' && u.protocol !== 'https:') return { url, broken: false }
         const opts = { signal: AbortSignal.timeout(5000), redirect: 'follow' }
         const res  = await fetch(url, { ...opts, method: 'HEAD' })
         if (res.status < 400 || res.status === 999) return { url, broken: false }

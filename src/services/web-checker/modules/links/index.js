@@ -19,8 +19,13 @@ export default async function check() {
 
   const checkableUrls = links.map(a => {
     const href = a.getAttribute('href') ?? ''
-    if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return null
-    try { return new URL(href, location.href).href } catch { return null }
+    if (!href || href.startsWith('#')) return null
+    try {
+      const url = new URL(href, location.href)
+      // Skip non-fetchable schemes (javascript:, mailto:, tel:, data:, blob:, ...).
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
+      return url.href
+    } catch { return null }
   })
 
   const brokenResults = await new Promise(resolve => {
