@@ -3,12 +3,11 @@ import { useCheckRunner } from './useCheckRunner.js'
 
 export function useTabWatcher(modules) {
   const { state, setRunning, setResult, setCheckedTab } = useCheckStore()
-  const { injectHelper, prepareModule }                  = useCheckRunner()
+  const { injectHelper }                                = useCheckRunner()
 
   async function runModule(tabId, mod) {
     setRunning(mod.id)
     try {
-      await prepareModule(tabId, mod.id)
       const [res] = await chrome.scripting.executeScript({
         target: { tabId },
         func:   mod.checker,
@@ -28,11 +27,8 @@ export function useTabWatcher(modules) {
       if (!tab?.url || ['chrome://', 'chrome-extension://', 'edge://'].some(p => tab.url.startsWith(p))) return
 
       await injectHelper(tab.id)
-      // Sequenziell — siehe useWebChecker.js für Begründung (Race auf __wpCurrentModule)
       reloadModules.forEach(mod => setRunning(mod.id))
-      for (const mod of reloadModules) {
-        await runModule(tab.id, mod)
-      }
+      await Promise.all(reloadModules.map(mod => runModule(tab.id, mod)))
       setCheckedTab(tab)
     } catch {}
   }

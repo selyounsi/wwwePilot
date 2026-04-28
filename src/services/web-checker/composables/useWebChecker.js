@@ -7,7 +7,7 @@ import { detectLiveEditor } from '@/composables/liveEditor/useLiveEditorDetector
 export function useWebChecker() {
   const { modules }                                            = useModuleLoader('web-checker')
   const { state, setRunning, setResult, setCheckedTab, reset } = useCheckStore()
-  const { injectHelper, prepareModule }                        = useCheckRunner()
+  const { injectHelper }                                       = useCheckRunner()
 
   const isChecking = ref(false)
   const tabStatus  = ref('unchecked')
@@ -51,11 +51,9 @@ export function useWebChecker() {
     chrome.tabs.onRemoved.removeListener(onTabRemoved)
   })
 
-  // Führt ein einzelnes Modul sequenziell aus (prepareModule + checker atomar hintereinander)
   async function runModule(tabId, mod) {
     setRunning(mod.id)
     try {
-      await prepareModule(tabId, mod.id)
       const [res] = await chrome.scripting.executeScript({
         target: { tabId },
         func:   mod.checker,
@@ -84,14 +82,9 @@ export function useWebChecker() {
     if (modulesToRun === modules) reset()
     await injectHelper(tab.id)
 
-    // Alle Module sofort als running markieren — UX: Spinner sofort sichtbar.
-    // Module sequenziell ausführen — sonst Race Condition auf window.__wpCurrentModule:
-    // bei parallelen Promise.all könnte prepareModule(B) den globalen State überschreiben
-    // bevor checker(A) liest → falsche IDs (A bekommt B's Counter).
+    // Mark all running upfront so spinners appear immediately.
     modulesToRun.forEach(mod => setRunning(mod.id))
-    for (const mod of modulesToRun) {
-      await runModule(tab.id, mod)
-    }
+    await Promise.all(modulesToRun.map(mod => runModule(tab.id, mod)))
 
     setCheckedTab(tab)
     tabStatus.value  = 'current'

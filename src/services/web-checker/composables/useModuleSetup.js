@@ -10,7 +10,7 @@ const EMPTY_RESULT = { status: 'idle', errors: [], warnings: [], items: [], erro
 
 export function useModuleSetup(moduleId, overlayConfig = null, allowChatBot = false) {
   const { state, setRunning, setResult, setCheckedTab } = useCheckStore()
-  const { injectHelper, prepareModule }  = useCheckRunner()
+  const { injectHelper }                                = useCheckRunner()
   const { modules }                      = useModuleLoader('web-checker')
 
   const result = computed(() => state.results[moduleId] ?? EMPTY_RESULT)
@@ -19,7 +19,7 @@ export function useModuleSetup(moduleId, overlayConfig = null, allowChatBot = fa
     const mod = modules.find(m => m.id === moduleId)
     if (!mod) return
 
-    // Vorheriger Check vorhanden → diesen Tab nehmen, sonst aktiven Tab
+    // re-use previously checked tab if any, otherwise fall back to the active tab
     let tabId = state.checkedTabId
     if (!tabId) {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
@@ -31,7 +31,6 @@ export function useModuleSetup(moduleId, overlayConfig = null, allowChatBot = fa
     setRunning(moduleId)
     try {
       await injectHelper(tabId)
-      await prepareModule(tabId, moduleId)
       const [res] = await chrome.scripting.executeScript({
         target: { tabId },
         func:   mod.checker,

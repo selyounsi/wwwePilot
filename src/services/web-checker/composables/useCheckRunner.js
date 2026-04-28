@@ -7,9 +7,6 @@ export function useCheckRunner() {
         if (window.__wpHelpersInjected) return
         window.__wpHelpersInjected = true
 
-        window.__wpModuleCounters = {}
-        window.__wpCurrentModule  = null
-
         window.isElementVisible = (el) => {
           if (!el) return false
           const style = window.getComputedStyle(el)
@@ -36,11 +33,9 @@ export function useCheckRunner() {
           return true
         }
 
-        window.setHighlightElement = (el, type, title, description, meta) => {
-          const mod = window.__wpCurrentModule ?? 'unknown'
-          window.__wpModuleCounters[mod] = window.__wpModuleCounters[mod] ?? 0
-          return `${mod}-${window.__wpModuleCounters[mod]++}`
-        }
+        // UUIDs avoid the cross-module ID collision that a shared counter
+        // would have when modules run in parallel.
+        window.setHighlightElement = () => crypto.randomUUID()
 
         window.createCheckResult = () => {
           const errors = [], warnings = [], items = []
@@ -92,17 +87,5 @@ export function useCheckRunner() {
     })
   }
 
-  async function prepareModule(tabId, moduleId) {
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      func: (moduleId) => {
-        window.__wpModuleCounters = window.__wpModuleCounters ?? {}
-        window.__wpModuleCounters[moduleId] = 0
-        window.__wpCurrentModule = moduleId
-      },
-      args: [moduleId],
-    })
-  }
-
-  return { injectHelper, prepareModule }
+  return { injectHelper }
 }
