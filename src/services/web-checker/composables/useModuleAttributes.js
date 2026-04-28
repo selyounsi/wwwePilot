@@ -1,5 +1,6 @@
 import { onMounted, onUnmounted } from 'vue'
-import { useCheckStore } from './useCheckStore.js'
+import { useCheckStore }  from './useCheckStore.js'
+import { APP_NAME_LOWER } from '@/config/app.js'
 
 export function useModuleAttributes(moduleId) {
   const { state } = useCheckStore()
@@ -27,16 +28,16 @@ export function useModuleAttributes(moduleId) {
     await Promise.all(tabIds.map(tabId =>
       chrome.scripting.executeScript({
         target: { tabId },
-        func: (payload, moduleId) => {
+        func: (payload, moduleId, prefix) => {
 
           // Bestehende Attribute entfernen
-          document.querySelectorAll('[data-wwwebar-id]').forEach(el => {
-            el.removeAttribute('data-wwwebar-id')
-            el.removeAttribute('data-wwwebar-module')
-            el.removeAttribute('data-wwwebar-type')
-            el.removeAttribute('data-wwwebar-meta')
-            el.removeAttribute('data-wwwebar-title')
-            el.removeAttribute('data-wwwebar-desc')
+          document.querySelectorAll(`[data-${prefix}-id]`).forEach(el => {
+            el.removeAttribute(`data-${prefix}-id`)
+            el.removeAttribute(`data-${prefix}-module`)
+            el.removeAttribute(`data-${prefix}-type`)
+            el.removeAttribute(`data-${prefix}-meta`)
+            el.removeAttribute(`data-${prefix}-title`)
+            el.removeAttribute(`data-${prefix}-desc`)
           })
 
           /**
@@ -45,8 +46,6 @@ export function useModuleAttributes(moduleId) {
            * Priorität:
            * 1. meta.selector → direkter CSS-Selektor
            *    Für Module, die eigene Spans in den DOM injizieren (z.B. Spellcheck).
-           *    Das Modul setzt data-wwwebar-ref als stabilen Anker,
-           *    den meta.selector hier findet.
            * 2. meta.tag + meta.idx → n-tes Element des Tag-Typs
            * 3. meta.text + meta.tag → Text-Fallback
            * 4. meta.src / meta.name / meta.alt → Bilder
@@ -97,15 +96,15 @@ export function useModuleAttributes(moduleId) {
             const topIssue = item.issues.find(i => i.type !== 'success')
             const desc     = item.issues.map(i => i.message).join(' · ')
 
-            el.setAttribute('data-wwwebar-id',     item.id)
-            el.setAttribute('data-wwwebar-module', moduleId)
-            el.setAttribute('data-wwwebar-type',   item.type)
-            el.setAttribute('data-wwwebar-meta',   JSON.stringify(item.meta))
-            if (topIssue) el.setAttribute('data-wwwebar-title', topIssue.message)
-            if (desc)     el.setAttribute('data-wwwebar-desc',  desc)
+            el.setAttribute(`data-${prefix}-id`,     item.id)
+            el.setAttribute(`data-${prefix}-module`, moduleId)
+            el.setAttribute(`data-${prefix}-type`,   item.type)
+            el.setAttribute(`data-${prefix}-meta`,   JSON.stringify(item.meta))
+            if (topIssue) el.setAttribute(`data-${prefix}-title`, topIssue.message)
+            if (desc)     el.setAttribute(`data-${prefix}-desc`,  desc)
           })
         },
-        args: [payload, moduleId],
+        args: [payload, moduleId, APP_NAME_LOWER],
       }).catch(() => {})
     ))
   }
@@ -115,25 +114,25 @@ export function useModuleAttributes(moduleId) {
     await Promise.all(tabIds.map(tabId =>
       chrome.scripting.executeScript({
         target: { tabId },
-        func: (moduleId) => {
+        func: (moduleId, prefix) => {
           // Attribute von bestehenden Elementen entfernen
-          document.querySelectorAll(`[data-wwwebar-module="${moduleId}"]`).forEach(el => {
-            el.removeAttribute('data-wwwebar-id')
-            el.removeAttribute('data-wwwebar-module')
-            el.removeAttribute('data-wwwebar-type')
-            el.removeAttribute('data-wwwebar-meta')
-            el.removeAttribute('data-wwwebar-title')
-            el.removeAttribute('data-wwwebar-desc')
+          document.querySelectorAll(`[data-${prefix}-module="${moduleId}"]`).forEach(el => {
+            el.removeAttribute(`data-${prefix}-id`)
+            el.removeAttribute(`data-${prefix}-module`)
+            el.removeAttribute(`data-${prefix}-type`)
+            el.removeAttribute(`data-${prefix}-meta`)
+            el.removeAttribute(`data-${prefix}-title`)
+            el.removeAttribute(`data-${prefix}-desc`)
           })
 
-          document.querySelectorAll(`[data-wwwebar-injected="${moduleId}"]`).forEach(span => {
+          document.querySelectorAll(`[data-${prefix}-injected="${moduleId}"]`).forEach(span => {
             const parent = span.parentNode
             if (!parent) return
             parent.replaceChild(document.createTextNode(span.textContent), span)
             parent.normalize()
           })
         },
-        args: [moduleId],
+        args: [moduleId, APP_NAME_LOWER],
       }).catch(() => {})
     ))
   }

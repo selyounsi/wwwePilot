@@ -1,3 +1,5 @@
+import { APP_NAME_LOWER } from './config/app.js'
+
 // ── Handler automatisch aus allen Modulen & Services laden ───────────────
 const moduleHandlers  = import.meta.glob('./services/*/modules/*/background.js', { eager: true })
 const serviceHandlers = import.meta.glob('./services/*/background.js',            { eager: true })
@@ -31,14 +33,14 @@ chrome.runtime.onConnect.addListener(port => {
       try {
         await chrome.scripting.executeScript({
           target: { tabId: tab.id },
-          func: () => {
+          func: (prefix) => {
             document.getElementById('__wp-overlays')?.remove()
             document.getElementById('__wp-single')?.remove()
             ;[document, ...Array.from(document.querySelectorAll('iframe')).map(f => { try { return f.contentDocument } catch { return null } }).filter(Boolean)]
-              .forEach(doc => doc.querySelectorAll('[data-wwwebar-highlight]').forEach(el => {
+              .forEach(doc => doc.querySelectorAll(`[data-${prefix}-highlight]`).forEach(el => {
                 el.style.outline = ''
                 el.style.outlineOffset = ''
-                el.removeAttribute('data-wwwebar-highlight')
+                el.removeAttribute(`data-${prefix}-highlight`)
               }))
             window.removeEventListener('scroll', window.__wpOverlayUpdate)
             window.removeEventListener('resize', window.__wpOverlayUpdate)
@@ -49,6 +51,7 @@ chrome.runtime.onConnect.addListener(port => {
             delete window.__wpOverlayUpdate
             delete window.__wpSingleUpdate
           },
+          args: [APP_NAME_LOWER],
         })
       } catch {}
     }

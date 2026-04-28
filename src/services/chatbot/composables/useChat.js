@@ -1,7 +1,8 @@
 import { ref, computed } from 'vue'
 import { API } from '@/config/api.js'
+import { APP_NAME_LOWER } from '@/config/app.js'
 
-const STORAGE_KEY = 'wwwebar-chats-v2'
+const STORAGE_KEY = `${APP_NAME_LOWER}-chats-v2`
 
 // ── Helpers ───────────────────────────────────────────────
 function now() {

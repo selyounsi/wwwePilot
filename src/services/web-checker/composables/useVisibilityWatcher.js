@@ -1,5 +1,6 @@
 import { onMounted, onUnmounted } from 'vue'
-import { useCheckStore } from './useCheckStore.js'
+import { useCheckStore }  from './useCheckStore.js'
+import { APP_NAME_LOWER } from '@/config/app.js'
 
 export function useVisibilityWatcher(moduleId) {
   const { state, setResult } = useCheckStore()
@@ -7,7 +8,7 @@ export function useVisibilityWatcher(moduleId) {
   let lastTabId     = null
 
   // ── Läuft im Seiten-Kontext ───────────────────────────────
-  const VISIBILITY_SCRIPT = (ids) => {
+  const VISIBILITY_SCRIPT = (ids, prefix) => {
     function isVisible(el, win) {
       const style = win.getComputedStyle(el)
       if (style.display === 'none')        return false
@@ -26,13 +27,13 @@ export function useVisibilityWatcher(moduleId) {
 
     return ids.map(id => {
       // 1. Hauptdokument
-      const el = document.querySelector(`[data-w-id="${id}"]`)
+      const el = document.querySelector(`[data-${prefix}-id="${id}"]`)
       if (el) return { id, visible: isVisible(el, window) }
 
       // 2. iFrames (Live Editor) – nutzt contentWindow für korrektes getComputedStyle
       for (const iframe of document.querySelectorAll('iframe')) {
         try {
-          const found = iframe.contentDocument?.querySelector(`[data-wwwebar-id="${id}"]`)
+          const found = iframe.contentDocument?.querySelector(`[data-${prefix}-id="${id}"]`)
           if (found) return { id, visible: isVisible(found, iframe.contentWindow) }
         } catch {}
       }
@@ -51,7 +52,7 @@ export function useVisibilityWatcher(moduleId) {
     const [res] = await chrome.scripting.executeScript({
       target: { tabId },
       func:   VISIBILITY_SCRIPT,
-      args:   [ids],
+      args:   [ids, APP_NAME_LOWER],
     }).catch(() => [{ result: [] }])
 
     if (!res?.result?.length) return

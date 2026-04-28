@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
+import { APP_NAME_LOWER } from '@/config/app.js'
 
 const props = defineProps({ item: Object })
 
@@ -49,13 +50,13 @@ async function applyColors() {
   const bgVal = bg.value
   await chrome.scripting.executeScript({
     target: { tabId: tab.id },
-    func: (id, fgVal, bgVal) => {
+    func: (id, fgVal, bgVal, prefix) => {
       function findEl(id) {
-        const el = document.querySelector(`[data-wwwebar-id="${id}"]`)
+        const el = document.querySelector(`[data-${prefix}-id="${id}"]`)
         if (el) return el
         for (const iframe of document.querySelectorAll('iframe')) {
           try {
-            const found = iframe.contentDocument?.querySelector(`[data-wwwebar-id="${id}"]`)
+            const found = iframe.contentDocument?.querySelector(`[data-${prefix}-id="${id}"]`)
             if (found) return found
           } catch {}
         }
@@ -66,7 +67,7 @@ async function applyColors() {
       el.style.color           = fgVal
       el.style.backgroundColor = bgVal
     },
-    args: [id, fgVal, bgVal],
+    args: [id, fgVal, bgVal, APP_NAME_LOWER],
   }).catch(() => {})
 }
 </script>

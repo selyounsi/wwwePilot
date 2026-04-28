@@ -1,8 +1,9 @@
 import { ref } from 'vue'
-import { useCheckStore } from '@/services/web-checker/composables/useCheckStore.js'
+import { useCheckStore }  from '@/services/web-checker/composables/useCheckStore.js'
+import { APP_NAME_LOWER } from '@/config/app.js'
 
 function buildOverlayScript() {
-  return (items) => {
+  return (items, prefix) => {
     document.getElementById('__wp-overlays')?.remove()
     window.removeEventListener('scroll', window.__wpOverlayUpdate)
     window.removeEventListener('resize', window.__wpOverlayUpdate)
@@ -21,7 +22,7 @@ function buildOverlayScript() {
 
     // ── _overlayFrontend.js ───────────────────────────────────
     function findElementFrontend(id) {
-      const el = document.querySelector(`[data-wwwebar-id="${id}"]`)
+      const el = document.querySelector(`[data-${prefix}-id="${id}"]`)
       if (el) return { el, offsetX: 0, offsetY: 0 }
       return null
     }
@@ -65,7 +66,7 @@ function buildOverlayScript() {
         try {
           const iDoc = iframe.contentDocument
           if (!iDoc) continue
-          const found = iDoc.querySelector(`[data-wwwebar-id="${id}"]`) ?? findByMeta(iDoc, meta)
+          const found = iDoc.querySelector(`[data-${prefix}-id="${id}"]`) ?? findByMeta(iDoc, meta)
           if (!found) continue
           const iRect = iframe.getBoundingClientRect()
           return { el: found, offsetX: iRect.left, offsetY: iRect.top }
@@ -213,7 +214,7 @@ function buildOverlayScript() {
         for (const iframe of document.querySelectorAll('iframe')) {
           try {
             const iDoc  = iframe.contentDocument
-            const found = iDoc?.querySelector(`[data-wwwebar-id="${item.id}"]`)
+            const found = iDoc?.querySelector(`[data-${prefix}-id="${item.id}"]`)
                        ?? findByMeta(iDoc, item.meta ?? {})
             if (found) {
               found.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -264,12 +265,12 @@ export function usePageOverlay() {
   }
 
   async function show(items) {
-    await injectIntoTabs(buildOverlayScript(), [items])
+    await injectIntoTabs(buildOverlayScript(), [items, APP_NAME_LOWER])
     active.value = true
   }
 
   async function showSingle(item) {
-    await injectIntoTabs(buildOverlayScript(), [[item]])
+    await injectIntoTabs(buildOverlayScript(), [[item], APP_NAME_LOWER])
     active.value = false
   }
 

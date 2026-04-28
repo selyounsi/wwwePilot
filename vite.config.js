@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import { crx } from '@crxjs/vite-plugin'
@@ -6,7 +6,11 @@ import { resolve } from 'path'
 import fs from 'fs'
 import manifest from './manifest.json' with { type: 'json' }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env     = loadEnv(mode, process.cwd(), '')
+  const appName = env.VITE_APP_NAME
+
+  return {
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src/'),
@@ -15,7 +19,7 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     vue(),
-    crx({ manifest }),
+    crx({ manifest: { ...manifest, name: appName } }),
     {
       name: 'fix-manifest-permissions',
       closeBundle() {
@@ -33,4 +37,5 @@ export default defineConfig({
     strictPort: true,
     hmr: { clientPort: 5173 },
   },
+  }
 })

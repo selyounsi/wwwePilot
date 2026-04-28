@@ -1,15 +1,19 @@
+import { APP_NAME_LOWER } from '@/config/app.js'
+
 export const checkOnReload = false
 export const allowChatBot  = false
 export const overlay       = null
+export const apiConfig     = { prefix: APP_NAME_LOWER }
 
-export default async function check() {
+export default async function check(config) {
 
   // ── Alle Konstanten HIER drin – chrome.scripting serialisiert nur den
   // Funktionskörper, kein Modul-Scope. Externe Variablen wären undefined. ──
+  const prefix            = config.prefix
   const SEO_OFFSET_MARKER = 2_000_000
 
   // ── Cleanup ───────────────────────────────────────────────────────────────
-  document.querySelectorAll('[data-wwwebar-injected="spellcheck"]').forEach(span => {
+  document.querySelectorAll(`[data-${prefix}-injected="spellcheck"]`).forEach(span => {
     const parent = span.parentNode
     if (!parent) return
     parent.replaceChild(document.createTextNode(span.textContent), span)
@@ -111,8 +115,8 @@ export default async function check() {
     const isWhitespace = !sliceText.trim()
 
     const span = document.createElement('span')
-    span.setAttribute('data-wwwebar-injected', 'spellcheck')
-    span.setAttribute('data-wwwebar-ref', id)
+    span.setAttribute(`data-${prefix}-injected`, 'spellcheck')
+    span.setAttribute(`data-${prefix}-ref`, id)
     span.style.cssText = isWhitespace
       ? 'background:rgba(250,176,5,0.35);outline:1px dashed #f59f00;cursor:pointer;'
       : 'text-decoration:underline wavy #dc2626;text-decoration-skip-ink:none;cursor:pointer;'
@@ -212,7 +216,7 @@ export default async function check() {
       isSeo,
       _meta: isSeo
         ? { alt: m.fehler, src: '', name: '' }
-        : { selector: `[data-wwwebar-ref="spellcheck-${i}"]`, tag: el.tagName, idx: tagIdx },
+        : { selector: `[data-${prefix}-ref="spellcheck-${i}"]`, tag: el.tagName, idx: tagIdx },
     })
   })
 

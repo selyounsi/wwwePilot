@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useServiceLoader } from '@/composables/loaders/useServiceLoader.js'
 import { useCheckStore }    from '@/services/web-checker/composables/useCheckStore.js'
+import { APP_NAME }         from '@/config/app.js'
 
 const router = useRouter()
 const { services } = useServiceLoader()
@@ -27,7 +28,7 @@ const checkerWarnings = computed(() => {
 
 <template>
   <div class="min-h-screen bg-background flex flex-col">
-    <AppHeader title="wwweBar" subtitle="Wähle einen Service" />
+    <AppHeader :title="APP_NAME" subtitle="Wähle einen Service" />
 
     <div class="flex-1 px-4 py-4 flex flex-col gap-2">
       <SectionLabel>Services</SectionLabel>
