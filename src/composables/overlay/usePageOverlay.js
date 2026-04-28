@@ -40,6 +40,13 @@ function buildOverlayScript() {
         )
         if (found) return found
       }
+      if (meta.isBackground && meta.idx !== undefined) {
+        const bgEls  = Array.from(doc.querySelectorAll('[style*="background-image"]')).filter(el => el.tagName !== 'IMG')
+        const cmsEls = Array.from(doc.querySelectorAll('[data-cms-src]:not(img)'))
+        const seen   = new Set()
+        const all    = [...bgEls, ...cmsEls].filter(el => seen.has(el) ? false : (seen.add(el), true))
+        return all[meta.idx] ?? null
+      }
       if (meta.src || meta.name || meta.alt) {
         const baseName = (meta.name || meta.src || '')
           .split('/').pop()

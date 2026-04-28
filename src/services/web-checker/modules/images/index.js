@@ -21,17 +21,18 @@ export default function check() {
     const seen   = new Set()
     const all    = [...bgEls, ...cmsEls].filter(el => seen.has(el) ? false : (seen.add(el), true))
 
-    all.forEach(el => {
+    all.forEach((el, idx) => {
       const cmsSrc  = el.getAttribute('data-cms-src') || ''
       const bgMatch = (el.style.backgroundImage || '').match(/url\(["']?([^"')]+)["']?\)/)
       const bgUrl   = bgMatch?.[1] || ''
-      const src     = cmsSrc || bgUrl
+      const rawSrc  = cmsSrc || bgUrl
+      const src     = rawSrc ? new URL(rawSrc, document.baseURI).href : ''
       const name    = src ? src.split('/').pop().split('?')[0] || 'Unbekannt' : el.className || el.tagName.toLowerCase()
 
       addItem(el, [
         { when: !!bgUrl,            type: 'error', title: 'Bild als CSS-Hintergrundbild eingebunden' },
         { when: !bgUrl && !!cmsSrc, type: 'error', title: 'data-cms-src auf Nicht-Bild-Element' },
-      ], { src, name, alt: null, width: 0, height: 0, broken: false, isBackground: true, _meta: { src, name, alt: null } })
+      ], { src, name, alt: null, width: 0, height: 0, broken: false, isBackground: true, _meta: { src: rawSrc, name, alt: null, isBackground: true, idx } })
     })
   }
 
@@ -50,6 +51,14 @@ export default function check() {
       const broken  = !isLazy && !img.naturalWidth && img.complete
       const width   = img.naturalWidth
       const height  = img.naturalHeight
+      const renderedWidth  = img.clientWidth
+      const renderedHeight = img.clientHeight
+      // skip upscale check for vector formats — they scale losslessly
+      const isVector = /\.svg(\?|#|$)/i.test(rawSrc)
+      const isUpscaled = !isVector && !broken && !isLazy
+        && width > 0 && height > 0
+        && renderedWidth > 0 && renderedHeight > 0
+        && (renderedWidth - width > 2 || renderedHeight - height > 2)
 
       const blacklistMatch = BLACKLIST.find(w => name.toLowerCase().includes(w))
       const nameWithoutExt = name.replace(/\.[^.]+$/, '')
@@ -85,8 +94,9 @@ export default function check() {
         { when: alt !== null && alt.trim().length < 3, type: 'warning', title: `Alt-Text zu kurz: "${alt}"` },
         { when: isAutoAlt,                             type: 'error',   title: `Alt-Text automatisch gesetzt: "${alt}"` },
         { when: inLightbox && !lightboxOk,             type: 'error',   title: 'Lightbox-Klasse fehlt (lightbox-zoom-image)' },
+        { when: isUpscaled,                            type: 'warning', title: `Bild wird hochskaliert: ${renderedWidth}×${renderedHeight}px gerendert, Original ${width}×${height}px` },
         { when: true,                                  type: 'success', title: 'Bild korrekt' },
-      ], { src, name, alt, width, height, broken, _meta: { src: rawSrc, name, alt } })
+      ], { src, name, alt, width, height, renderedWidth, renderedHeight, isVector, broken, _meta: { src: rawSrc, name, alt } })
     })
 
     return processedLinks

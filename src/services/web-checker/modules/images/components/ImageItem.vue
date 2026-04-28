@@ -26,8 +26,15 @@ const normalized = computed(() => ({
         </div>
 
         <div v-if="item.width" class="flex gap-3 items-start">
-          <span class="text-xs text-muted/60 shrink-0 w-20">Dimensionen</span>
+          <span class="text-xs text-muted/60 shrink-0 w-20">Original</span>
           <span class="text-xs text-light">{{ item.width }} × {{ item.height }}px</span>
+        </div>
+
+        <div v-if="item.renderedWidth" class="flex gap-3 items-start">
+          <span class="text-xs text-muted/60 shrink-0 w-20">Gerendert</span>
+          <span class="text-xs" :class="!item.isVector && (item.renderedWidth - item.width > 2 || item.renderedHeight - item.height > 2) ? 'text-alert' : 'text-light'">
+            {{ item.renderedWidth }} × {{ item.renderedHeight }}px<span v-if="item.isVector" class="text-muted/60 ml-1">(Vektor)</span>
+          </span>
         </div>
 
         <div v-if="item.src" class="flex gap-3 items-start">

@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, watch } from 'vue'
 import { useCheckStore }  from './useCheckStore.js'
 import { APP_NAME_LOWER } from '@/config/app.js'
 
@@ -39,7 +39,7 @@ export function useModuleAttributes(moduleId) {
             el.removeAttribute(`data-${prefix}-desc`)
           })
 
-          // resolution order: selector (modules that inject their own spans, e.g. spellcheck) → tag+idx → text+tag → image attrs
+          // resolution order: selector (modules that inject their own spans, e.g. spellcheck) → tag+idx → text+tag → background-image div by idx → image attrs
           function findEl(meta) {
             if (meta.selector) {
               return document.querySelector(meta.selector) ?? null
@@ -54,6 +54,14 @@ export function useModuleAttributes(moduleId) {
               return Array.from(document.querySelectorAll(meta.tag)).find(el =>
                 (el.innerText || el.textContent || '').trim().toLowerCase().startsWith(needle)
               ) ?? null
+            }
+
+            if (meta.isBackground && meta.idx !== undefined) {
+              const bgEls  = Array.from(document.querySelectorAll('[style*="background-image"]')).filter(el => el.tagName !== 'IMG')
+              const cmsEls = Array.from(document.querySelectorAll('[data-cms-src]:not(img)'))
+              const seen   = new Set()
+              const all    = [...bgEls, ...cmsEls].filter(el => seen.has(el) ? false : (seen.add(el), true))
+              return all[meta.idx] ?? null
             }
 
             if (meta.src || meta.name || meta.alt) {
@@ -128,4 +136,10 @@ export function useModuleAttributes(moduleId) {
 
   onMounted(() => apply())
   onUnmounted(() => remove())
+
+  // re-apply when items change (e.g. after a single-module recheck)
+  watch(
+    () => state.results[moduleId]?.items,
+    items => { if (items?.length) apply() },
+  )
 }
