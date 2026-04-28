@@ -37,6 +37,27 @@ export function useCheckRunner() {
         // would have when modules run in parallel.
         window.setHighlightElement = () => crypto.randomUUID()
 
+        // detects visible content beyond plain text — child <img>/<svg>,
+        // ::before/::after content (icon fonts), or background-image (CSS icons).
+        // shared helper for any module that needs to distinguish empty
+        // elements from icon-only / pseudo-styled ones.
+        window.hasVisualContent = (el) => {
+          if (!el) return false
+          if ((el.innerText || el.textContent || '').trim()) return true
+          if (el.querySelector('img[src], svg, picture, video, canvas')) return true
+
+          const own = window.getComputedStyle(el)
+          if (own.backgroundImage && own.backgroundImage !== 'none') return true
+
+          for (const pseudo of ['::before', '::after']) {
+            const s = window.getComputedStyle(el, pseudo)
+            const c = s.content
+            if (c && c !== 'none' && c !== 'normal' && c !== '""' && c !== "''") return true
+            if (s.backgroundImage && s.backgroundImage !== 'none') return true
+          }
+          return false
+        }
+
         window.createCheckResult = () => {
           const errors = [], warnings = [], items = []
 

@@ -8,6 +8,15 @@ export const overlay = {
 }
 
 export default async function check() {
+
+  const IGNORE_SELECTORS = [
+    '[href="#content"]',
+    '[href="#back-to-top"]',
+    '[href="/sitemap"]',
+    '.cms-logo',
+    '.WidgetSealContainer',
+  ]
+
   const { errors, warnings, items, addItem, finish } = createCheckResult()
 
   const links = Array.from(document.querySelectorAll('a[href]'))
@@ -17,12 +26,14 @@ export default async function check() {
     return finish()
   }
 
-  const checkableUrls = links.map(a => {
+  const ignored = links.map(a => IGNORE_SELECTORS.some(sel => a.closest(sel)))
+
+  const checkableUrls = links.map((a, i) => {
+    if (ignored[i]) return null
     const href = a.getAttribute('href') ?? ''
     if (!href || href.startsWith('#')) return null
     try {
       const url = new URL(href, location.href)
-      // Skip non-fetchable schemes (javascript:, mailto:, tel:, data:, blob:, ...).
       if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
       return url.href
     } catch { return null }
@@ -38,14 +49,9 @@ export default async function check() {
     )
   })
 
-  const IGNORE_LINKS = [
-    // '/datenschutz',
-    // 'https://example.com',
-  ]
-
   links.forEach((a, index) => {
+    if (ignored[index]) return
     const href   = a.getAttribute('href') ?? ''
-    if (IGNORE_LINKS.some(ignore => href.includes(ignore))) return
 
     const title  = a.getAttribute('title')
     const target = a.getAttribute('target') ?? ''
@@ -58,15 +64,18 @@ export default async function check() {
 
     const ariaLabel   = a.getAttribute('aria-label') ?? ''
     const imgAlt      = a.querySelector('img')?.getAttribute('alt') ?? ''
-    const visibleText = text || imgAlt || ariaLabel || title || ''
+    const linkContent = text || imgAlt || ariaLabel
+    const hasIcon     = !linkContent && hasVisualContent(a)
+    const visibleText = linkContent || title || (hasIcon ? '(Icon)' : '')
 
-    const noText         = !visibleText
-    const noTitle        = !title && !isAnchor
+    const noText         = !linkContent && !hasIcon
+    const iconNoLabel    = hasIcon && !title && !ariaLabel
+    const noTitle        = !title && !isAnchor && !hasIcon
     const noBlank        = isExternal && target !== '_blank'
     const noMailTitle    = (isMailto || isTel) && !title
     const isBroken       = brokenResults[index]
-    const titleEqualsText = title && visibleText &&
-      title.trim().toLowerCase() === visibleText.trim().toLowerCase()
+    const titleEqualsText = title && linkContent &&
+      title.trim().toLowerCase() === linkContent.trim().toLowerCase()
 
     addItem(a, [
       {
@@ -80,6 +89,12 @@ export default async function check() {
         type:        'error',
         title:       'Leerer Link',
         description: `href="${href}" hat keinen sichtbaren Text`,
+      },
+      {
+        when:        iconNoLabel,
+        type:        'error',
+        title:       'Icon-Link ohne aria-label oder title',
+        description: `href="${href}" — Screenreader können den Link nicht beschriften`,
       },
       {
         when:        noTitle && !isMailto && !isTel,
