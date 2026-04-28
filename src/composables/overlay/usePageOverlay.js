@@ -3,7 +3,7 @@ import { useCheckStore }  from '@/services/web-checker/composables/useCheckStore
 import { APP_NAME_LOWER } from '@/config/app.js'
 
 function buildOverlayScript() {
-  return (items, prefix) => {
+  return (items, prefix, moduleId) => {
     document.getElementById('__wp-overlays')?.remove()
     window.removeEventListener('scroll', window.__wpOverlayUpdate)
     window.removeEventListener('resize', window.__wpOverlayUpdate)
@@ -145,17 +145,31 @@ function buildOverlayScript() {
       })
 
       const labelEl = document.createElement('div')
-      labelEl.style.cssText = 'white-space:nowrap; overflow:hidden; text-overflow:ellipsis;'
+      labelEl.style.cssText = 'word-break:break-word;'
       labelEl.textContent = item.label
       badge.appendChild(labelEl)
 
       const realIssues = (item.issues ?? []).filter(i => i.type !== 'success')
       realIssues.forEach(issue => {
         const d = document.createElement('div')
-        d.style.cssText = `color:${fg}; opacity:0.8; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:400;`
+        d.style.cssText = `color:${fg}; opacity:0.8; font-size:12px; word-break:break-word; font-weight:400;`
         d.textContent = issue.message
         badge.appendChild(d)
       })
+
+      if (moduleId) {
+        badge.style.cursor = 'pointer'
+        badge.addEventListener('click', (ev) => {
+          ev.stopPropagation()
+          try {
+            chrome.runtime.sendMessage({
+              type:     'OVERLAY_BADGE_CLICK',
+              moduleId: moduleId,
+              itemId:   item.id,
+            })
+          } catch {}
+        })
+      }
 
       badge.style.visibility = 'hidden'
       container.appendChild(badge)
@@ -269,13 +283,13 @@ export function usePageOverlay() {
     ))
   }
 
-  async function show(items) {
-    await injectIntoTabs(buildOverlayScript(), [items, APP_NAME_LOWER])
+  async function show(items, moduleId = null) {
+    await injectIntoTabs(buildOverlayScript(), [items, APP_NAME_LOWER, moduleId])
     active.value = true
   }
 
-  async function showSingle(item) {
-    await injectIntoTabs(buildOverlayScript(), [[item], APP_NAME_LOWER])
+  async function showSingle(item, moduleId = null) {
+    await injectIntoTabs(buildOverlayScript(), [[item], APP_NAME_LOWER, moduleId])
     active.value = false
   }
 
@@ -284,8 +298,8 @@ export function usePageOverlay() {
     active.value = false
   }
 
-  async function toggle(items) {
-    active.value ? hide() : show(items)
+  async function toggle(items, moduleId = null) {
+    active.value ? hide() : show(items, moduleId)
   }
 
   return { active, show, showSingle, hide, toggle }

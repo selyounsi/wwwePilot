@@ -23,7 +23,7 @@ export function useModuleOverlay(moduleId, overlayConfig) {
   )
 
   function toggle() {
-    po.toggle(overlayItems.value)
+    po.toggle(overlayItems.value, moduleId)
   }
 
   onUnmounted(() => po.hide())

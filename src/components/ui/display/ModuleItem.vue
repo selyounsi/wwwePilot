@@ -3,6 +3,8 @@ import { ref, inject, computed, useSlots } from 'vue'
 import { useRouter } from 'vue-router'
 import { highlightElement } from '@/composables/highlight/index.js'
 import { useChat } from '@/services/chatbot/composables/useChat.js'
+import { useCheckStore } from '@/services/web-checker/composables/useCheckStore.js'
+import { APP_NAME_LOWER } from '@/config/app.js'
 
 const props = defineProps({
   item:    { type: Object, required: true },
@@ -10,16 +12,57 @@ const props = defineProps({
 })
 const emit = defineEmits(['click'])
 
-const router  = useRouter()
-const { send } = useChat()
-const slots   = useSlots()
-const open    = ref(false)
+const router       = useRouter()
+const { send }     = useChat()
+const checkStore   = useCheckStore()
+const slots        = useSlots()
+const open         = ref(false)
 
 const { labelFn = () => '', allowChatBot = false } = inject('moduleOverlay', {})
 
 const highlight = (clickType) => {
   highlightElement(props.item, labelFn(props.item), clickType)
   emit('click', clickType)
+}
+
+// fetch the element's outerHTML from the page tab and strip extension-added
+// attributes so the chatbot sees the original markup.
+async function fetchElementHtml() {
+  if (!props.item.element) return null
+  const tabIds = []
+  const [active] = await chrome.tabs.query({ active: true, currentWindow: true })
+  if (active?.id)                            tabIds.push(active.id)
+  if (checkStore.state.checkedTabId
+      && !tabIds.includes(checkStore.state.checkedTabId)) tabIds.push(checkStore.state.checkedTabId)
+
+  for (const tabId of tabIds) {
+    try {
+      const results = await chrome.scripting.executeScript({
+        target: { tabId, allFrames: true },
+        func: (id, prefix) => {
+          const el = document.querySelector(`[data-${prefix}-id="${id}"]`)
+          if (!el) return null
+          const clone = el.cloneNode(true)
+          const stripAttrs = [
+            `data-${prefix}-id`,    `data-${prefix}-module`, `data-${prefix}-type`,
+            `data-${prefix}-meta`,  `data-${prefix}-title`,  `data-${prefix}-desc`,
+            `data-${prefix}-injected`, `data-${prefix}-highlight`,
+          ]
+          const visit = (n) => {
+            if (n.nodeType !== 1) return
+            stripAttrs.forEach(a => n.removeAttribute(a))
+            for (const c of Array.from(n.children)) visit(c)
+          }
+          visit(clone)
+          return clone.outerHTML
+        },
+        args: [props.item.element, APP_NAME_LOWER],
+      })
+      const html = results.find(r => r.result)?.result
+      if (html) return html
+    } catch {}
+  }
+  return null
 }
 
 async function openInChat() {
@@ -31,9 +74,13 @@ async function openInChat() {
 
   const nameInfo = name && name !== label ? `\n**Dateiname:** ${name}` : ''
 
+  const html        = await fetchElementHtml()
+  const truncated   = html && html.length > 2000 ? html.slice(0, 2000) + '\n…' : html
+  const htmlSection = truncated ? `\n\n**HTML:**\n\`\`\`html\n${truncated}\n\`\`\`` : ''
+
   const msg = issues.length
-    ? `Ich habe folgende ${typ} auf der Seite gefunden:\n\n**Element:** ${label}${nameInfo}\n**Probleme:**\n${issues.map(i => `- [${i.type === 'error' ? 'Fehler' : 'Warnung'}] ${i.message}`).join('\n')}\n\nWas kann ich dagegen tun?`
-    : `Was kannst du mir zu diesem Element sagen?\n\n**Element:** ${label}${nameInfo}`
+    ? `Ich habe folgende ${typ} auf der Seite gefunden:\n\n**Element:** ${label}${nameInfo}\n**Probleme:**\n${issues.map(i => `- [${i.type === 'error' ? 'Fehler' : 'Warnung'}] ${i.message}`).join('\n')}${htmlSection}\n\nWas kann ich dagegen tun?`
+    : `Was kannst du mir zu diesem Element sagen?\n\n**Element:** ${label}${nameInfo}${htmlSection}`
 
   send(msg)
   router.push('/service/chatbot')
@@ -56,6 +103,7 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
 
 <template>
   <div
+    :id="item.element ? `item-${item.element}` : undefined"
     :class="[
       !item.visible ? 'opacity-40' : '',
       indent,
