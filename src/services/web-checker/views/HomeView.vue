@@ -49,10 +49,10 @@ async function handleCheck() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-background flex flex-col">
+  <div class="h-screen bg-background flex flex-col">
     <AppHeader showBack />
 
-    <div class="flex-1 px-4 py-4 flex flex-col gap-2">
+    <div class="flex-1 px-4 py-4 flex flex-col gap-2 overflow-y-auto">
       <div class="flex items-center justify-between mb-1">
         <SectionLabel>Module</SectionLabel>
         <div class="flex items-center gap-2">
@@ -75,7 +75,7 @@ async function handleCheck() {
       </CardItem>
     </div>
 
-    <div class="px-4 pb-5">
+    <div class="px-4 pt-3 pb-5 bg-background border-t border-border shrink-0">
       <BaseButton :loading="isChecking" @click="handleCheck">
         {{ buttonLabel }}
         <template #loading>Wird geprüft…</template>

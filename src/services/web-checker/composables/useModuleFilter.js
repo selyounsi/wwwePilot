@@ -1,5 +1,9 @@
 import { ref, computed } from 'vue'
 
+const SEVERITY = { error: 0, warning: 1, success: 2 }
+const sortBySeverity = (items) =>
+  [...items].sort((a, b) => (SEVERITY[a.type] ?? 3) - (SEVERITY[b.type] ?? 3))
+
 export function useModuleFilter(result, defaultFilter = 'issues') {
 
   const filter = ref(defaultFilter)
@@ -13,17 +17,14 @@ export function useModuleFilter(result, defaultFilter = 'issues') {
 
     if (!hasIssues.value) return r
 
-    if (filter.value === 'errors')   return { ...r, items: (r.items ?? []).filter(i => i.type === 'error') }
-    if (filter.value === 'warnings') return { ...r, items: (r.items ?? []).filter(i => i.type === 'warning') }
-    if (filter.value === 'issues')   return { ...r, items: (r.items ?? []).filter(i => i.type === 'error' || i.type === 'warning') }
+    let items = r.items ?? []
+    if      (filter.value === 'errors')   items = items.filter(i => i.type === 'error')
+    else if (filter.value === 'warnings') items = items.filter(i => i.type === 'warning')
+    else if (filter.value === 'issues')   items = items.filter(i => i.type === 'error' || i.type === 'warning')
 
-    // Sort by severity; stable sort keeps original order within each group.
-    if (filter.value === 'all') {
-      const sev = { error: 0, warning: 1, success: 2 }
-      return { ...r, items: [...(r.items ?? [])].sort((a, b) => (sev[a.type] ?? 3) - (sev[b.type] ?? 3)) }
-    }
-
-    return r
+    // Always sort by severity — errors first, then warnings, then success.
+    // Stable sort keeps original order within each severity group.
+    return { ...r, items: sortBySeverity(items) }
   })
 
   return { filter, hasIssues, filteredResult }
