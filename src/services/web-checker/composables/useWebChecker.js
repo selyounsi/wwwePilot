@@ -3,11 +3,12 @@ import { useModuleLoader }  from '@/composables/loaders/useModuleLoader.js'
 import { useCheckStore }    from '@/services/web-checker/composables/useCheckStore.js'
 import { useCheckRunner }   from '@/services/web-checker/composables/useCheckRunner.js'
 import { detectLiveEditor } from '@/composables/liveEditor/useLiveEditorDetector.js'
+import { moduleAppliesTo }  from '@/services/web-checker/composables/useUrlFilter.js'
 
 export function useWebChecker() {
-  const { modules }                                            = useModuleLoader('web-checker')
-  const { state, setRunning, setResult, setCheckedTab, reset } = useCheckStore()
-  const { injectHelper }                                       = useCheckRunner()
+  const { modules }                                                         = useModuleLoader('web-checker')
+  const { state, setRunning, setResult, setSkipped, setCheckedTab, reset } = useCheckStore()
+  const { injectHelper }                                                    = useCheckRunner()
 
   const isChecking = ref(false)
   const tabStatus  = ref('unchecked')
@@ -82,9 +83,16 @@ export function useWebChecker() {
     if (modulesToRun === modules) reset()
     await injectHelper(tab.id)
 
-    // Mark all running upfront so spinners appear immediately.
-    modulesToRun.forEach(mod => setRunning(mod.id))
-    await Promise.all(modulesToRun.map(mod => runModule(tab.id, mod)))
+    // Apply per-module URL filter — modules whose urlPatterns exclude the
+    // current URL are marked as 'skipped' instead of being run.
+    const applicable = []
+    for (const mod of modulesToRun) {
+      if (moduleAppliesTo(mod, tab.url)) applicable.push(mod)
+      else setSkipped(mod.id, 'URL-Filter')
+    }
+
+    applicable.forEach(mod => setRunning(mod.id))
+    await Promise.all(applicable.map(mod => runModule(tab.id, mod)))
 
     setCheckedTab(tab)
     tabStatus.value  = 'current'

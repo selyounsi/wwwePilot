@@ -7,8 +7,8 @@ const allViews    = import.meta.glob('@/services/*/modules/*/Index.vue',   { eag
  * from index.js. JSON keys win — JS exports are kept as a fallback so older
  * modules (or per-module dynamic config like overlay/labelFn) still work.
  *
- * Static config lives in module.json (checkOnReload, allowChatBot, defaultFilter).
- * Dynamic config lives in index.js (overlay with labelFn, apiConfig).
+ * Static config lives in module.json (checkOnReload, allowChatBot, defaultFilter,
+ * urlPatterns). Dynamic config lives in index.js (overlay with labelFn, apiConfig).
  */
 export function useModuleLoader(serviceId) {
   const modules = []

@@ -71,14 +71,22 @@ async function handleCheck() {
         @click="router.push(`/service/web-checker/module/${mod.id}`)"
       >
         <LoadingSpinner v-if="state.results[mod.id]?.status === 'running'" size="sm" />
+        <span
+          v-else-if="state.results[mod.id]?.status === 'skipped'"
+          class="text-xs text-muted/60 px-2 py-0.5 rounded-lg bg-surface-soft"
+          :title="state.results[mod.id]?.skippedReason || ''"
+        >Übersprungen</span>
         <StatusPill v-else :count="errorCount(mod.id)" :warning-count="warningCount(mod.id)" />
       </CardItem>
     </div>
 
-    <div class="px-4 pt-3 pb-5 bg-background border-t border-border shrink-0">
+    <div class="px-4 pt-3 pb-5 bg-background border-t border-border shrink-0 flex flex-col gap-2">
       <BaseButton :loading="isChecking" @click="handleCheck">
         {{ buttonLabel }}
         <template #loading>Wird geprüft…</template>
+      </BaseButton>
+      <BaseButton variant="ghost" @click="router.push('/service/web-checker/feature/site-check')">
+        Komplette Website prüfen
       </BaseButton>
     </div>
   </div>

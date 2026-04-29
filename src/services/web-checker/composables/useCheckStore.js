@@ -17,6 +17,16 @@ export function useCheckStore() {
     state.results[id] = { ...result, status: 'done' }
   }
 
+  function setSkipped(id, reason = '') {
+    state.results[id] = {
+      status: 'skipped',
+      skippedReason: reason,
+      errors: [], warnings: [],
+      errorCount: 0, warningCount: 0,
+      items: [],
+    }
+  }
+
   function getResult(id) {
     return state.results[id] ?? { status: 'idle', errors: [], warnings: [] }
   }
@@ -36,5 +46,5 @@ export function useCheckStore() {
     state.checkedTabName = null
   }
 
-  return { state, setRunning, setResult, getResult, setCheckedTab, reset }
+  return { state, setRunning, setResult, setSkipped, getResult, setCheckedTab, reset }
 }
