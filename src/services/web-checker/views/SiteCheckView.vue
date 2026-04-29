@@ -189,12 +189,10 @@ onUnmounted(() => cancel())
       <template v-if="isIdle || isFetching || isPreflight">
         <div class="bg-surface-soft border border-border rounded-xl px-3 py-2.5 flex flex-col gap-1 shrink-0">
           <div class="flex items-center gap-2 min-w-0">
-            <Icon name="mdiSitemap" :size="13" class="text-muted shrink-0" />
             <span class="text-[10px] uppercase tracking-wide text-muted/70 shrink-0">Domain</span>
             <span class="text-xs font-mono text-light truncate flex-1">{{ activeHost || '—' }}</span>
           </div>
           <div class="flex items-center gap-2 min-w-0">
-            <span class="w-3.5 shrink-0" />
             <span class="text-[10px] uppercase tracking-wide text-muted/70 shrink-0">Sitemap</span>
             <a
               v-if="sitemapUrl"
