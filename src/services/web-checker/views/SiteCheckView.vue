@@ -3,11 +3,13 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter }       from 'vue-router'
 import { useSiteCheck }    from '../composables/useSiteCheck.js'
 import { useCheckStore }   from '../composables/useCheckStore.js'
+import { useWebChecker }   from '../composables/useWebChecker.js'
 import { useModuleLoader } from '@/composables/loaders/useModuleLoader.js'
 
 const router = useRouter()
 const { loadPreflight, start, pause, resume, cancel, highlightCheckTab, store } = useSiteCheck()
 const checkStore                                                                = useCheckStore()
+const { silentRefresh }                                                         = useWebChecker()
 const { modules }                                                               = useModuleLoader('web-checker')
 
 function pathOf(url) {
@@ -137,6 +139,9 @@ async function openSinglePage(url) {
 
     hydrateCheckStore(url, finalTab)
     router.replace('/service/web-checker')
+
+    // pinned tab's _meta indices can drift from the new active tab; refresh silently
+    silentRefresh(finalTab.id)
   } finally {
     navigatingUrl.value = null
   }

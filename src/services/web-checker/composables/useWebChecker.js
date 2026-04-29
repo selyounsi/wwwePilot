@@ -103,8 +103,28 @@ export function useWebChecker() {
     isChecking.value = false
   }
 
+  async function silentRefresh(tabId) {
+    const tab = await chrome.tabs.get(tabId).catch(() => null)
+    if (!tab?.url || ['chrome://', 'chrome-extension://', 'edge://'].some(p => tab.url.startsWith(p))) return
+
+    await injectHelper(tab.id)
+    const applicable = modules.filter(mod => moduleAppliesTo(mod, tab.url, 'singlePage'))
+    await Promise.all(applicable.map(async mod => {
+      try {
+        const [res] = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func:   mod.checker,
+          args:   mod.apiConfig ? [mod.apiConfig] : [],
+        })
+        const result = res.result ?? { errors: [], warnings: [] }
+        setResult(mod.id, result)
+        siteCheckStore.syncFromSingleCheck(tab.url, mod.id, result)
+      } catch {}
+    }))
+  }
+
   const errorCount   = id => state.results[id]?.errorCount   ?? null
   const warningCount = id => state.results[id]?.warningCount ?? null
 
-  return { modules, state, isChecking, tabStatus, errorCount, warningCount, runChecks, switchToCheckedTab }
+  return { modules, state, isChecking, tabStatus, errorCount, warningCount, runChecks, silentRefresh, switchToCheckedTab }
 }
