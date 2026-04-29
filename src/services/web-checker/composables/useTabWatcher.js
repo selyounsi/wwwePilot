@@ -1,20 +1,26 @@
-import { useCheckStore }  from './useCheckStore.js'
-import { useCheckRunner } from './useCheckRunner.js'
+import { useCheckStore }     from './useCheckStore.js'
+import { useCheckRunner }    from './useCheckRunner.js'
+import { useSiteCheckStore } from './useSiteCheckStore.js'
 
 export function useTabWatcher(modules) {
-  const { state, setRunning, setResult, setCheckedTab } = useCheckStore()
-  const { injectHelper }                                = useCheckRunner()
+  const { state, setRunning, setResult, setCheckedTab, markCheckedAt } = useCheckStore()
+  const { injectHelper }                                               = useCheckRunner()
+  const siteCheckStore                                                 = useSiteCheckStore()
 
-  async function runModule(tabId, mod) {
+  async function runModule(tabId, tabUrl, mod) {
     setRunning(mod.id)
     try {
       const [res] = await chrome.scripting.executeScript({
         target: { tabId },
         func:   mod.checker,
       })
-      setResult(mod.id, res.result ?? { errors: [], warnings: [] })
+      const result = res.result ?? { errors: [], warnings: [] }
+      setResult(mod.id, result)
+      siteCheckStore.syncFromSingleCheck(tabUrl, mod.id, result)
     } catch (e) {
-      setResult(mod.id, { errors: [{ message: e.message }], warnings: [] })
+      const result = { errors: [{ message: e.message }], warnings: [] }
+      setResult(mod.id, result)
+      siteCheckStore.syncFromSingleCheck(tabUrl, mod.id, result)
     }
   }
 
@@ -26,10 +32,19 @@ export function useTabWatcher(modules) {
       const tab = await chrome.tabs.get(tabId)
       if (!tab?.url || ['chrome://', 'chrome-extension://', 'edge://'].some(p => tab.url.startsWith(p))) return
 
+      // tab.url may be a live-editor URL after reload; the audit context
+      // is the original page we ran on
+      const auditedUrl = state.checkedUrl
+
       await injectHelper(tab.id)
       reloadModules.forEach(mod => setRunning(mod.id))
-      await Promise.all(reloadModules.map(mod => runModule(tab.id, mod)))
-      setCheckedTab(tab)
+      await Promise.all(reloadModules.map(mod => runModule(tab.id, auditedUrl ?? tab.url, mod)))
+
+      if (auditedUrl && siteCheckStore.state.urls.includes(auditedUrl)) {
+        markCheckedAt(tab)
+      } else {
+        setCheckedTab(tab)
+      }
     } catch {}
   }
 

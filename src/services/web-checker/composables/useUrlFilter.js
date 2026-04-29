@@ -1,31 +1,18 @@
-/**
- * Decides whether a module should run for a given URL based on its
- * urlPatterns config.
- *
- * Patterns are regex strings matched against the URL's pathname.
- *
- *   urlPatterns: {
- *     include: ['^/$', '^/blog/'],   // run only when one matches
- *     exclude: ['^/admin/']          // never run when one matches
- *   }
- *
- * exclude wins over include. Missing/empty config means "always run".
- */
-export function moduleAppliesTo(mod, url) {
-  const patterns = mod?.urlPatterns
-  if (!patterns) return true
+// Exact pathname match against runOnPaths/skipOnPaths in the given context
+// (singlePage | fullSite). skipOnPaths wins. Empty/missing config = always run.
+export function moduleAppliesTo(mod, url, context = 'singlePage') {
+  const cfg    = mod?.[context] ?? {}
+  const runOn  = cfg.runOnPaths  ?? []
+  const skipOn = cfg.skipOnPaths ?? []
+  if (runOn.length === 0 && skipOn.length === 0) return true
 
   let path = '/'
   try { path = new URL(url).pathname } catch {}
 
-  const exclude = patterns.exclude ?? []
-  if (exclude.some(p => safeMatch(p, path))) return false
+  const norm = (p) => (p === '/' ? '/' : p.replace(/\/$/, ''))
+  const cur  = norm(path)
 
-  const include = patterns.include ?? []
-  if (include.length === 0) return true
-  return include.some(p => safeMatch(p, path))
-}
-
-function safeMatch(pattern, value) {
-  try { return new RegExp(pattern).test(value) } catch { return false }
+  if (skipOn.some(p => norm(p) === cur)) return false
+  if (runOn.length === 0) return true
+  return runOn.some(p => norm(p) === cur)
 }

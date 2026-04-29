@@ -19,7 +19,6 @@ export function useModuleSetup(moduleId, overlayConfig = null, allowChatBot = fa
     const mod = modules.find(m => m.id === moduleId)
     if (!mod) return
 
-    // re-use previously checked tab if any, otherwise fall back to the active tab
     let tabId = state.checkedTabId
     if (!tabId) {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })

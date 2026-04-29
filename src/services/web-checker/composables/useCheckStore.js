@@ -38,6 +38,13 @@ export function useCheckStore() {
     state.lastChecked    = new Date().toLocaleTimeString()
   }
 
+  // Bump timestamp without touching checkedUrl/Name — preserves the audited
+  // page identity across live-editor reloads.
+  function markCheckedAt(tab) {
+    state.checkedTabId = tab.id
+    state.lastChecked  = new Date().toLocaleTimeString()
+  }
+
   function reset() {
     state.results        = {}
     state.lastChecked    = null
@@ -46,5 +53,5 @@ export function useCheckStore() {
     state.checkedTabName = null
   }
 
-  return { state, setRunning, setResult, setSkipped, getResult, setCheckedTab, reset }
+  return { state, setRunning, setResult, setSkipped, getResult, setCheckedTab, markCheckedAt, reset }
 }

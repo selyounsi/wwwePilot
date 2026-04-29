@@ -20,12 +20,44 @@ Statische Modul-Konfiguration. Wird beim Start von `useModuleLoader` gelesen.
   "order":         50,               // number, Sortierreihenfolge im Dashboard
   "checkOnReload": false,            // boolean, erneut ausführen wenn Tab fertig lädt
   "allowChatBot":  true,             // boolean, "Im Chat analysieren" auf Items zeigen
-  "defaultFilter": "issues"          // 'issues' | 'errors' | 'warnings' | 'all'
+  "defaultFilter": "issues",         // 'issues' | 'errors' | 'warnings' | 'all'
+
+  // Pfad-Filter pro Check-Modus. Beide Keys sind optional —
+  // fehlt ein Context oder sind beide Listen leer, läuft das
+  // Modul in diesem Modus auf ALLEN URLs.
+  "singlePage": {
+    "runOnPaths":  ["/", "/impressum"],   // Whitelist (leer = überall)
+    "skipOnPaths": ["/checkout"]          // Blacklist, gewinnt über runOnPaths
+  },
+  "fullSite": {
+    "runOnPaths":  [],
+    "skipOnPaths": []
+  }
 }
 ```
 
 Statische Keys können aus Gründen der Rückwärtskompatibilität auch aus
 `index.js` exportiert werden (der Loader merged, wobei `module.json` gewinnt).
+
+### Pfad-Filter (`singlePage` / `fullSite`)
+
+```ts
+interface PathFilter {
+  runOnPaths?:  string[]   // Whitelist exakter Pfade. Leer/fehlt = keine Einschränkung.
+  skipOnPaths?: string[]   // Blacklist exakter Pfade. Gewinnt über runOnPaths.
+}
+```
+
+- Pfade werden **exakt** gegen `new URL(tabUrl).pathname` gematched. Trailing-Slash
+  wird normalisiert (`/foo/` ≡ `/foo`), aber sonst kein Pattern-Matching, kein
+  Regex, kein Glob.
+- **Default ist "läuft überall":** Fehlt der ganze Context-Block (`singlePage`
+  oder `fullSite`), oder sind beide Listen leer, gilt das Modul für alle URLs in
+  diesem Modus. Du musst die Keys nur setzen, wenn du tatsächlich filtern willst.
+- Übersprungene Module bekommen im Dashboard ein graues "Übersprungen"-Badge
+  statt Stats — sie sind nicht "fehlgeschlagen", sie wurden bewusst ausgelassen.
+
+Implementierung: [`composables/useUrlFilter.js`](../src/services/web-checker/composables/useUrlFilter.js).
 
 ---
 

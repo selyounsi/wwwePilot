@@ -83,6 +83,35 @@ useModuleAttributes.apply()
   • schreibt data-${prefix}-* Attribute für das Overlay-Lookup
 ```
 
+## Service-Struktur
+
+Ein Service ist ein Top-Level-Bereich der Extension (z.B. der Web-Checker).
+Konvention pro Service:
+
+```
+src/services/web-checker/
+├── service.json          ← id, name, icon, order, active
+├── background.js         ← optional: Service-Level SW-Handler (z.B. FETCH_SITEMAP)
+├── views/
+│   ├── HomeView.vue      ← Service-Übersicht, Route /service/<id>
+│   └── *View.vue         ← optionale Sub-Seiten, Route /service/<id>/<kebab-name>
+├── composables/
+│   └── use*.js           ← geteilte Composables (Store, Runner, Watcher, Filter, …)
+└── modules/
+    └── <id>/             ← auto-discovered Module (siehe unten)
+```
+
+`views/`, `composables/`, `modules/` und `background.js` werden alle per Glob
+auto-entdeckt — kein manuelles Registrieren nötig:
+
+| Slot | Glob | Wer lädt es |
+|---|---|---|
+| `service.json` + `views/HomeView.vue` | `services/*/service.json` | `useServiceLoader` |
+| `views/*View.vue` (außer HomeView) | `services/*/views/*View.vue` | `router/index.js` (Slug aus Dateiname) |
+| `composables/use*.js` | – | per direktem Import in Views/Modulen |
+| `background.js` | `services/*/background.js` | `src/background.js` |
+| `modules/<id>/` | `services/*/modules/*/module.json` | `useModuleLoader` |
+
 ## Modulsystem
 
 Jedes Modul ist ein **eigenständiges Verzeichnis** unter
@@ -112,8 +141,53 @@ Jedes Modul hat zwei Arten von Konfiguration:
 | `id`, `name`, `description`, `icon` | `overlay = { labelFn, onText, offText }` (Funktionen passen nicht in JSON) |
 | `active`, `order` | `apiConfig = { ... }` (Werte, die aus Imports kommen) |
 | `checkOnReload`, `allowChatBot`, `defaultFilter` | `default function check()` (der Checker selbst) |
+| `singlePage`, `fullSite` (Pfad-Filter, siehe unten) | |
 
 Der Loader merged beide, wobei `module.json` gewinnt, wenn beide denselben Key definieren.
+
+## Pfad-Filter pro Modul
+
+Module können ihre Ausführung pro URL einschränken — getrennt für die zwei
+Check-Modi (Single-Page in der Sidebar / Site-Wide via Sitemap):
+
+```json
+{
+  "singlePage": {
+    "runOnPaths":  ["/"],
+    "skipOnPaths": []
+  },
+  "fullSite": {
+    "runOnPaths":  ["/"],
+    "skipOnPaths": []
+  }
+}
+```
+
+Pfade sind **exakte Matches** auf `URL.pathname` (Trailing-Slash wird ignoriert).
+`skipOnPaths` gewinnt über `runOnPaths`. **Wenn ein Context (`singlePage` /
+`fullSite`) komplett fehlt, läuft das Modul in diesem Modus auf allen URLs.**
+Beispiel: Performance-Modul nur auf der Startseite — `runOnPaths: ["/"]` für
+beide Contexts.
+
+Auf der Dashboard-Übersicht erscheint ein übersprungenes Modul mit grauem
+"Übersprungen"-Badge statt Stats.
+
+## Site-Wide-Check
+
+Neben dem Single-Page-Check (aktiver Tab) gibt es einen **Sitemap-basierten
+Site-Check**. Klick auf "Komplette Website prüfen" auf der Web-Checker-Übersicht:
+
+1. Service-Worker (`web-checker/background.js`, Handler `FETCH_SITEMAP`) lädt
+   `/sitemap.xml` vom aktuellen Origin (Regex-Parsing wegen fehlendem
+   `DOMParser` in MV3-SW), folgt Sitemap-Index-Dateien rekursiv. `<image:image>`
+   Einträge werden ignoriert — nur `<url><loc>`.
+2. `composables/useSiteCheck.js` öffnet einen neuen Tab im Hintergrund
+   (`active: false`) und navigiert ihn durch alle URLs nacheinander.
+3. Pro URL: kurze Settle-Zeit für Lazy-Load, `injectHelper`, alle
+   `fullSite`-passenden Module parallel ausführen, Ergebnisse via
+   `useSiteCheckStore` pro URL+Modul ablegen.
+4. Tab schließt am Ende. `views/SiteCheckView.vue` zeigt Progress +
+   per-URL Drill-Down.
 
 ## Geteilte Bausteine
 

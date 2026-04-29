@@ -7,5 +7,13 @@
   "order": 3,
   "checkOnReload": false,
   "allowChatBot": false,
-  "defaultFilter": "issues"
+  "defaultFilter": "issues",
+  "singlePage": {
+    "runOnPaths": ["/"],
+    "skipOnPaths": []
+  },
+  "fullSite": {
+    "runOnPaths": ["/"],
+    "skipOnPaths": []
+  }
 }

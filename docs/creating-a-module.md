@@ -35,7 +35,15 @@ sorgt für Ordnung.
   "order":         50,
   "checkOnReload": false,
   "allowChatBot":  true,
-  "defaultFilter": "issues"
+  "defaultFilter": "issues",
+  "singlePage": {
+    "runOnPaths":  [],
+    "skipOnPaths": []
+  },
+  "fullSite": {
+    "runOnPaths":  [],
+    "skipOnPaths": []
+  }
 }
 ```
 
@@ -50,6 +58,33 @@ sorgt für Ordnung.
 | `checkOnReload` | Automatisch erneut ausführen, wenn die Seite neu geladen wird |
 | `allowChatBot` | "Im Chat analysieren"-Button auf den Items anzeigen |
 | `defaultFilter` | Initialer Filter: `'issues'` / `'errors'` / `'warnings'` / `'all'` |
+| `singlePage` | Pfad-Filter für den Single-Page-Check (aktiver Tab) — siehe unten |
+| `fullSite` | Pfad-Filter für den Site-Wide-Check (Sitemap-Crawl) — siehe unten |
+
+#### Pfad-Filter (`singlePage` / `fullSite`)
+
+Beide Contexts haben dieselbe Form:
+
+```json
+"singlePage": {
+  "runOnPaths":  ["/", "/impressum"],
+  "skipOnPaths": ["/checkout"]
+}
+```
+
+- `runOnPaths` — Whitelist: Modul läuft **nur** auf diesen Pfaden.
+- `skipOnPaths` — Blacklist: Modul läuft hier **nicht** (gewinnt über `runOnPaths`).
+- Pfade sind **exakte Matches** auf `URL.pathname`. Trailing-Slash wird normalisiert.
+- **Defaults sind permissiv:** Fehlt der ganze Context, oder sind beide Listen leer,
+  läuft das Modul überall in diesem Modus. Die Keys sind also komplett optional —
+  wenn du sie weglässt, gilt "immer laufen" und die Filter-Regeln werden ignoriert.
+
+Beispiel: Performance-Modul soll nur auf der Startseite laufen, in beiden Modi:
+
+```json
+"singlePage": { "runOnPaths": ["/"], "skipOnPaths": [] },
+"fullSite":   { "runOnPaths": ["/"], "skipOnPaths": [] }
+```
 
 ### 3. `index.js` — der Checker
 

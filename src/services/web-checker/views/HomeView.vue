@@ -1,7 +1,8 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useWebChecker } from '../composables/useWebChecker.js'
+import { useWebChecker }     from '../composables/useWebChecker.js'
+import { useSiteCheckStore } from '../composables/useSiteCheckStore.js'
 
 const router = useRouter()
 const {
@@ -14,6 +15,14 @@ const {
   runChecks,
   switchToCheckedTab,
 } = useWebChecker()
+
+const siteCheck = useSiteCheckStore()
+const siteCheckCount = computed(() => siteCheck.state.urls.length)
+const hasSiteCheck   = computed(() => siteCheckCount.value > 0)
+const siteCheckLabel = computed(() => hasSiteCheck.value
+  ? `Zur Komplett-Übersicht (${siteCheckCount.value} Seiten)`
+  : 'Komplette Website prüfen',
+)
 
 const sortedModules = computed(() => {
   const order = (mod) => {
@@ -85,8 +94,11 @@ async function handleCheck() {
         {{ buttonLabel }}
         <template #loading>Wird geprüft…</template>
       </BaseButton>
-      <BaseButton variant="ghost" @click="router.push('/service/web-checker/feature/site-check')">
-        Komplette Website prüfen
+      <BaseButton variant="ghost" @click="router.push('/service/web-checker/site-check')">
+        <span class="inline-flex items-center gap-1.5">
+          <Icon v-if="hasSiteCheck" name="mdiArrowLeft" :size="13" />
+          {{ siteCheckLabel }}
+        </span>
       </BaseButton>
     </div>
   </div>

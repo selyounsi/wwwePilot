@@ -1,8 +1,9 @@
 <script setup>
 import { computed, inject } from 'vue'
-import { useModuleSetup }  from '@/services/web-checker/composables/useModuleSetup.js'
-import { useModuleFilter } from '@/services/web-checker/composables/useModuleFilter.js'
-import { useCheckStore }   from '@/services/web-checker/composables/useCheckStore.js'
+import { useModuleSetup }   from '@/services/web-checker/composables/useModuleSetup.js'
+import { useModuleFilter }  from '@/services/web-checker/composables/useModuleFilter.js'
+import { useModuleLoader }  from '@/composables/loaders/useModuleLoader.js'
+import { useCheckStore }    from '@/services/web-checker/composables/useCheckStore.js'
 
 const props = defineProps({
   label:         { type: String, required: true },
@@ -10,17 +11,14 @@ const props = defineProps({
   defaultFilter: { type: String, default: 'issues' },
 })
 
-const allModules = import.meta.glob('@/services/*/modules/*/index.js', { eager: true })
+const { modules } = useModuleLoader('web-checker')
+const moduleConfig = props.moduleId ? modules.find(m => m.id === props.moduleId) : null
 
-const checkerModule = props.moduleId
-  ? allModules[Object.keys(allModules).find(k => k.includes(`/modules/${props.moduleId}/index.js`))]
-  : null
-
-const setup = props.moduleId
+const setup = moduleConfig
   ? useModuleSetup(
       props.moduleId,
-      checkerModule?.overlay      ?? null,
-      checkerModule?.allowChatBot ?? false,
+      moduleConfig.overlay      ?? null,
+      moduleConfig.allowChatBot ?? false,
     )
   : null
 

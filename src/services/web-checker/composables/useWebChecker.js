@@ -1,14 +1,16 @@
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useModuleLoader }  from '@/composables/loaders/useModuleLoader.js'
-import { useCheckStore }    from '@/services/web-checker/composables/useCheckStore.js'
-import { useCheckRunner }   from '@/services/web-checker/composables/useCheckRunner.js'
-import { detectLiveEditor } from '@/composables/liveEditor/useLiveEditorDetector.js'
-import { moduleAppliesTo }  from '@/services/web-checker/composables/useUrlFilter.js'
+import { useModuleLoader }    from '@/composables/loaders/useModuleLoader.js'
+import { useCheckStore }      from '@/services/web-checker/composables/useCheckStore.js'
+import { useCheckRunner }     from '@/services/web-checker/composables/useCheckRunner.js'
+import { useSiteCheckStore }  from '@/services/web-checker/composables/useSiteCheckStore.js'
+import { detectLiveEditor }   from '@/composables/liveEditor/useLiveEditorDetector.js'
+import { moduleAppliesTo }    from '@/services/web-checker/composables/useUrlFilter.js'
 
 export function useWebChecker() {
   const { modules }                                                         = useModuleLoader('web-checker')
   const { state, setRunning, setResult, setSkipped, setCheckedTab, reset } = useCheckStore()
   const { injectHelper }                                                    = useCheckRunner()
+  const siteCheckStore                                                      = useSiteCheckStore()
 
   const isChecking = ref(false)
   const tabStatus  = ref('unchecked')
@@ -52,7 +54,7 @@ export function useWebChecker() {
     chrome.tabs.onRemoved.removeListener(onTabRemoved)
   })
 
-  async function runModule(tabId, mod) {
+  async function runModule(tabId, tabUrl, mod) {
     setRunning(mod.id)
     try {
       const [res] = await chrome.scripting.executeScript({
@@ -60,9 +62,13 @@ export function useWebChecker() {
         func:   mod.checker,
         args:   mod.apiConfig ? [mod.apiConfig] : [],
       })
-      setResult(mod.id, res.result ?? { errors: [], warnings: [] })
+      const result = res.result ?? { errors: [], warnings: [] }
+      setResult(mod.id, result)
+      siteCheckStore.syncFromSingleCheck(tabUrl, mod.id, result)
     } catch (e) {
-      setResult(mod.id, { errors: [{ message: e.message }], warnings: [] })
+      const result = { errors: [{ message: e.message }], warnings: [] }
+      setResult(mod.id, result)
+      siteCheckStore.syncFromSingleCheck(tabUrl, mod.id, result)
     }
   }
 
@@ -83,16 +89,14 @@ export function useWebChecker() {
     if (modulesToRun === modules) reset()
     await injectHelper(tab.id)
 
-    // Apply per-module URL filter — modules whose urlPatterns exclude the
-    // current URL are marked as 'skipped' instead of being run.
     const applicable = []
     for (const mod of modulesToRun) {
-      if (moduleAppliesTo(mod, tab.url)) applicable.push(mod)
+      if (moduleAppliesTo(mod, tab.url, 'singlePage')) applicable.push(mod)
       else setSkipped(mod.id, 'URL-Filter')
     }
 
     applicable.forEach(mod => setRunning(mod.id))
-    await Promise.all(applicable.map(mod => runModule(tab.id, mod)))
+    await Promise.all(applicable.map(mod => runModule(tab.id, tab.url, mod)))
 
     setCheckedTab(tab)
     tabStatus.value  = 'current'
