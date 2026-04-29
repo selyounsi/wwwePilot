@@ -16,6 +16,7 @@ const normalized = computed(() => ({
 
 const isUpscaled = computed(() =>
   !props.item.isVector
+  && !props.item.isLazy
   && (props.item.renderedWidth - props.item.width > 2
    || props.item.renderedHeight - props.item.height > 2)
 )
@@ -28,8 +29,8 @@ const isUpscaled = computed(() =>
 
         <DetailRow v-if="item.name" label="Dateiname">{{ item.name }}</DetailRow>
 
-        <DetailRow v-if="item.width" label="Original">
-          {{ item.width }} × {{ item.height }}px
+        <DetailRow v-if="item.width" :label="item.isLazy ? 'Erwartet' : 'Original'">
+          {{ item.width }} × {{ item.height }}px<span v-if="item.isLazy" class="text-muted/60 ml-1">(noch nicht geladen)</span>
         </DetailRow>
 
         <DetailRow v-if="item.renderedWidth" label="Gerendert">

@@ -42,18 +42,28 @@ export default function check() {
 
     images.forEach(img => {
       const alt     = img.getAttribute('alt')
-      const rawSrc  = img.getAttribute('data-pic-cms-src') || img.getAttribute('data-src') || img.getAttribute('src') || ''
+      const lazySrc = img.getAttribute('data-cms-src')
+                   || img.getAttribute('data-pic-cms-src')
+                   || img.getAttribute('data-src')
+                   || ''
+      const elemSrc = img.getAttribute('src') || ''
+      // base64 placeholder + a real lazy-src → not loaded yet
+      const isPlaceholder = elemSrc.startsWith('data:')
+      const rawSrc  = lazySrc || elemSrc
       const src     = rawSrc ? new URL(rawSrc, document.baseURI).href : ''
-      const name    = rawSrc.split('/').pop().split('?')[0] || 'Unbekannt'
-      const isLazy  = (img.getAttribute('data-pic-cms-src') || img.getAttribute('data-src')) && img.src !== src
-      const broken  = !isLazy && !img.naturalWidth && img.complete
-      const width   = img.naturalWidth
-      const height  = img.naturalHeight
+      const name    = rawSrc ? (rawSrc.split('/').pop().split('?')[0] || 'Unbekannt') : 'Unbekannt'
+      const isLazy  = !!lazySrc && (isPlaceholder || img.src !== src)
+      const broken  = !isLazy && !isPlaceholder && img.complete && !img.naturalWidth
+      // when lazy, naturalWidth is the placeholder pixel size — fall back to the html attrs
+      const intendedW = parseInt(img.getAttribute('width')  || '0', 10) || 0
+      const intendedH = parseInt(img.getAttribute('height') || '0', 10) || 0
+      const width   = isLazy ? intendedW : img.naturalWidth
+      const height  = isLazy ? intendedH : img.naturalHeight
       const renderedWidth  = img.clientWidth
       const renderedHeight = img.clientHeight
-      // skip upscale check for vector formats — they scale losslessly
+      // skip upscale check for vector formats and for not-yet-loaded lazy images
       const isVector = /\.svg(\?|#|$)/i.test(rawSrc)
-      const isUpscaled = !isVector && !broken && !isLazy
+      const isUpscaled = !isVector && !isLazy && !broken
         && width > 0 && height > 0
         && renderedWidth > 0 && renderedHeight > 0
         && (renderedWidth - width > 2 || renderedHeight - height > 2)
@@ -94,7 +104,7 @@ export default function check() {
         { when: inLightbox && !lightboxOk,             type: 'error',   title: 'Lightbox-Klasse fehlt (lightbox-zoom-image)' },
         { when: isUpscaled,                            type: 'warning', title: `Bild wird hochskaliert: ${renderedWidth}×${renderedHeight}px gerendert, Original ${width}×${height}px` },
         { when: true,                                  type: 'success', title: 'Bild korrekt' },
-      ], { src, name, alt, width, height, renderedWidth, renderedHeight, isVector, broken, _meta: { src: rawSrc, name, alt } })
+      ], { src, name, alt, width, height, renderedWidth, renderedHeight, isVector, broken, isLazy, _meta: { src: rawSrc, name, alt } })
     })
 
     return processedLinks
