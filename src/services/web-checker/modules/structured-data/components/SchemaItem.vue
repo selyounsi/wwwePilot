@@ -64,10 +64,9 @@ function toggle(idx) { openMap[idx] = !openMap[idx] }
             <span class="text-xs text-light truncate flex-1">{{ entityLabel(entity.schema) || item.name }}</span>
           </button>
 
-          <div v-if="openMap[idx]" class="bg-surface/30">
+          <div v-if="openMap[idx]" class="bg-surface/30 px-3 py-2.5 flex flex-col gap-2">
 
-            <div v-if="entity.image?.url" class="flex gap-3 px-3 py-2.5 border-b border-border/40">
-              <span class="text-xs text-muted/60 shrink-0 w-28 font-mono">image</span>
+            <DetailRow v-if="entity.image?.url" label="image" mono width="w-28">
               <div class="flex gap-3 min-w-0 flex-1">
                 <div
                   v-if="entity.image.reachable"
@@ -81,27 +80,26 @@ function toggle(idx) { openMap[idx] = !openMap[idx] }
                   />
                 </div>
                 <div class="flex flex-col gap-0.5 min-w-0">
-                  <span
-                    class="text-xs font-medium"
-                    :class="entity.image.reachable ? 'text-success' : 'text-error'"
-                  >{{ entity.image.reachable ? 'Erreichbar' : 'Nicht erreichbar' }}</span>
-                  <span
-                    v-if="entity.image.reachable && entity.image.width"
-                    class="text-xs text-muted"
-                  >{{ entity.image.width }}×{{ entity.image.height }}px</span>
+                  <span class="text-xs font-medium" :class="entity.image.reachable ? 'text-success' : 'text-error'">
+                    {{ entity.image.reachable ? 'Erreichbar' : 'Nicht erreichbar' }}
+                  </span>
+                  <span v-if="entity.image.reachable && entity.image.width" class="text-xs text-muted">
+                    {{ entity.image.width }}×{{ entity.image.height }}px
+                  </span>
                   <span class="text-muted/60 break-all font-mono" style="font-size:10px">{{ entity.image.url }}</span>
                 </div>
               </div>
-            </div>
+            </DetailRow>
 
-            <div
+            <DetailRow
               v-for="entry in schemaEntries(entity.schema)"
               :key="entry.key"
-              class="flex gap-3 px-3 py-2 border-b border-border/40 last:border-b-0"
+              :label="entry.key"
+              mono
+              width="w-28"
             >
-              <span class="text-xs text-muted/60 shrink-0 w-28 truncate font-mono">{{ entry.key }}</span>
-              <span class="text-xs text-light break-all">{{ entry.value }}</span>
-            </div>
+              {{ entry.value }}
+            </DetailRow>
 
           </div>
         </div>

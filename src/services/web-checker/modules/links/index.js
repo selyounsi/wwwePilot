@@ -1,5 +1,3 @@
-export const checkOnReload = true
-export const allowChatBot = true
 export const overlay = {
   enabled: true,
   labelFn: (item) => item.title ? `Title: ${item.title}` : '⚠ Kein Title',
@@ -39,15 +37,9 @@ export default async function check() {
     } catch { return null }
   })
 
-  const brokenResults = await new Promise(resolve => {
-    chrome.runtime.sendMessage(
-      { type: 'CHECK_LINKS', urls: checkableUrls.map(u => u ?? '') },
-      results => {
-        const map = Object.fromEntries((results ?? []).map(r => [r.url, r.broken]))
-        resolve(checkableUrls.map(u => u ? (map[u] ?? false) : false))
-      }
-    )
-  })
+  const linkResults = await runInBackground('CHECK_LINKS', { urls: checkableUrls.map(u => u ?? '') })
+  const brokenMap   = Object.fromEntries((linkResults ?? []).map(r => [r.url, r.broken]))
+  const brokenResults = checkableUrls.map(u => u ? (brokenMap[u] ?? false) : false)
 
   links.forEach((a, index) => {
     if (ignored[index]) return

@@ -3,5 +3,8 @@
   "name": "Headings",
   "description": "H1-H6 Struktur prüfen",
   "icon": "mdiFormatHeader1",
-  "active": true
+  "active": true,
+  "checkOnReload": true,
+  "allowChatBot": true,
+  "defaultFilter": "issues"
 }

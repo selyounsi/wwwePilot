@@ -1,4 +1,3 @@
-export const checkOnReload = true
 export const overlay = {
   enabled: true,
   labelFn: (item) => `${item.ratio}:1 – ${item.level}`,
@@ -206,15 +205,12 @@ export default async function check() {
 
   // Capture & sample via service worker
   if (toSample.length > 0) {
-    const reply = await new Promise(resolve => {
-      chrome.runtime.sendMessage({
-        type: 'CONTRAST_SAMPLE_BG',
-        viewportWidth: window.innerWidth,
-        targets: toSample.map(c => ({
-          rect: c.sampleRect,
-          fg:   premultiply(c.fgColor, c.cssBg),
-        })),
-      }, resolve)
+    const reply = await runInBackground('CONTRAST_SAMPLE_BG', {
+      viewportWidth: window.innerWidth,
+      targets: toSample.map(c => ({
+        rect: c.sampleRect,
+        fg:   premultiply(c.fgColor, c.cssBg),
+      })),
     })
     const sampled = reply?.colors ?? []
     toSample.forEach((c, i) => {

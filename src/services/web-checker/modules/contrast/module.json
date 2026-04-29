@@ -3,5 +3,8 @@
   "name": "Kontrast",
   "description": "Farbkontrast & Lesbarkeit prüfen",
   "icon": "mdiContrast",
-  "active": true
+  "active": true,
+  "checkOnReload": true,
+  "allowChatBot": false,
+  "defaultFilter": "issues"
 }

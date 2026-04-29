@@ -18,6 +18,9 @@ const normalized = computed(() => ({
 }))
 
 const impactLabel = computed(() => IMPACT_LABEL[props.item.impact] ?? props.item.impact ?? '')
+const impactClass = computed(() =>
+  props.item.impact === 'critical' || props.item.impact === 'serious' ? 'text-error' : 'text-alert'
+)
 </script>
 
 <template>
@@ -25,30 +28,25 @@ const impactLabel = computed(() => IMPACT_LABEL[props.item.impact] ?? props.item
     <template #expand>
       <div class="bg-surface-soft border-t border-border/40 px-3 py-2.5 flex flex-col gap-2">
 
-        <div v-if="item.ruleId" class="flex gap-3 items-start">
-          <span class="text-xs text-muted/60 shrink-0 w-20">Regel</span>
-          <span class="text-xs text-light font-mono break-all">{{ item.ruleId }}</span>
-        </div>
+        <DetailRow v-if="item.ruleId" label="Regel">
+          <span class="font-mono">{{ item.ruleId }}</span>
+        </DetailRow>
 
-        <div v-if="item.impact" class="flex gap-3 items-start">
-          <span class="text-xs text-muted/60 shrink-0 w-20">Impact</span>
-          <span class="text-xs" :class="item.impact === 'critical' || item.impact === 'serious' ? 'text-error' : 'text-alert'">{{ impactLabel }}</span>
-        </div>
+        <DetailRow v-if="item.impact" label="Impact">
+          <span :class="impactClass">{{ impactLabel }}</span>
+        </DetailRow>
 
-        <div v-if="item.target" class="flex gap-3 items-start">
-          <span class="text-xs text-muted/60 shrink-0 w-20">Selector</span>
-          <span class="text-xs text-light font-mono break-all">{{ item.target }}</span>
-        </div>
+        <DetailRow v-if="item.target" label="Selector">
+          <span class="font-mono">{{ item.target }}</span>
+        </DetailRow>
 
-        <div v-if="item.nodeHtml" class="flex gap-3 items-start">
-          <span class="text-xs text-muted/60 shrink-0 w-20">HTML</span>
-          <span class="text-xs text-light font-mono break-all" style="white-space: pre-wrap">{{ item.nodeHtml }}</span>
-        </div>
+        <DetailRow v-if="item.nodeHtml" label="HTML">
+          <span class="font-mono" style="white-space: pre-wrap">{{ item.nodeHtml }}</span>
+        </DetailRow>
 
-        <div v-if="item.helpUrl" class="flex gap-3 items-start">
-          <span class="text-xs text-muted/60 shrink-0 w-20">Doku</span>
-          <a :href="item.helpUrl" target="_blank" rel="noreferrer" class="text-xs text-primary hover:underline break-all">{{ item.helpUrl }}</a>
-        </div>
+        <DetailRow v-if="item.helpUrl" label="Doku">
+          <a :href="item.helpUrl" target="_blank" rel="noreferrer" class="text-primary hover:underline">{{ item.helpUrl }}</a>
+        </DetailRow>
 
         <div
           v-for="issue in item.issues"

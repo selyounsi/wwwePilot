@@ -1,9 +1,7 @@
 import { API } from '@/config/api.js'
 
-export const checkOnReload = false
-export const allowChatBot  = false
-export const overlay       = null
-export const apiConfig     = { pagespeedUrl: API.pagespeed.url }
+export const overlay   = null
+export const apiConfig = { pagespeedUrl: API.pagespeed.url }
 
 export default async function check(config = {}) {
 

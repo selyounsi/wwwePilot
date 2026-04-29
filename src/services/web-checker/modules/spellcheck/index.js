@@ -1,9 +1,7 @@
 import { APP_NAME_LOWER } from '@/config/app.js'
 
-export const checkOnReload = false
-export const allowChatBot  = false
-export const overlay       = null
-export const apiConfig     = { prefix: APP_NAME_LOWER }
+export const overlay   = null
+export const apiConfig = { prefix: APP_NAME_LOWER }
 
 export default async function check(config) {
 
@@ -33,12 +31,7 @@ export default async function check(config) {
   const domain   = location.hostname
   const language = document.documentElement.lang?.slice(0, 5) || 'de-DE'
 
-  const result = await new Promise(resolve => {
-    chrome.runtime.sendMessage(
-      { type: 'CHECK_SPELLING', text, domain, language, images },
-      resolve
-    )
-  })
+  const result = await runInBackground('CHECK_SPELLING', { text, domain, language, images })
 
   if (result?.error) {
     return { errors: [{ message: result.error }], warnings: [], errorCount: 1, warningCount: 0, items: [] }

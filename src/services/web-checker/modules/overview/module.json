@@ -4,5 +4,8 @@
   "description": "SEO, Technik & Site-Infos",
   "icon": "mdiMonitorDashboard",
   "active": true,
-  "order": 1
+  "order": 1,
+  "checkOnReload": false,
+  "allowChatBot": false,
+  "defaultFilter": "issues"
 }

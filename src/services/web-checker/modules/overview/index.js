@@ -1,6 +1,4 @@
-export const checkOnReload = false
-export const allowChatBot  = false
-export const overlay       = null
+export const overlay = null
 
 export default async function check() {
 

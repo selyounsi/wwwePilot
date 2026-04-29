@@ -13,6 +13,12 @@ const normalized = computed(() => ({
     : (props.item.width ? `${props.item.width} × ${props.item.height}px` : ''),
   image: props.item.src || null,
 }))
+
+const isUpscaled = computed(() =>
+  !props.item.isVector
+  && (props.item.renderedWidth - props.item.width > 2
+   || props.item.renderedHeight - props.item.height > 2)
+)
 </script>
 
 <template>
@@ -20,27 +26,21 @@ const normalized = computed(() => ({
     <template #expand>
       <div class="bg-surface-soft border-t border-border/40 px-3 py-2.5 flex flex-col gap-2">
 
-        <div v-if="item.name" class="flex gap-3 items-start">
-          <span class="text-xs text-muted/60 shrink-0 w-20">Dateiname</span>
-          <span class="text-xs text-light break-all">{{ item.name }}</span>
-        </div>
+        <DetailRow v-if="item.name" label="Dateiname">{{ item.name }}</DetailRow>
 
-        <div v-if="item.width" class="flex gap-3 items-start">
-          <span class="text-xs text-muted/60 shrink-0 w-20">Original</span>
-          <span class="text-xs text-light">{{ item.width }} × {{ item.height }}px</span>
-        </div>
+        <DetailRow v-if="item.width" label="Original">
+          {{ item.width }} × {{ item.height }}px
+        </DetailRow>
 
-        <div v-if="item.renderedWidth" class="flex gap-3 items-start">
-          <span class="text-xs text-muted/60 shrink-0 w-20">Gerendert</span>
-          <span class="text-xs" :class="!item.isVector && (item.renderedWidth - item.width > 2 || item.renderedHeight - item.height > 2) ? 'text-alert' : 'text-light'">
+        <DetailRow v-if="item.renderedWidth" label="Gerendert">
+          <span :class="isUpscaled ? 'text-alert' : ''">
             {{ item.renderedWidth }} × {{ item.renderedHeight }}px<span v-if="item.isVector" class="text-muted/60 ml-1">(Vektor)</span>
           </span>
-        </div>
+        </DetailRow>
 
-        <div v-if="item.src" class="flex gap-3 items-start">
-          <span class="text-xs text-muted/60 shrink-0 w-20">Pfad</span>
-          <span class="text-muted/70 break-all font-mono" style="font-size: 10px">{{ item.src }}</span>
-        </div>
+        <DetailRow v-if="item.src" label="Pfad">
+          <span class="text-muted/70 font-mono" style="font-size: 10px">{{ item.src }}</span>
+        </DetailRow>
 
         <div
           v-for="issue in item.issues"

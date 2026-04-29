@@ -3,5 +3,8 @@
   "name": "Links",
   "description": "Link-Qualität & Erreichbarkeit prüfen",
   "icon": "mdiLink",
-  "active": true
+  "active": true,
+  "checkOnReload": true,
+  "allowChatBot": true,
+  "defaultFilter": "issues"
 }

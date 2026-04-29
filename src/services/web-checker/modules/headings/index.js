@@ -1,5 +1,3 @@
-export const checkOnReload = true
-export const allowChatBot = true
 export const overlay = {
   enabled: true,
   labelFn: (item) => item.tag,

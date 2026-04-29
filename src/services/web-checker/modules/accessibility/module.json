@@ -4,5 +4,8 @@
   "description": "WCAG-Audit via axe-core",
   "icon": "mdiWheelchairAccessibility",
   "active": true,
-  "order": 99
+  "order": 99,
+  "checkOnReload": false,
+  "allowChatBot": true,
+  "defaultFilter": "issues"
 }

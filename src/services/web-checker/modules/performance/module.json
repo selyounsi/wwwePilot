@@ -4,5 +4,8 @@
   "description": "Ladezeiten & Ressourcen analysieren",
   "icon": "mdiSpeedometer",
   "active": true,
-  "order": 3
+  "order": 3,
+  "checkOnReload": false,
+  "allowChatBot": false,
+  "defaultFilter": "issues"
 }

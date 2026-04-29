@@ -4,5 +4,8 @@
   "description": "Rechtschreibung & Grammatik prüfen",
   "icon": "mdiSpellcheck",
   "active": true,
-  "order": 4
+  "order": 4,
+  "checkOnReload": false,
+  "allowChatBot": false,
+  "defaultFilter": "issues"
 }

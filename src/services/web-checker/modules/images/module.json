@@ -3,5 +3,8 @@
   "name": "Bilder",
   "description": "Alt-Texte & Bildqualität prüfen",
   "icon": "mdiImage",
-  "active": true
+  "active": true,
+  "checkOnReload": true,
+  "allowChatBot": true,
+  "defaultFilter": "issues"
 }

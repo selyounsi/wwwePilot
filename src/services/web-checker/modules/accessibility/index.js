@@ -1,11 +1,7 @@
-export const checkOnReload = false
-export const allowChatBot = true
 export const overlay = null
 
 export default async function check() {
-  const reply = await new Promise(resolve => {
-    chrome.runtime.sendMessage({ type: 'AXE_RUN' }, resolve)
-  })
+  const reply = await runInBackground('AXE_RUN')
 
   const { errors, addItem, finish } = createCheckResult()
 

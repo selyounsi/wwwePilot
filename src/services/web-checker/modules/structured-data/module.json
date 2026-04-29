@@ -4,5 +4,8 @@
   "description": "JSON-LD Schemas prüfen & einsehen",
   "icon": "mdiCodeJson",
   "active": true,
-  "order": 2
+  "order": 2,
+  "checkOnReload": false,
+  "allowChatBot": false,
+  "defaultFilter": "issues"
 }
