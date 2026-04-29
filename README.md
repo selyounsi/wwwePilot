@@ -135,21 +135,25 @@ wwweBar/
 
 ## Neues Modul erstellen
 
+Schnelle Übersicht — siehe **[docs/creating-a-module.md](./docs/creating-a-module.md)** für die ausführliche Anleitung.
+
 1. Ordner anlegen: `src/services/web-checker/modules/mein-modul/`
-2. `module.json` erstellen:
+2. `module.json`:
 ```json
 {
-  "name": "Mein Modul",
-  "description": "Kurze Beschreibung",
-  "icon": "mdiMagnify",
-  "active": true,
-  "order": 5
+  "id":            "mein-modul",
+  "name":          "Mein Modul",
+  "description":   "Kurze Beschreibung",
+  "icon":          "mdiMagnify",
+  "active":        true,
+  "order":         5,
+  "checkOnReload": true,
+  "allowChatBot":  true,
+  "defaultFilter": "issues"
 }
 ```
 3. `index.js` – Checker-Logik (läuft im DOM der Zielseite):
 ```js
-export const checkOnReload = true
-export const allowChatBot  = true
 export const overlay = {
   enabled: true,
   labelFn: (item) => item.title,
@@ -170,5 +174,23 @@ export default function check() {
   return finish()
 }
 ```
-4. `Index.vue` – Detailansicht des Moduls
-5. Fertig – erscheint automatisch im Web Checker ✅
+4. `Index.vue` – Sidebar-Seite (einzeiler über `<ModulePage>`):
+```vue
+<script setup>
+import MyItem from './components/MyItem.vue'
+</script>
+<template>
+  <ModulePage moduleId="mein-modul" label="Mein Modul" :itemComponent="MyItem" />
+</template>
+```
+5. `components/MyItem.vue` – Item-Darstellung
+6. Fertig – erscheint automatisch im Web Checker ✅
+
+---
+
+## Dokumentation
+
+- **[docs/architecture.md](./docs/architecture.md)** — Aufbau, Kontexte und Datenfluss
+- **[docs/creating-a-module.md](./docs/creating-a-module.md)** — Schritt-für-Schritt-Guide für neue Module
+- **[docs/module-api.md](./docs/module-api.md)** — vollständige API-Referenz
+- **Per-Modul-READMEs** in `src/services/web-checker/modules/<id>/README.md` — was jedes Modul prüft, Edge Cases, Limitierungen
