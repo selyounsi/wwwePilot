@@ -37,6 +37,12 @@ export function useCheckRunner() {
         // would have when modules run in parallel.
         window.setHighlightElement = () => crypto.randomUUID()
 
+        // promise-based wrapper around chrome.runtime.sendMessage so modules
+        // can call service-worker handlers without re-implementing the boilerplate.
+        window.runInBackground = (type, payload = {}) => new Promise(resolve => {
+          chrome.runtime.sendMessage({ type, ...payload }, resolve)
+        })
+
         // detects visible content beyond plain text — child <img>/<svg>,
         // ::before/::after content (icon fonts), or background-image (CSS icons).
         // shared helper for any module that needs to distinguish empty

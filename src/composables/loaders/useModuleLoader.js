@@ -2,6 +2,14 @@ const allConfigs  = import.meta.glob('@/services/*/modules/*/module.json', { eag
 const allCheckers = import.meta.glob('@/services/*/modules/*/index.js',    { eager: true })
 const allViews    = import.meta.glob('@/services/*/modules/*/Index.vue',   { eager: true })
 
+/**
+ * Loads modules for a service, merging module.json config with the JS exports
+ * from index.js. JSON keys win — JS exports are kept as a fallback so older
+ * modules (or per-module dynamic config like overlay/labelFn) still work.
+ *
+ * Static config lives in module.json (checkOnReload, allowChatBot, defaultFilter).
+ * Dynamic config lives in index.js (overlay with labelFn, apiConfig).
+ */
 export function useModuleLoader(serviceId) {
   const modules = []
 
@@ -27,9 +35,13 @@ export function useModuleLoader(serviceId) {
       ...config,
       id:            modId,
       checker:       checkerModule.default,
-      checkOnReload: checkerModule.checkOnReload ?? false,
-      overlay:       checkerModule.overlay       ?? null,
-      apiConfig:     checkerModule.apiConfig      ?? null,
+      // static settings: prefer module.json, fall back to JS export, then default
+      checkOnReload: config.checkOnReload ?? checkerModule.checkOnReload ?? false,
+      allowChatBot:  config.allowChatBot  ?? checkerModule.allowChatBot  ?? false,
+      defaultFilter: config.defaultFilter ?? 'issues',
+      // dynamic settings stay in JS (cannot be JSON because they hold functions)
+      overlay:       checkerModule.overlay   ?? null,
+      apiConfig:     checkerModule.apiConfig ?? null,
       view,
     })
   }
