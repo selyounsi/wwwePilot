@@ -27,14 +27,23 @@ export default async function check() {
   let privacyControlVersion = ''
   try { privacyControlVersion = window.privacyControl?.version || '' } catch {}
 
-  // same-origin fetch — runs in page context so no CORS preflight
+  // same-origin fetch with no caching, 10s timeout and one retry on network errors
   async function fetchCheck(url, method = 'GET') {
-    try {
-      const res  = await fetch(url, { method, cache: 'reload' })
-      const text = method === 'GET' ? await res.text() : ''
-      return { ok: res.ok, status: res.status, text, contentType: res.headers.get('content-type') || '' }
-    } catch (e) {
-      return { ok: false, status: 0, text: '', error: e.message }
+    const opts = {
+      method,
+      cache:    'no-store',
+      redirect: 'follow',
+      headers:  { 'Cache-Control': 'no-cache' },
+    }
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res  = await fetch(url, { ...opts, signal: AbortSignal.timeout(10_000) })
+        const text = method === 'GET' ? await res.text() : ''
+        return { ok: res.ok, status: res.status, text, contentType: res.headers.get('content-type') || '' }
+      } catch (e) {
+        if (attempt === 0) { await new Promise(r => setTimeout(r, 500)); continue }
+        return { ok: false, status: 0, text: '', error: e.message }
+      }
     }
   }
 

@@ -7,13 +7,22 @@ export async function handle(msg, sendResponse) {
       try {
         const u = new URL(url)
         if (u.protocol !== 'http:' && u.protocol !== 'https:') return { url, broken: false }
-        const opts = { signal: AbortSignal.timeout(5000), redirect: 'follow' }
-        const res  = await fetch(url, { ...opts, method: 'HEAD' })
-        if (res.status < 400 || res.status === 999) return { url, broken: false }
-        const res2 = await fetch(url, { ...opts, method: 'GET', signal: AbortSignal.timeout(8000) })
-        return { url, broken: res2.status >= 400 && res2.status !== 999 }
-      } catch {
-        return { url, broken: true }
+      } catch { return { url, broken: false } }
+
+      const baseOpts = { redirect: 'follow', cache: 'no-store' }
+
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          let res = await fetch(url, { ...baseOpts, method: 'HEAD', signal: AbortSignal.timeout(10_000) })
+          // some CDNs return 4xx for HEAD even when GET works — fall back
+          if (res.status >= 400 && res.status !== 999) {
+            res = await fetch(url, { ...baseOpts, method: 'GET', signal: AbortSignal.timeout(15_000) })
+          }
+          return { url, broken: res.status >= 400 && res.status !== 999 }
+        } catch (e) {
+          if (attempt === 0) { await new Promise(r => setTimeout(r, 500)); continue }
+          return { url, broken: true }
+        }
       }
     })
   )
