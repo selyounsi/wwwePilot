@@ -1,0 +1,11 @@
+{
+  "id": "validation",
+  "name": "HTML-Validierung",
+  "description": "HTML5-Markup gegen die W3C-Spec prüfen",
+  "icon": "mdiCodeTags",
+  "active": true,
+  "order": 100,
+  "checkOnReload": false,
+  "allowChatBot": true,
+  "defaultFilter": "issues"
+}
