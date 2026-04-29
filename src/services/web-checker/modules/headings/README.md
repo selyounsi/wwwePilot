@@ -1,33 +1,33 @@
-# Headings module
+# Headings-Modul
 
-Hierarchy and content checks for `<h1>` through `<h6>`.
+Hierarchie- und Inhaltsprüfungen für `<h1>` bis `<h6>`.
 
-## What it checks
+## Was geprüft wird
 
-- **Missing H1** — error if zero `<h1>` on the page
-- **Empty heading** — error if a heading has no text content
-- **Duplicate H1** — error if more than one `<h1>` (warning may suit some
-  sites; here it's an error)
-- **Heading-before-H1** — warning if the first heading isn't an `<h1>`
-- **Skipped levels** — warning if hierarchy jumps (e.g. H2 → H4)
+- **Fehlende H1** — Fehler, wenn keine `<h1>` auf der Seite vorhanden ist
+- **Leere Heading** — Fehler, wenn eine Heading keinen Textinhalt hat
+- **Doppelte H1** — Fehler bei mehr als einer `<h1>` (für manche Seiten passt
+  eine Warning besser; hier ist es ein Fehler)
+- **Heading-vor-H1** — Warning, wenn die erste Heading keine `<h1>` ist
+- **Übersprungene Levels** — Warning, wenn die Hierarchie springt (z.B. H2 → H4)
 
-Every heading also gets a `success` row with the level and text so the
-user sees the full hierarchy when filter is "Alle anzeigen".
+Jede Heading bekommt zusätzlich eine `success`-Zeile mit Level und Text, sodass
+der Nutzer die volle Hierarchie sieht, wenn der Filter "Alle anzeigen" ist.
 
 ## Overlay
 
-Toggle "Tags ausblenden / einblenden" — shows each heading's tag name
-(H1, H2, …) as a coloured badge above the element on the page. Click a
-badge to jump to the matching item in the sidebar.
+Toggle "Tags ausblenden / einblenden" — zeigt den Tag-Namen jeder Heading
+(H1, H2, …) als farbiges Badge über dem Element auf der Seite. Klicke auf ein
+Badge, um zum passenden Item in der Sidebar zu springen.
 
-## Element lookup
+## Element-Lookup
 
-`_meta = { tag: 'H1', idx: <document-position> }`. The `idx` is the
-position within all elements of that tag, not the headings array — so
-overlay lookup via `document.querySelectorAll('H1')[idx]` works.
+`_meta = { tag: 'H1', idx: <document-position> }`. Das `idx` ist die Position
+innerhalb aller Elemente dieses Tags, nicht innerhalb des Headings-Arrays —
+sodass Overlay-Lookup via `document.querySelectorAll('H1')[idx]` funktioniert.
 
-## Custom display
+## Eigene Anzeige
 
-`Index.vue` shows a `HeadingStats` block (heading count per level) above
-the standard ModuleStats. Uses the `<ModulePage>` slot to override the
-default items rendering.
+`Index.vue` zeigt einen `HeadingStats`-Block (Heading-Anzahl pro Level) über
+den Standard-ModuleStats. Nutzt den Slot von `<ModulePage>`, um das
+Standard-Items-Rendering zu überschreiben.

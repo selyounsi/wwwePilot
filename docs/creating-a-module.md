@@ -1,15 +1,15 @@
-# Creating a new module
+# Ein neues Modul erstellen
 
-Step-by-step guide for adding a new check to the Web Checker.
+Schritt-für-Schritt-Anleitung zum Hinzufügen einer neuen Prüfung im Web Checker.
 
-> Read [architecture.md](./architecture.md) first for the big picture, then
-> use this as the practical recipe.
+> Lies zuerst [architecture.md](./architecture.md) für das große Bild und nutze
+> dann diese Anleitung als praktisches Rezept.
 
-## Quick recipe (no service worker needed)
+## Schnellrezept (kein Service Worker nötig)
 
-For a check that only walks the DOM and doesn't need network access.
+Für eine Prüfung, die nur das DOM durchwandert und keinen Netzwerkzugriff braucht.
 
-### 1. Create the directory
+### 1. Verzeichnis anlegen
 
 ```
 src/services/web-checker/modules/<your-id>/
@@ -20,8 +20,8 @@ src/services/web-checker/modules/<your-id>/
     └── YourItem.vue
 ```
 
-The directory name doesn't have to match `<your-id>` but the convention
-keeps things tidy.
+Der Verzeichnisname muss nicht mit `<your-id>` übereinstimmen, aber die Konvention
+sorgt für Ordnung.
 
 ### 2. `module.json`
 
@@ -39,22 +39,22 @@ keeps things tidy.
 }
 ```
 
-| Key | Meaning |
+| Key | Bedeutung |
 |---|---|
-| `id` | Internal identifier — must be unique, kebab-case |
-| `name` | Display name in the dashboard / module page |
-| `description` | One-line subtitle on the dashboard |
-| `icon` | MDI icon name from [pictogrammers.com/library/mdi](https://pictogrammers.com/library/mdi/) |
-| `active` | Set to `false` to hide the module without deleting it |
-| `order` | Sort order on the dashboard (lower = earlier) |
-| `checkOnReload` | Re-run automatically when the page reloads |
-| `allowChatBot` | Show "Im Chat analysieren" button on items |
-| `defaultFilter` | Initial filter: `'issues'` / `'errors'` / `'warnings'` / `'all'` |
+| `id` | Interner Bezeichner — muss eindeutig sein, kebab-case |
+| `name` | Anzeigename im Dashboard / auf der Modul-Seite |
+| `description` | Einzeiler-Untertitel im Dashboard |
+| `icon` | MDI-Icon-Name von [pictogrammers.com/library/mdi](https://pictogrammers.com/library/mdi/) |
+| `active` | Auf `false` setzen, um das Modul auszublenden, ohne es zu löschen |
+| `order` | Sortierreihenfolge im Dashboard (kleiner = früher) |
+| `checkOnReload` | Automatisch erneut ausführen, wenn die Seite neu geladen wird |
+| `allowChatBot` | "Im Chat analysieren"-Button auf den Items anzeigen |
+| `defaultFilter` | Initialer Filter: `'issues'` / `'errors'` / `'warnings'` / `'all'` |
 
-### 3. `index.js` — the checker
+### 3. `index.js` — der Checker
 
 ```js
-export const overlay = null   // or a config object — see below
+export const overlay = null   // oder ein Konfigurationsobjekt — siehe unten
 
 export default function check() {
   const { errors, warnings, items, addItem, finish } = createCheckResult()
@@ -69,7 +69,7 @@ export default function check() {
     ], {
       tag:  h.tagName,
       text,
-      _meta: { tag: 'H1', idx },   // so overlays/highlight can find it later
+      _meta: { tag: 'H1', idx },   // damit Overlays/Highlight es später finden können
     })
   })
 
@@ -77,29 +77,28 @@ export default function check() {
 }
 ```
 
-This function runs in the **page context** of the website being checked.
-That means:
+Diese Funktion läuft im **Page-Kontext** der zu prüfenden Webseite. Das bedeutet:
 
-- ✅ You have full DOM access via `document`, `window`, `getComputedStyle`,
+- ✅ Du hast vollen DOM-Zugriff via `document`, `window`, `getComputedStyle`,
   `XMLHttpRequest`, `fetch`, `chrome.runtime.sendMessage`, …
-- ❌ You **cannot** use module-scope `import`s — anything outside the
-  `check()` function body is lost when the function is serialised
-- ❌ You **cannot** use bundler features like `import.meta.env`
+- ❌ Du **kannst keine** Imports auf Modulebene verwenden — alles außerhalb des
+  `check()`-Funktionskörpers geht verloren, wenn die Funktion serialisiert wird
+- ❌ Du **kannst keine** Bundler-Features wie `import.meta.env` nutzen
 
-If you need a constant, declare it **inside** `check()`. If you need a
-helper function, declare it inside `check()` too.
+Wenn du eine Konstante brauchst, deklariere sie **innerhalb** von `check()`. Wenn
+du eine Hilfsfunktion brauchst, deklariere sie ebenfalls innerhalb von `check()`.
 
-The framework injects a few useful helpers as `window.*` globals before
-your checker runs (see [module-api.md](./module-api.md) for the full list):
+Das Framework injiziert ein paar nützliche Helper als `window.*`-Globals, bevor
+dein Checker läuft (siehe [module-api.md](./module-api.md) für die vollständige Liste):
 
-- `createCheckResult()` — what you saw above
-- `setHighlightElement()` — returns a UUID you typically don't need to
-  call yourself; `addItem` calls it for you
-- `isElementVisible(el)` — recursive visibility check
-- `hasVisualContent(el)` — detects icon-styled empty elements
-- `runInBackground(type, payload)` — call a service-worker handler
+- `createCheckResult()` — wie oben gezeigt
+- `setHighlightElement()` — gibt eine UUID zurück, die du normalerweise nicht
+  selbst aufrufen musst; `addItem` macht das für dich
+- `isElementVisible(el)` — rekursive Sichtbarkeitsprüfung
+- `hasVisualContent(el)` — erkennt Icon-gestylte leere Elemente
+- `runInBackground(type, payload)` — ruft einen Service-Worker-Handler auf
 
-### 4. `Index.vue` — the sidebar page
+### 4. `Index.vue` — die Sidebar-Seite
 
 ```vue
 <script setup>
@@ -111,10 +110,10 @@ import YourItem from './components/YourItem.vue'
 </template>
 ```
 
-That's it. `<ModulePage>` handles the AppHeader, idle / running / done
-states, ModuleStats, and the items loop.
+Das war's. `<ModulePage>` kümmert sich um AppHeader, idle / running / done-States,
+ModuleStats und die Items-Schleife.
 
-For more elaborate views, override the default slot:
+Für komplexere Views überschreibst du den Default-Slot:
 
 ```vue
 <template>
@@ -127,7 +126,7 @@ For more elaborate views, override the default slot:
 </template>
 ```
 
-### 5. `components/YourItem.vue` — display per item
+### 5. `components/YourItem.vue` — Anzeige pro Item
 
 ```vue
 <script setup>
@@ -154,26 +153,26 @@ const normalized = computed(() => ({
 </template>
 ```
 
-### 6. Done
+### 6. Fertig
 
-Your module appears in the dashboard automatically — no router setup, no
-loader registration. Vite picks it up via `import.meta.glob`.
+Dein Modul taucht automatisch im Dashboard auf — kein Router-Setup, keine
+Loader-Registrierung. Vite findet es via `import.meta.glob`.
 
 ---
 
-## Recipe: module that needs a service worker
+## Rezept: Modul, das einen Service Worker braucht
 
-Use this when your check needs `chrome.tabs.captureVisibleTab`, `fetch` to
-external APIs without CORS issues, persistent storage, or anything else
-that requires the service-worker context.
+Verwende dies, wenn deine Prüfung `chrome.tabs.captureVisibleTab`, `fetch` zu
+externen APIs ohne CORS-Probleme, persistenten Speicher oder irgendetwas anderes
+braucht, das den Service-Worker-Kontext erfordert.
 
-### Add `background.js`
+### `background.js` hinzufügen
 
 ```js
 export const type = 'MY_CHECK_FETCH'
 
 export async function handle(msg, sendResponse, sender) {
-  // sender.tab.id is the tab that originated the call
+  // sender.tab.id ist der Tab, von dem der Aufruf stammt
   try {
     const data = await fetch(msg.url).then(r => r.json())
     sendResponse({ data })
@@ -183,7 +182,7 @@ export async function handle(msg, sendResponse, sender) {
 }
 ```
 
-### Call from your checker
+### Aufruf aus deinem Checker
 
 ```js
 export default async function check() {
@@ -194,20 +193,20 @@ export default async function check() {
   }
 
   const { addItem, finish } = createCheckResult()
-  // ...use reply.data...
+  // ...nutze reply.data...
   return finish()
 }
 ```
 
-The framework's auto-loader picks up any `background.js` file in
-`services/*/modules/*/background.js` and registers it by its exported
-`type`. No manifest tweaks needed.
+Der Auto-Loader des Frameworks erkennt jede `background.js`-Datei in
+`services/*/modules/*/background.js` und registriert sie über ihren exportierten
+`type`. Keine Manifest-Anpassungen nötig.
 
 ---
 
-## Recipe: module with overlay badges
+## Rezept: Modul mit Overlay-Badges
 
-Add an `overlay` export with a `labelFn`:
+Füge einen `overlay`-Export mit einer `labelFn` hinzu:
 
 ```js
 export const overlay = {
@@ -218,81 +217,82 @@ export const overlay = {
 }
 ```
 
-The user sees a toggle on the module page. When active, every item that
-matches `_meta` lookup gets a coloured speech-bubble badge above its
-element on the page.
+Der Nutzer sieht einen Toggle auf der Modul-Seite. Wenn aktiv, bekommt jedes
+Item, das per `_meta`-Lookup gefunden wird, ein farbiges Sprechblasen-Badge
+über seinem Element auf der Seite.
 
-Click on a badge → the sidebar navigates to the matching item and scrolls
-it into view (handled centrally in `App.vue`).
+Klick auf ein Badge → die Sidebar navigiert zum passenden Item und scrollt
+es in den Sichtbereich (zentral in `App.vue` behandelt).
 
 ---
 
-## Conventions and gotchas
+## Konventionen und Stolperfallen
 
-### File naming
+### Datei-Benennung
 
-- `index.js` (lowercase) for the checker
-- `Index.vue` (capital) for the sidebar page
-- The case difference is intentional — Vite distinguishes them
+- `index.js` (kleingeschrieben) für den Checker
+- `Index.vue` (groß) für die Sidebar-Seite
+- Der Unterschied in der Schreibweise ist Absicht — Vite unterscheidet sie
 
-### Item-finding via `_meta`
+### Item-Suche via `_meta`
 
-Always set `_meta` so overlays and the chatbot's HTML extraction can find
-the element later. Common patterns:
+Setze immer `_meta`, damit Overlays und die HTML-Extraktion des Chatbots das
+Element später finden können. Übliche Muster:
 
 ```js
-// Tag-and-index lookup (most common)
+// Tag-und-Index-Lookup (am häufigsten)
 { _meta: { tag: 'A', idx: 5 } }
 
-// Direct CSS selector (for elements you injected yourself)
+// Direkter CSS-Selektor (für Elemente, die du selbst injiziert hast)
 { _meta: { selector: '#my-injected-span' } }
 
-// Background-image divs (no <img> child)
+// Background-Image-Divs (kein <img>-Kind)
 { _meta: { isBackground: true, idx: 2 } }
 
-// Image lookup by filename / alt
+// Bild-Lookup über Dateiname / alt
 { _meta: { src: '/logo.svg', name: 'logo.svg', alt: 'Logo' } }
 ```
 
-### Severity rules
+### Schweregrad-Regeln
 
-- `type: 'error'` — broken or critical issue (red)
-- `type: 'warning'` — improvement opportunity (orange)
-- `type: 'success'` — passes (green, only shown when filter is "all")
+- `type: 'error'` — defektes oder kritisches Problem (rot)
+- `type: 'warning'` — Verbesserungsmöglichkeit (orange)
+- `type: 'success'` — bestanden (grün, nur sichtbar bei Filter "all")
 
-### Don't import in the checker
+### Keine Imports im Checker
 
-Module-scope imports are stripped during serialisation. Either:
+Imports auf Modulebene werden bei der Serialisierung entfernt. Entweder:
 
-- Put helpers inside the `check()` function
-- Pass values via `args` from the runner (set `apiConfig` export)
+- Helper innerhalb der `check()`-Funktion platzieren
+- Werte via `args` vom Runner übergeben (`apiConfig`-Export setzen)
 
 ```js
 import { API } from '@/config/api.js'
-export const apiConfig = { url: API.myApi.url }   // ✓ passed as arg
+export const apiConfig = { url: API.myApi.url }   // ✓ als Argument übergeben
 
 export default async function check(config) {
-  const url = config.url   // ✓ available
+  const url = config.url   // ✓ verfügbar
 }
 ```
 
-### Use `runInBackground` instead of raw `sendMessage`
+### `runInBackground` statt rohem `sendMessage` verwenden
 
-The framework provides `runInBackground(type, payload)` as a
-promise-wrapped shortcut. Prefer it:
+Das Framework bietet `runInBackground(type, payload)` als Promise-gewrapptes
+Shortcut. Bevorzuge es:
 
 ```js
-// Old (still works)
+// Alt (funktioniert noch)
 const reply = await new Promise(resolve =>
   chrome.runtime.sendMessage({ type: 'X', foo }, resolve)
 )
 
-// New (preferred)
+// Neu (bevorzugt)
 const reply = await runInBackground('X', { foo })
 ```
 
-### Add a README
+### README hinzufügen
 
-Every module gets a `README.md` next to its `module.json`. Briefly
-document **what** it checks, **why** (especially non-obvious heuristics),
-and **known limitations**. Future-you and contributors will thank you.
+Jedes Modul bekommt eine `README.md` neben seiner `module.json`. Dokumentiere
+kurz, **was** geprüft wird, **warum** (besonders bei nicht-offensichtlichen
+Heuristiken) und **bekannte Einschränkungen**. Dein zukünftiges Ich und die
+Mitwirkenden werden es dir danken.

@@ -1,73 +1,74 @@
-# Contrast module
+# Contrast-Modul
 
-WCAG AA contrast checking for text elements, including pixel-sampling
-fallback for text on background images and icon detection for elements
-where the text itself is hidden.
+WCAG-AA-Kontrastprüfung für Textelemente, inklusive Pixel-Sampling-Fallback für
+Text auf Hintergrundbildern und Icon-Erkennung für Elemente, bei denen der
+Text selbst versteckt ist.
 
-## What it checks
+## Was geprüft wird
 
-For each text-bearing element (`h1-6, p, a, span, li, td, th, label,
+Für jedes textführende Element (`h1-6, p, a, span, li, td, th, label,
 button, figcaption, blockquote, small, b, strong`):
 
-1. Computes the **effective foreground colour** (`color`, alpha-blended
-   with the resolved background)
-2. Resolves the **effective background colour** by walking ancestors and
-   compositing alpha-blended `backgroundColor` layers, including
-   `::before`/`::after` overlays with `inset: 0` (the typical "darken
-   bg-image" pattern)
-3. If a real `background-image` exists anywhere up the tree (and isn't
-   blocked by an opaque ancestor): captures a screenshot via the service
-   worker, samples pixels in the element's bounding rect, excludes
-   pixels near the foreground colour, and uses the averaged result as
-   the real background
-4. Computes WCAG contrast ratio
-5. Compares against AA thresholds — 4.5:1 for normal text, 3.0:1 for
-   "large text" (≥ 18px or ≥ 14px bold)
+1. Berechnet die **effektive Vordergrundfarbe** (`color`, alpha-gemischt mit
+   dem aufgelösten Hintergrund)
+2. Löst die **effektive Hintergrundfarbe** auf, indem es die Vorfahren
+   durchwandert und alpha-gemischte `backgroundColor`-Schichten zusammensetzt,
+   inklusive `::before`/`::after`-Overlays mit `inset: 0` (das typische
+   "Hintergrundbild abdunkeln"-Muster)
+3. Wenn irgendwo im Baum oben ein echtes `background-image` existiert (und
+   nicht von einem opaken Vorfahren überdeckt wird): nimmt einen Screenshot
+   via Service Worker auf, sampelt Pixel im Bounding-Rect des Elements,
+   schließt Pixel nahe der Vordergrundfarbe aus und nutzt das gemittelte
+   Ergebnis als echten Hintergrund
+4. Berechnet das WCAG-Kontrastverhältnis
+5. Vergleicht mit AA-Schwellen — 4.5:1 für normalen Text, 3.0:1 für "großen
+   Text" (≥ 18px oder ≥ 14px fett)
 
-## Special cases
+## Sonderfälle
 
-### Placeholders
-`input[placeholder]` and `textarea[placeholder]` are checked using the
-`::placeholder` pseudo's `color` against the input's background. Items
-get a `(Placeholder)` suffix.
+### Placeholder
+`input[placeholder]` und `textarea[placeholder]` werden mit der `color` des
+`::placeholder`-Pseudos gegen den Hintergrund des Inputs geprüft. Items
+bekommen einen `(Placeholder)`-Suffix.
 
-### Icon-only elements
-When the element's own text is invisible (`font-size: 0`, `color:
+### Icon-only-Elemente
+Wenn der eigene Text des Elements unsichtbar ist (`font-size: 0`, `color:
 transparent`, `text-indent: -9999px`, `display: none`, `visibility:
-hidden`, `opacity: 0`), the checker falls back to the `::before`/`::after`
-pseudo's colour as foreground and uses its font size for the AA-large
-threshold. Items get an `(Icon)` suffix.
+hidden`, `opacity: 0`), fällt der Checker auf die Farbe des
+`::before`/`::after`-Pseudos als Vordergrund zurück und nutzt dessen
+Schriftgröße für die AA-Large-Schwelle. Items bekommen einen
+`(Icon)`-Suffix.
 
-If there's no visible pseudo either, the element is **skipped entirely**
-(it's intentionally hidden, often for screen readers — no contrast to
-check).
+Wenn es auch kein sichtbares Pseudo gibt, wird das Element **komplett
+übersprungen** (es ist absichtlich versteckt, oft für Screenreader — kein
+Kontrast zu prüfen).
 
-## Off-screen elements
+## Off-Screen-Elemente
 
-Pixel sampling requires the element to be **in the viewport** (otherwise
-`captureVisibleTab` doesn't see it). Off-screen elements with
-background-image fall back to `'Unsicher'` — a warning suggesting the
-user scroll the element into view and re-check the module.
+Pixel-Sampling erfordert, dass das Element **im Viewport** ist (sonst sieht
+`captureVisibleTab` es nicht). Off-Screen-Elemente mit Background-Image
+fallen auf `'Unsicher'` zurück — eine Warnung, die dem Nutzer vorschlägt,
+das Element in den Sichtbereich zu scrollen und das Modul erneut zu prüfen.
 
-## Service worker (`background.js`)
+## Service Worker (`background.js`)
 
-Handles the `CONTRAST_SAMPLE_BG` message:
+Behandelt die Nachricht `CONTRAST_SAMPLE_BG`:
 
-1. Captures the visible tab as a PNG via `chrome.tabs.captureVisibleTab`
-2. Decodes into an `OffscreenCanvas`
-3. For each requested rect: samples every Nth pixel (adaptive step for
-   speed), excludes pixels with Euclidean RGB distance < 60 from the
-   text colour, averages the rest
+1. Erfasst den sichtbaren Tab als PNG via `chrome.tabs.captureVisibleTab`
+2. Dekodiert in einen `OffscreenCanvas`
+3. Für jedes angeforderte Rect: sampelt jeden N-ten Pixel (adaptiver Schritt
+   für Geschwindigkeit), schließt Pixel mit euklidischer RGB-Distanz < 60 zur
+   Textfarbe aus, mittelt den Rest
 
-## Limitations
+## Einschränkungen
 
-- Pseudo-overlay detection only catches `inset: 0` patterns. Patterns
-  like `width: 100%; height: 100%; top: 0; left: 0` would also work but
-  are harder to detect reliably and are not handled.
-- We don't sample pixels behind off-screen elements.
-- Modern SR-only patterns using `clip: rect(0,0,0,0); width: 1px;
-  height: 1px` are not detected as "hidden" — those text elements still
-  go through normal contrast checking.
-- The sampling step is adaptive; for very dense text where most pixels
-  are foreground-coloured, the sample may return null and we fall back
-  to the CSS-based estimate.
+- Pseudo-Overlay-Erkennung erfasst nur `inset: 0`-Muster. Muster wie
+  `width: 100%; height: 100%; top: 0; left: 0` würden ebenfalls funktionieren,
+  sind aber schwieriger zuverlässig zu erkennen und werden nicht behandelt.
+- Wir sampeln keine Pixel hinter Off-Screen-Elementen.
+- Moderne SR-only-Muster mit `clip: rect(0,0,0,0); width: 1px;
+  height: 1px` werden nicht als "versteckt" erkannt — diese Textelemente
+  durchlaufen weiterhin die normale Kontrastprüfung.
+- Der Sampling-Schritt ist adaptiv; bei sehr dichtem Text, wo die meisten Pixel
+  vordergrundfarbig sind, kann das Sample null zurückgeben und wir fallen auf
+  die CSS-basierte Schätzung zurück.

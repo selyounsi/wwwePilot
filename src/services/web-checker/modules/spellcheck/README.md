@@ -1,50 +1,51 @@
-# Spellcheck module
+# Spellcheck-Modul
 
-Spelling and grammar checks via the LanguageTool API.
+Rechtschreib- und Grammatikprüfung via LanguageTool-API.
 
-## What it checks
+## Was geprüft wird
 
-1. Walks the DOM and extracts visible text
-2. Sends the text to the backend's LanguageTool proxy
+1. Durchwandert das DOM und extrahiert sichtbaren Text
+2. Schickt den Text an den LanguageTool-Proxy des Backends
    (`runInBackground('CHECK_SPELLING', { text, domain, language, images })`)
-3. Receives `matches` with offsets, replacements and rule IDs
-4. Maps each match to an item with the issue surfaced as error or
-   warning depending on the rule's severity
+3. Empfängt `matches` mit Offsets, Ersatzvorschlägen und Regel-IDs
+4. Mapped jeden Match auf ein Item, wobei das Issue je nach Schweregrad der
+   Regel als Error oder Warning auftaucht
 
-## Element lookup via `_meta.selector`
+## Element-Lookup via `_meta.selector`
 
-Spellcheck **injects spans** around misspelled words so users can
-highlight them. The injected span carries `data-${prefix}-injected="spellcheck"`
-and a unique id. `_meta = { selector: `[data-${prefix}-injected-id="${id}"]` }`
-points right at the injected span — no tag/idx walk needed.
+Spellcheck **injiziert Spans** um falsch geschriebene Wörter, damit Nutzer sie
+hervorheben können. Das injizierte Span trägt
+`data-${prefix}-injected="spellcheck"` und eine eindeutige id.
+`_meta = { selector: `[data-${prefix}-injected-id="${id}"]` }` zeigt direkt
+auf das injizierte Span — kein Tag/idx-Walk nötig.
 
-The framework cleans up these spans on `useModuleAttributes.remove()` by
-unwrapping each span back to a text node.
+Das Framework räumt diese Spans bei `useModuleAttributes.remove()` auf, indem
+es jedes Span zurück zu einem Textknoten unwrappt.
 
-## Image alt text
+## Bild-Alt-Texte
 
-Image alt texts are also sent to LanguageTool (rare but useful — typos
-in alt text are common). They're identified by their `src` so matches
-can be mapped back.
+Bild-Alt-Texte werden ebenfalls an LanguageTool geschickt (selten, aber
+nützlich — Tippfehler in Alt-Texten sind häufig). Sie werden über ihren `src`
+identifiziert, sodass Matches zurückgemappt werden können.
 
-## Custom UI
+## Eigene UI
 
-`Index.vue` groups items by `category` (Rechtschreibung, Grammatik,
-Stil, …) with a per-category dismissed-counter. Users can dismiss
-individual matches via the `@ignore` / `@addWord` events on `SpellItem`.
+`Index.vue` gruppiert Items nach `category` (Rechtschreibung, Grammatik,
+Stil, …) mit einem Dismissed-Counter pro Kategorie. Nutzer können einzelne
+Matches via die `@ignore` / `@addWord`-Events auf `SpellItem` verwerfen.
 
-## Service worker (`background.js`)
+## Service Worker (`background.js`)
 
-Proxies the request to the backend's `/api/spellcheck/check` endpoint.
-The backend handles the actual LanguageTool API call (and adds the
-project's custom dictionary).
+Leitet die Anfrage an den `/api/spellcheck/check`-Endpoint des Backends weiter.
+Das Backend kümmert sich um den eigentlichen LanguageTool-API-Aufruf (und
+ergänzt das projekteigene Wörterbuch).
 
-## Limitations
+## Einschränkungen
 
-- Requires the backend running and the `SPELLCHECK_*` env vars set in
-  the backend's `.env`.
-- Long pages (10k+ characters) can take several seconds — there's a
-  `runningMessage` warning the user.
-- Dismissing a match is per-session only (not persisted).
-- The injected spans alter the DOM. Sites that re-render via
-  React/Vue/Angular may overwrite them; recheck after such re-renders.
+- Setzt voraus, dass das Backend läuft und die `SPELLCHECK_*`-Env-Vars in der
+  `.env` des Backends gesetzt sind.
+- Lange Seiten (10k+ Zeichen) können mehrere Sekunden dauern — es gibt eine
+  `runningMessage`, die den Nutzer warnt.
+- Das Verwerfen eines Matches gilt nur pro Session (nicht persistiert).
+- Die injizierten Spans verändern das DOM. Seiten, die via React/Vue/Angular
+  neu rendern, können sie überschreiben; nach solchem Re-Rendering erneut prüfen.

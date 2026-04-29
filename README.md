@@ -1,8 +1,8 @@
 # wwweBar – Chrome Extension
 
-wwweBar ist eine Chrome Extension für Webagenturen und Entwickler, die Webseiten auf SEO, Qualität, Barrierefreiheit und Performance prüft – direkt im Browser, ohne externe Tools.
+wwweBar ist eine interne Chrome Extension, die allen Mitarbeitern zugänglich gemacht werden soll und die tägliche Arbeit an Webseiten vereinfacht. Sie prüft die aktuell geöffnete Seite auf SEO, Qualität, Barrierefreiheit und Performance – direkt im Browser, ohne dass externe Tools oder Tabs nötig sind.
 
-Die Extension analysiert die aktuell geöffnete Seite und zeigt Fehler, Warnungen und Hinweise übersichtlich in einer Seitenleiste an. Ergebnisse können direkt auf der Seite visualisiert werden (Overlay). Ein integrierter KI-Assistent hilft bei der Analyse und Behebung von Problemen.
+Fehler, Warnungen und Hinweise erscheinen übersichtlich in einer Seitenleiste. Ergebnisse können direkt auf der Seite als Overlay visualisiert werden, und ein integrierter KI-Assistent hilft beim Analysieren und Beheben von Problemen.
 
 ---
 

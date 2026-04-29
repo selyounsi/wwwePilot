@@ -1,47 +1,46 @@
-# Module API reference
+# Modul-API-Referenz
 
-Complete contract for module authors. For the high-level introduction
-read [architecture.md](./architecture.md) and the recipe in
-[creating-a-module.md](./creating-a-module.md) first.
+Vollständiger Vertrag für Modul-Autoren. Für die übergreifende Einführung lies
+zuerst [architecture.md](./architecture.md) und das Rezept in
+[creating-a-module.md](./creating-a-module.md).
 
 ---
 
 ## `module.json`
 
-Static module configuration. Read by `useModuleLoader` at startup.
+Statische Modul-Konfiguration. Wird beim Start von `useModuleLoader` gelesen.
 
 ```jsonc
 {
-  "id":            "my-check",       // string, required, unique, kebab-case
-  "name":          "Mein Check",     // string, required, dashboard label
-  "description":   "Was prüft das",  // string, dashboard subtitle
-  "icon":          "mdiCheck",       // MDI icon name (camelCase)
-  "active":        true,             // boolean, default true. Set false to hide
-  "order":         50,               // number, sort order on dashboard
-  "checkOnReload": false,            // boolean, re-run when tab finishes loading
-  "allowChatBot":  true,             // boolean, show "Im Chat analysieren" on items
+  "id":            "my-check",       // string, erforderlich, eindeutig, kebab-case
+  "name":          "Mein Check",     // string, erforderlich, Dashboard-Label
+  "description":   "Was prüft das",  // string, Dashboard-Untertitel
+  "icon":          "mdiCheck",       // MDI-Icon-Name (camelCase)
+  "active":        true,             // boolean, Default true. false zum Ausblenden
+  "order":         50,               // number, Sortierreihenfolge im Dashboard
+  "checkOnReload": false,            // boolean, erneut ausführen wenn Tab fertig lädt
+  "allowChatBot":  true,             // boolean, "Im Chat analysieren" auf Items zeigen
   "defaultFilter": "issues"          // 'issues' | 'errors' | 'warnings' | 'all'
 }
 ```
 
-Static keys can also be exported from `index.js` for backward compat (the
-loader merges with `module.json` winning).
+Statische Keys können aus Gründen der Rückwärtskompatibilität auch aus
+`index.js` exportiert werden (der Loader merged, wobei `module.json` gewinnt).
 
 ---
 
 ## `index.js`
 
-The module's checker. Runs in the **page context** of the website being
-audited.
+Der Checker des Moduls. Läuft im **Page-Kontext** der geprüften Webseite.
 
-### Default export — the checker
+### Default-Export — der Checker
 
 ```ts
 type Check = (apiConfig?: any) => Result | Promise<Result>
 ```
 
-Sync or async. Receives the module's `apiConfig` export (if any) as first
-argument.
+Sync oder async. Erhält den `apiConfig`-Export des Moduls (falls vorhanden) als
+erstes Argument.
 
 ```js
 export default async function check() {
@@ -51,25 +50,25 @@ export default async function check() {
 }
 ```
 
-### Named exports
+### Benannte Exports
 
-| Export | Type | Default | Use |
+| Export | Typ | Default | Verwendung |
 |---|---|---|---|
-| `overlay` | `OverlayConfig \| null` | `null` | Enables the badge layer (see below) |
-| `apiConfig` | `any` | `null` | Object passed as the first arg to `check()` — use this to pass values from your bundler-imported config (e.g. URLs from `@/config/api.js`) |
+| `overlay` | `OverlayConfig \| null` | `null` | Aktiviert die Badge-Ebene (siehe unten) |
+| `apiConfig` | `any` | `null` | Objekt, das als erstes Argument an `check()` übergeben wird — nutze dies, um Werte aus deiner Bundler-importierten Config (z.B. URLs aus `@/config/api.js`) durchzureichen |
 
 ### `OverlayConfig`
 
 ```ts
 interface OverlayConfig {
-  enabled: boolean              // master switch
-  labelFn: (item) => string     // text shown in the badge above each element
-  onText:  string               // button label when overlay is active
-  offText: string               // button label when overlay is hidden
+  enabled: boolean              // Hauptschalter
+  labelFn: (item) => string     // Text, der im Badge über jedem Element angezeigt wird
+  onText:  string               // Button-Label, wenn Overlay aktiv ist
+  offText: string               // Button-Label, wenn Overlay versteckt ist
 }
 ```
 
-Example:
+Beispiel:
 ```js
 export const overlay = {
   enabled: true,
@@ -81,10 +80,10 @@ export const overlay = {
 
 ---
 
-## Window helpers (page context)
+## Window-Helper (Page-Kontext)
 
-Pre-injected by `useCheckRunner.injectHelper()` before any checker runs.
-Available on `window.*` inside your `check()` function.
+Vorab injiziert von `useCheckRunner.injectHelper()`, bevor irgendein Checker
+läuft. Innerhalb deiner `check()`-Funktion auf `window.*` verfügbar.
 
 ### `createCheckResult()`
 
@@ -98,22 +97,22 @@ function createCheckResult(): {
 }
 
 interface Check {
-  when:        boolean              // include this check?
+  when:        boolean              // diesen Check einbeziehen?
   type:        'error' | 'warning' | 'success'
-  title:       string               // shown as the issue message
-  description?: string              // optional context (not currently rendered)
+  title:       string               // wird als Issue-Nachricht angezeigt
+  description?: string              // optionaler Kontext (aktuell nicht gerendert)
 }
 
 interface Item {
-  type:    'error' | 'warning' | 'success'   // worst severity in `issues`
+  type:    'error' | 'warning' | 'success'   // schlimmster Schweregrad in `issues`
   issues:  { type, message }[]
-  visible: boolean                  // result of isElementVisible(el)
-  element: string                   // UUID for overlay/highlight lookup
-  ...extra                          // anything the module passed in `extra`
+  visible: boolean                  // Ergebnis von isElementVisible(el)
+  element: string                   // UUID für Overlay-/Highlight-Lookup
+  ...extra                          // alles, was das Modul in `extra` übergeben hat
 }
 
 interface Result {
-  errors:       { message: string }[]   // de-duplicated, with (Nx) suffix
+  errors:       { message: string }[]   // dedupliziert, mit (Nx)-Suffix
   warnings:     { message: string }[]
   errorCount:   number
   warningCount: number
@@ -122,20 +121,19 @@ interface Result {
 ```
 
 `addItem(el, checks, extra)`:
-- `checks` filters out `when: false` and `type: 'success'` for the issues
-  list, then derives the item's overall `type` from worst severity
-- `extra` is spread into the item — typically holds display props (`text`,
-  `name`, `href`), the `_meta` for element lookup, and module-specific
-  fields
+- `checks` filtert `when: false` und `type: 'success'` für die Issues-Liste heraus
+  und leitet daraus den Gesamt-`type` des Items vom schlimmsten Schweregrad ab
+- `extra` wird ins Item gespreaded — enthält typischerweise Display-Props (`text`,
+  `name`, `href`), das `_meta` für das Element-Lookup und modulspezifische Felder
 
 ### `setHighlightElement()`
 
 ```ts
-function setHighlightElement(): string   // returns crypto.randomUUID()
+function setHighlightElement(): string   // gibt crypto.randomUUID() zurück
 ```
 
-Returns a fresh UUID. `addItem` calls this for you and stores the result
-on `item.element`. You rarely need to call it directly.
+Gibt eine frische UUID zurück. `addItem` ruft das für dich auf und speichert das
+Ergebnis in `item.element`. Du musst es selten direkt aufrufen.
 
 ### `isElementVisible(el)`
 
@@ -143,9 +141,9 @@ on `item.element`. You rarely need to call it directly.
 function isElementVisible(el: Element): boolean
 ```
 
-Recursive visibility check covering `display`, `visibility`, `opacity`,
-zero-scale `transform`, and ancestor visibility. Used internally by
-`addItem` to set `item.visible`.
+Rekursive Sichtbarkeitsprüfung, die `display`, `visibility`, `opacity`,
+Zero-Scale-`transform` und Vorfahren-Sichtbarkeit abdeckt. Wird intern von
+`addItem` genutzt, um `item.visible` zu setzen.
 
 ### `hasVisualContent(el)`
 
@@ -153,13 +151,13 @@ zero-scale `transform`, and ancestor visibility. Used internally by
 function hasVisualContent(el: Element): boolean
 ```
 
-Returns `true` if the element renders anything visible — text, child
-`<img>/<svg>/<picture>/<video>/<canvas>`, `::before`/`::after` content
-(icon fonts), or a background-image (CSS icons).
+Gibt `true` zurück, wenn das Element irgendetwas Sichtbares rendert — Text, Kind-
+`<img>/<svg>/<picture>/<video>/<canvas>`, `::before`/`::after`-Content
+(Icon-Fonts) oder ein background-image (CSS-Icons).
 
-Useful for distinguishing truly empty elements from icon-styled ones.
-Used by `links` to detect icon-only `<a>` tags and by `contrast` to fall
-back to the pseudo's colour when the text itself is hidden.
+Nützlich, um wirklich leere Elemente von Icon-gestylten zu unterscheiden.
+Wird von `links` benutzt, um Icon-only-`<a>`-Tags zu erkennen, und von `contrast`,
+um auf die Pseudo-Farbe zurückzufallen, wenn der Text selbst versteckt ist.
 
 ### `runInBackground(type, payload?)`
 
@@ -167,8 +165,8 @@ back to the pseudo's colour when the text itself is hidden.
 function runInBackground(type: string, payload?: object): Promise<any>
 ```
 
-Promise-wrapped `chrome.runtime.sendMessage`. Calls a service-worker
-handler by its `type` and resolves with the handler's response.
+Promise-gewrappter `chrome.runtime.sendMessage`. Ruft einen Service-Worker-
+Handler über seinen `type` auf und löst mit der Response des Handlers auf.
 
 ```js
 const reply = await runInBackground('CHECK_LINKS', { urls })
@@ -176,42 +174,42 @@ const reply = await runInBackground('CHECK_LINKS', { urls })
 
 ---
 
-## `_meta` — element lookup
+## `_meta` — Element-Lookup
 
-The framework needs to find each item's element again later (for
-overlays, highlight, "Im Chat analysieren"). The `_meta` field on each
-item tells `useModuleAttributes.findEl` how to look it up.
+Das Framework muss das Element jedes Items später wiederfinden (für Overlays,
+Highlight, "Im Chat analysieren"). Das `_meta`-Feld jedes Items sagt
+`useModuleAttributes.findEl`, wie es nachschlagen soll.
 
-Resolution order (first match wins):
+Auflösungsreihenfolge (erster Treffer gewinnt):
 
-| Strategy | `_meta` shape | When to use |
+| Strategie | `_meta`-Form | Wann verwenden |
 |---|---|---|
-| **CSS selector** | `{ selector: '#x' }` | You injected the element yourself |
-| **Tag + index** | `{ tag: 'H1', idx: 3 }` | Most common — n-th element of that tag |
-| **Text-based** | `{ text: 'foo', tag: 'P' }` | Text-content match (used by contrast) |
-| **Background-image** | `{ isBackground: true, idx: 2 }` | `<div>` with CSS background-image |
-| **Image fingerprint** | `{ src, name, alt }` | Image lookup by filename / alt |
+| **CSS-Selektor** | `{ selector: '#x' }` | Du hast das Element selbst injiziert |
+| **Tag + Index** | `{ tag: 'H1', idx: 3 }` | Häufigster Fall — n-tes Element dieses Tags |
+| **Text-basiert** | `{ text: 'foo', tag: 'P' }` | Match über Textinhalt (verwendet von Contrast) |
+| **Background-Image** | `{ isBackground: true, idx: 2 }` | `<div>` mit CSS-background-image |
+| **Bild-Fingerprint** | `{ src, name, alt }` | Bild-Lookup über Dateiname / alt |
 
-Always set `_meta` — without it, badges and HTML extraction won't work.
+Setze `_meta` immer — ohne es funktionieren weder Badges noch HTML-Extraktion.
 
 ---
 
 ## `background.js` (optional)
 
-Service-worker handler. Auto-loaded by `src/background.js` from any
-module's directory.
+Service-Worker-Handler. Wird von `src/background.js` aus dem Verzeichnis jedes
+Moduls automatisch geladen.
 
 ```ts
-export const type: string         // message type to register for
+export const type: string         // Nachrichtentyp, für den registriert wird
 
 export async function handle(
-  msg: any,                       // the message body
+  msg: any,                       // der Nachrichtenkörper
   sendResponse: (reply: any) => void,
-  sender: chrome.runtime.MessageSender,   // sender.tab.id is the calling tab
+  sender: chrome.runtime.MessageSender,   // sender.tab.id ist der aufrufende Tab
 ): Promise<void>
 ```
 
-Single type:
+Einzelner Type:
 ```js
 export const type = 'AXE_RUN'
 export async function handle(msg, sendResponse, sender) {
@@ -219,7 +217,7 @@ export async function handle(msg, sendResponse, sender) {
 }
 ```
 
-Multiple types (one handler):
+Mehrere Types (ein Handler):
 ```js
 export const types = ['CLAUDE_KEY_SET', 'CLAUDE_KEY_GET']
 export async function handle(msg, sendResponse) {
@@ -230,41 +228,41 @@ export async function handle(msg, sendResponse) {
 }
 ```
 
-The handler can use any `chrome.*` API available to service workers —
+Der Handler kann jede `chrome.*`-API nutzen, die für Service Worker verfügbar ist —
 `chrome.tabs`, `chrome.scripting`, `chrome.tabs.captureVisibleTab`,
-`chrome.storage`, `fetch` (no CORS preflight from SW context), etc.
+`chrome.storage`, `fetch` (kein CORS-Preflight aus dem SW-Kontext) usw.
 
 ---
 
-## Sidebar UI components
+## Sidebar-UI-Komponenten
 
 ### `<ModulePage>`
 
-Wraps a module's sidebar page with the standard layout. Props:
+Wrappt die Sidebar-Seite eines Moduls mit dem Standard-Layout. Props:
 
-| Prop | Type | Default | Use |
+| Prop | Typ | Default | Verwendung |
 |---|---|---|---|
-| `moduleId` | String | required | Looks up module config |
-| `label` | String | required | Section title |
-| `itemComponent` | Vue Component | null | Rendered for each `result.items[i]` |
-| `runningMessage` | String | '' | Optional caption shown below the spinner |
-| `emptyMessage` | String | "Noch nicht geprüft …" | Shown in idle state |
-| `showStats` | Boolean | true | Show ModuleStats above the items |
+| `moduleId` | String | erforderlich | Schlägt die Modul-Konfiguration nach |
+| `label` | String | erforderlich | Section-Titel |
+| `itemComponent` | Vue Component | null | Wird für jedes `result.items[i]` gerendert |
+| `runningMessage` | String | '' | Optionale Caption unter dem Spinner |
+| `emptyMessage` | String | "Noch nicht geprüft …" | Wird im Idle-State angezeigt |
+| `showStats` | Boolean | true | ModuleStats über den Items anzeigen |
 
-Default slot receives `{ result, raw }` for full custom rendering.
+Der Default-Slot erhält `{ result, raw }` für vollständig eigenes Rendering.
 
 ### `<ModuleSection>`
 
-Inner part: filter dropdown, recheck button, overlay toggle, items slot.
-You normally don't use this directly — `<ModulePage>` wraps it.
+Innerer Teil: Filter-Dropdown, Recheck-Button, Overlay-Toggle, Items-Slot.
+Du nutzt das normalerweise nicht direkt — `<ModulePage>` wrappt es.
 
-Slot exposes `{ result, raw }`:
-- `result` — possibly filtered, what the user wants to see
-- `raw` — unfiltered, use for stats / total counts
+Slot exponiert `{ result, raw }`:
+- `result` — eventuell gefiltert, was der Nutzer sehen will
+- `raw` — ungefiltert, für Statistiken / Gesamtzahlen
 
 ### `<ModuleItem>`
 
-Single result row. Use inside an item-component:
+Einzelne Ergebniszeile. Verwende sie innerhalb einer Item-Komponente:
 
 ```vue
 <ModuleItem :item="normalized" variant="box">
@@ -274,17 +272,17 @@ Single result row. Use inside an item-component:
 </ModuleItem>
 ```
 
-Variants: `'box'` (rounded card) or `'list'` (flat list row).
+Varianten: `'box'` (gerundete Karte) oder `'list'` (flache Listenzeile).
 
-The component derives display fields from the item:
-- `title` from `item.title ?? item.text ?? item.name ?? item.href`
-- `details` from `item.details ?? item.tag ?? item.href`
-- `image` from `item.image ?? item.src`
-- Status colour from `item.issues` (worst type)
+Die Komponente leitet die Anzeige-Felder vom Item ab:
+- `title` aus `item.title ?? item.text ?? item.name ?? item.href`
+- `details` aus `item.details ?? item.tag ?? item.href`
+- `image` aus `item.image ?? item.src`
+- Status-Farbe aus `item.issues` (schlimmster Type)
 
 ### `<DetailRow>`
 
-Labelled key-value row used inside item expand views.
+Zeile mit Label und Wert, verwendet in den Expand-Views der Items.
 
 ```vue
 <DetailRow label="Selector" mono width="w-24">
@@ -293,21 +291,21 @@ Labelled key-value row used inside item expand views.
 ```
 
 Props:
-- `label` (required) — left-side label text
-- `width` — Tailwind width class for label, default `w-20`
-- `mono` — boolean, applies `font-mono` to the label
+- `label` (erforderlich) — Label-Text auf der linken Seite
+- `width` — Tailwind-Width-Klasse für das Label, Default `w-20`
+- `mono` — boolean, wendet `font-mono` auf das Label an
 
-Slot is the value (right side).
+Slot ist der Wert (rechte Seite).
 
 ### `<ModuleStats>`
 
-Gesamt / Fehler / Warnungen badges. Props:
+Gesamt / Fehler / Warnungen Badges. Props:
 
-| Prop | Default | Use |
+| Prop | Default | Verwendung |
 |---|---|---|
-| `result` | required | Item array container |
-| `total` | true | Show "Gesamt" badge |
-| `errors` | true | Show "Fehler" badge |
-| `warnings` | true | Show "Warnungen" badge |
+| `result` | erforderlich | Item-Array-Container |
+| `total` | true | "Gesamt"-Badge anzeigen |
+| `errors` | true | "Fehler"-Badge anzeigen |
+| `warnings` | true | "Warnungen"-Badge anzeigen |
 
-Default slot for additional StatBox cells.
+Default-Slot für zusätzliche StatBox-Zellen.

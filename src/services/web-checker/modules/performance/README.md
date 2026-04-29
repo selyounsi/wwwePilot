@@ -1,44 +1,44 @@
-# Performance module
+# Performance-Modul
 
-Page-load timings, resource counts and PageSpeed Insights audit.
+Page-Load-Timings, Ressourcen-Counts und PageSpeed-Insights-Audit.
 
-## What it checks
+## Was geprüft wird
 
-### From `performance.timing` / Resource Timing API
-- TTFB, DOMContentLoaded, Load events
-- Counts of CSS / JS / Font / Image / Other resources
-- Total transferred bytes
+### Aus `performance.timing` / Resource Timing API
+- TTFB, DOMContentLoaded, Load-Events
+- Counts von CSS- / JS- / Font- / Image- / Other-Ressourcen
+- Insgesamt übertragene Bytes
 
-### From PageSpeed Insights API
-Two items: **Mobile** and **Desktop**. For each strategy:
-- Overall Performance score (0-100)
-- Core Web Vitals (LCP, INP, CLS, TBT, FCP, TTFB) with score colour
-- Top opportunities ("Bilder optimieren", "JS reduzieren", …) with
-  estimated savings
+### Aus der PageSpeed-Insights-API
+Zwei Items: **Mobile** und **Desktop**. Pro Strategie:
+- Gesamt-Performance-Score (0-100)
+- Core Web Vitals (LCP, INP, CLS, TBT, FCP, TTFB) mit Score-Farbe
+- Top-Opportunities ("Bilder optimieren", "JS reduzieren", …) mit
+  geschätzter Einsparung
 
-## API config
+## API-Konfiguration
 
-The PageSpeed URL is exported via `apiConfig` so the page-context
-checker can read it without a bundler import:
+Die PageSpeed-URL wird via `apiConfig` exportiert, damit der Page-Kontext-
+Checker sie ohne Bundler-Import lesen kann:
 
 ```js
 import { API } from '@/config/api.js'
 export const apiConfig = { pagespeedUrl: API.pagespeed.url }
 ```
 
-The framework passes this object as the first argument to `check()`.
+Das Framework übergibt dieses Objekt als erstes Argument an `check()`.
 
-## Custom display
+## Eigene Anzeige
 
-`PerformanceItem` has special expand views for the PSI items (`psi-mobile`
-/ `psi-desktop`) showing the Vitals grid and Opportunities list. Other
-items use the standard ModuleItem expand.
+`PerformanceItem` hat spezielle Expand-Views für die PSI-Items (`psi-mobile`
+/ `psi-desktop`), die das Vitals-Grid und die Opportunities-Liste anzeigen.
+Andere Items nutzen den Standard-Expand von ModuleItem.
 
-## Limitations
+## Einschränkungen
 
-- PSI requires the page to be publicly accessible (Google's crawler
-  needs to reach it). Localhost or password-protected pages won't get
-  PSI results.
-- One PSI call per strategy — Mobile and Desktop run in parallel via
+- PSI braucht eine öffentlich erreichbare Seite (Googles Crawler muss sie
+  erreichen). Localhost oder passwortgeschützte Seiten erhalten keine PSI-
+  Ergebnisse.
+- Ein PSI-Aufruf pro Strategie — Mobile und Desktop laufen parallel via
   `Promise.all`.
-- Results are not cached — every check makes fresh API calls.
+- Ergebnisse werden nicht gecached — jede Prüfung macht frische API-Aufrufe.

@@ -1,53 +1,53 @@
-# Images module
+# Images-Modul
 
-Alt-text quality, lightbox configuration, upscaling detection and
-background-image flags.
+Alt-Text-Qualität, Lightbox-Konfiguration, Upscaling-Erkennung und
+Background-Image-Markierungen.
 
-## What it checks
+## Was geprüft wird
 
-### `<img>` tags
-- **Broken** — `naturalWidth === 0 && complete` (and not lazy-loaded)
-- **Blacklisted filename** — patterns like `shutterstock`, `gettyimages`,
+### `<img>`-Tags
+- **Defekt** — `naturalWidth === 0 && complete` (und nicht lazy-loaded)
+- **Geblacklisteter Dateiname** — Muster wie `shutterstock`, `gettyimages`,
   `istock`, `screenshot`, `depositphotos`, `adobe-stock`, `dreamstime`
-- **Missing alt** — error
-- **Alt too short** — warning when `< 3` characters
-- **Auto-generated alt** — error when alt matches the filename or looks
-  like a hash / generated string (heuristics: 10+ alphanumeric chars,
-  hex blob, contains `resized`/`large`/`small`/`medium`/`_x[12]_`)
-- **Lightbox** — when wrapped in `.cms-image a[href=image]`, the
-  `.cms-image` container must have `lightbox-zoom-image` class or
-  `data-lightbox-type` attribute
-- **Upscaled** — warning when rendered size is more than 2px larger than
-  natural size (skipped for `.svg` — vector scales losslessly)
+- **Fehlendes alt** — Fehler
+- **Alt zu kurz** — Warning bei `< 3` Zeichen
+- **Auto-generiertes alt** — Fehler, wenn alt mit dem Dateinamen übereinstimmt
+  oder wie ein Hash / generierter String aussieht (Heuristiken: 10+ alphanumerische
+  Zeichen, Hex-Blob, enthält `resized`/`large`/`small`/`medium`/`_x[12]_`)
+- **Lightbox** — wenn in `.cms-image a[href=image]` gewrappt, muss der
+  `.cms-image`-Container die Klasse `lightbox-zoom-image` oder das Attribut
+  `data-lightbox-type` haben
+- **Hochskaliert** — Warning, wenn die gerenderte Größe mehr als 2px größer ist
+  als die natürliche Größe (übersprungen für `.svg` — Vektor skaliert verlustfrei)
 
-### Background images
-- **`<div style="background-image: url(...)">`** — flagged because
-  background images are bad for SEO (no alt text possible)
-- **`data-cms-src` on non-`<img>`** — same reasoning
+### Hintergrundbilder
+- **`<div style="background-image: url(...)">`** — markiert, weil
+  Hintergrundbilder schlecht für SEO sind (kein Alt-Text möglich)
+- **`data-cms-src` auf nicht-`<img>`** — gleiche Begründung
 
-### Lightbox-only `<a>` links (no inner `<img>`)
-- Same lightbox-class check as above
+### Lightbox-only-`<a>`-Links (kein inneres `<img>`)
+- Gleiche Lightbox-Klassen-Prüfung wie oben
 
-## Element lookup
+## Element-Lookup
 
-- `<img>` items: `_meta = { tag: 'IMG', idx, src, name, alt }` — supports
-  fingerprint-based lookup via filename if tag+idx fails (CMS images
-  with hashed src tend to be stable by filename)
-- Background-image divs: `_meta = { isBackground: true, idx }` — looked
-  up via `[style*="background-image"], [data-cms-src]:not(img)` order
+- `<img>`-Items: `_meta = { tag: 'IMG', idx, src, name, alt }` — unterstützt
+  Fingerprint-basiertes Lookup über den Dateinamen, falls tag+idx fehlschlägt
+  (CMS-Bilder mit gehashtem src sind oft stabil über den Dateinamen)
+- Background-Image-Divs: `_meta = { isBackground: true, idx }` — werden über
+  die Reihenfolge `[style*="background-image"], [data-cms-src]:not(img)` aufgelöst
 
 ## Thumbnails
 
-Each item shows a 64×64 thumbnail in the list. Background-image src is
-resolved to absolute URL via `new URL(rawSrc, document.baseURI).href` so
-`<img>` rendering works (relative `/upload/...` paths would 404 against
-the sidebar's `chrome-extension://` origin).
+Jedes Item zeigt ein 64×64 Thumbnail in der Liste. Background-Image-src wird
+via `new URL(rawSrc, document.baseURI).href` zur absoluten URL aufgelöst,
+sodass `<img>`-Rendering funktioniert (relative `/upload/...`-Pfade würden
+gegen den `chrome-extension://`-Origin der Sidebar 404en).
 
-## Limitations
+## Einschränkungen
 
-- Lightbox detection is hard-coded to the project's `.cms-image` /
-  `.lightbox-zoom-image` convention. Other lightbox libraries (Fancybox,
-  GLightbox, etc.) need adjustment.
-- The blacklist is a fixed list; not configurable via UI yet.
-- "Auto-generated alt" heuristics catch most CMS auto-fills but are not
-  exhaustive.
+- Lightbox-Erkennung ist auf die `.cms-image` / `.lightbox-zoom-image`-
+  Konvention des Projekts fest verdrahtet. Andere Lightbox-Bibliotheken
+  (Fancybox, GLightbox usw.) brauchen Anpassungen.
+- Die Blacklist ist eine fixe Liste; noch nicht über die UI konfigurierbar.
+- "Auto-generiertes alt"-Heuristiken erfassen die meisten CMS-Auto-Fills,
+  sind aber nicht erschöpfend.

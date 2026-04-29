@@ -1,45 +1,46 @@
-# Structured-data module
+# Structured-Data-Modul
 
-Detects and inspects JSON-LD schema markup on the page, mirroring how
-Google's Rich Results Test groups findings.
+Erkennt und inspiziert JSON-LD-Schema-Markup auf der Seite und spiegelt dabei,
+wie Googles Rich Results Test Findings gruppiert.
 
-## What it checks
+## Was geprüft wird
 
-1. Walks all `<script type="application/ld+json">` tags
-2. Recursively flattens the JSON tree, including:
-   - `@graph` containers
-   - top-level arrays
-   - nested entities like `review[]` inside a LocalBusiness
-3. Filters to **rich-result-relevant `@type`s** (LocalBusiness, Review,
-   AggregateRating, Article, Product, Event, FAQPage, etc.) — helper
-   types like `PostalAddress`, `GeoCoordinates`, `Rating` are skipped
-4. Groups entities by primary `@type` — one item per type with a counter
-5. Per entity: validates the `image` URL — reachable + dimension checks
-   (e.g. `social_branding.png` should be ≥ 250×250)
+1. Durchwandert alle `<script type="application/ld+json">`-Tags
+2. Flacht den JSON-Baum rekursiv ab, inklusive:
+   - `@graph`-Containern
+   - Top-Level-Arrays
+   - verschachtelten Entitäten wie `review[]` innerhalb eines LocalBusiness
+3. Filtert auf **rich-result-relevante `@type`s** (LocalBusiness, Review,
+   AggregateRating, Article, Product, Event, FAQPage usw.) — Hilfstypen
+   wie `PostalAddress`, `GeoCoordinates`, `Rating` werden übersprungen
+4. Gruppiert Entitäten nach primärem `@type` — ein Item pro Type mit Counter
+5. Pro Entität: validiert die `image`-URL — Erreichbarkeit + Dimensionsprüfung
+   (z.B. `social_branding.png` sollte ≥ 250×250 sein)
 
-## Why grouped, not flat
+## Warum gruppiert, nicht flach
 
-Google's Rich Results Test shows "LocalBusiness: 2 elements" not two
-separate entries. We mirror that. Each group's expand view drills down
-into the individual entities (clickable sub-collapsibles).
+Googles Rich Results Test zeigt "LocalBusiness: 2 Elemente", nicht zwei
+separate Einträge. Wir spiegeln das. Die Expand-View jeder Gruppe drillt in
+die einzelnen Entitäten herunter (klickbare Sub-Collapsibles).
 
-## Image reachability
+## Bild-Erreichbarkeit
 
-Uses `<img>` probes (not `fetch()`) so cross-origin images without CORS
-headers don't false-fail. `naturalWidth/Height` is readable either way.
+Nutzt `<img>`-Probes (nicht `fetch()`), damit Cross-Origin-Bilder ohne
+CORS-Header nicht fälschlich fehlschlagen. `naturalWidth/Height` ist so oder
+so lesbar.
 
-## Why `RICH_RESULT_TYPES` lives inside `check()`
+## Warum `RICH_RESULT_TYPES` innerhalb von `check()` lebt
 
-`chrome.scripting.executeScript` only serialises the function body — any
-module-scope constant would be `undefined` in the page context. The Set
-must be declared inside `check()` to be available there.
+`chrome.scripting.executeScript` serialisiert nur den Funktionskörper — jede
+Konstante auf Modulebene wäre im Page-Kontext `undefined`. Das Set muss
+innerhalb von `check()` deklariert sein, um dort verfügbar zu sein.
 
-## Limitations
+## Einschränkungen
 
-- We don't walk Schema.org inheritance — `LocalBusiness` is not also
-  reported as `Organization` like Google does. Same physical schema, one
-  classification.
-- Person entities are intentionally **not** in the whitelist. They'd
-  show up as duplicates of every Review's author.
-- We don't read pixels of bg-images for image-validation; only the URL
-  reachability and natural size.
+- Wir verfolgen keine Schema.org-Vererbung — `LocalBusiness` wird nicht
+  zusätzlich als `Organization` gemeldet, wie Google es macht. Gleiches
+  physisches Schema, eine Klassifikation.
+- Person-Entitäten sind absichtlich **nicht** in der Whitelist. Sie würden
+  als Duplikate des Authors jedes Reviews auftauchen.
+- Wir lesen keine Pixel von Bg-Images für die Bild-Validierung; nur die
+  URL-Erreichbarkeit und natürliche Größe.

@@ -1,81 +1,81 @@
-# Accessibility module (axe-core)
+# Accessibility-Modul (axe-core)
 
-WCAG audit via [axe-core](https://github.com/dequelabs/axe-core), the
-industry-standard accessibility testing library used by Lighthouse and
-many CI tools.
+WCAG-Audit via [axe-core](https://github.com/dequelabs/axe-core), der
+Industriestandard-Bibliothek für Accessibility-Tests, die von Lighthouse und
+vielen CI-Tools verwendet wird.
 
-## What it checks
+## Was geprüft wird
 
-Runs `axe.run()` against the page and reports:
+Führt `axe.run()` gegen die Seite aus und meldet:
 
-- **Violations** — confirmed WCAG failures (mapped to error or warning
-  based on impact)
-- **Incomplete** — issues axe can't decide automatically; user should
-  manually verify (mapped to warning, prefixed with `[Manuelle Prüfung]`)
+- **Violations** — bestätigte WCAG-Verstöße (je nach Impact als Error oder
+  Warning eingestuft)
+- **Incomplete** — Issues, die axe nicht automatisch entscheiden kann; der
+  Nutzer sollte manuell prüfen (als Warning eingestuft, mit `[Manuelle Prüfung]`
+  als Präfix)
 
-axe covers ~90 WCAG rules including ARIA usage, form labels, landmark
-regions, language attributes, role/state/value validity, etc.
+axe deckt ~90 WCAG-Regeln ab, darunter ARIA-Verwendung, Formular-Labels,
+Landmark-Regionen, Sprachattribute, Gültigkeit von role/state/value usw.
 
-## Severity mapping
+## Schweregrad-Mapping
 
-| axe impact | Our type | German label |
+| axe Impact | Unser Type | Deutsches Label |
 |---|---|---|
 | `critical` | error | Kritisch |
 | `serious` | error | Schwerwiegend |
 | `moderate` | warning | Mittel |
 | `minor` | warning | Gering |
-| (incomplete, no impact) | warning | Manuelle Prüfung |
+| (incomplete, kein Impact) | warning | Manuelle Prüfung |
 
-## Disabled rules (avoid duplicates)
+## Deaktivierte Regeln (Duplikate vermeiden)
 
-The following rules are disabled because we have specialised modules for
-them:
+Die folgenden Regeln sind deaktiviert, weil wir spezialisierte Module dafür haben:
 
-- `color-contrast` — our `contrast` module uses pixel sampling
-- `image-alt` — `images` module
-- `link-name` — `links` module
-- `heading-order`, `empty-heading` — `headings` module
-- `html-has-lang`, `meta-viewport`, `document-title` — `overview` module
+- `color-contrast` — unser `contrast`-Modul nutzt Pixel-Sampling
+- `image-alt` — `images`-Modul
+- `link-name` — `links`-Modul
+- `heading-order`, `empty-heading` — `headings`-Modul
+- `html-has-lang`, `meta-viewport`, `document-title` — `overview`-Modul
 
-## German locale
+## Deutsche Lokalisierung
 
-`axe-core/locales/de.json` is bundled into the extension. The service
-worker loads it via `chrome.runtime.getURL('axe-locale-de.json')` and
-passes it to `axe.configure({ locale })` before each run, so help texts
-and failure summaries appear in German. Rule IDs and impact enums stay
-English (they're identifiers, not UI).
+`axe-core/locales/de.json` ist in die Extension gebündelt. Der Service Worker
+lädt sie via `chrome.runtime.getURL('axe-locale-de.json')` und übergibt sie vor
+jedem Lauf an `axe.configure({ locale })`, sodass Hilfe-Texte und Failure-
+Summaries auf Deutsch erscheinen. Regel-IDs und Impact-Enums bleiben Englisch
+(es sind Bezeichner, keine UI).
 
-## How axe is loaded
+## Wie axe geladen wird
 
-axe.min.js is **not bundled** into the extension's main JS — it's a
-500KB file that we inject into the page on demand:
+axe.min.js ist **nicht in das Haupt-JS der Extension gebündelt** — es ist eine
+500KB große Datei, die wir bei Bedarf in die Seite injizieren:
 
-1. Vite plugin (`copy-axe-core` in `vite.config.js`) copies
-   `node_modules/axe-core/axe.min.js` → `public/axe.min.js` at build
-   time. Vite/CRXJS then bundles `public/` into `dist/` root.
-2. The same plugin copies `axe-core/locales/de.json` →
+1. Vite-Plugin (`copy-axe-core` in `vite.config.js`) kopiert
+   `node_modules/axe-core/axe.min.js` → `public/axe.min.js` zur Build-Zeit.
+   Vite/CRXJS bündelt dann `public/` in das `dist/`-Root.
+2. Dasselbe Plugin kopiert `axe-core/locales/de.json` →
    `public/axe-locale-de.json`.
-3. On `AXE_RUN`, the service worker injects `axe.min.js` via
-   `chrome.scripting.executeScript({ files: ['axe.min.js'] })` then
-   runs a second `executeScript` with a func that calls `axe.run()`.
+3. Bei `AXE_RUN` injiziert der Service Worker `axe.min.js` via
+   `chrome.scripting.executeScript({ files: ['axe.min.js'] })` und führt dann
+   ein zweites `executeScript` mit einer Funktion aus, die `axe.run()` aufruft.
 
-Both auto-copied files are gitignored.
+Beide automatisch kopierten Dateien sind gitignored.
 
-## Item display
+## Item-Anzeige
 
-Each axe finding becomes one item:
-- **Title** = CSS selector of the failing element
-- **Issue** = rule help text (in German)
-- **Details** = rule ID
-- Expand → Regel, Impact, Selector, HTML snippet, Doku link
+Jedes axe-Finding wird zu einem Item:
+- **Titel** = CSS-Selektor des fehlgeschlagenen Elements
+- **Issue** = Hilfe-Text der Regel (auf Deutsch)
+- **Details** = Regel-ID
+- Expand → Regel, Impact, Selector, HTML-Snippet, Doku-Link
 
-## Limitations
+## Einschränkungen
 
-- axe-core needs to load before each check — adds ~100ms vs. native
-  modules.
-- Some rules require manual review and surface as `[Manuelle Prüfung]`
-  warnings rather than concrete failures.
-- axe runs against the same DOM snapshot — dynamic content loaded after
-  the check started won't be evaluated until you re-run.
-- The disabled rules list is hard-coded in `background.js` — adding
-  custom disables requires code changes.
+- axe-core muss vor jeder Prüfung geladen werden — fügt ~100ms gegenüber
+  nativen Modulen hinzu.
+- Manche Regeln erfordern manuelle Prüfung und tauchen als
+  `[Manuelle Prüfung]`-Warnings auf statt als konkrete Fehler.
+- axe läuft gegen denselben DOM-Snapshot — dynamische Inhalte, die nach Beginn
+  der Prüfung geladen werden, werden erst beim erneuten Lauf bewertet.
+- Die Liste der deaktivierten Regeln ist in `background.js` fest verdrahtet —
+  eigene Deaktivierungen erfordern Code-Änderungen.
