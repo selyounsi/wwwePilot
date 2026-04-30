@@ -1,7 +1,7 @@
 {
   "id": "links",
   "name": "Links",
-  "description": "Link-Qualität & Erreichbarkeit prüfen",
+  "description": "Check link quality & reachability",
   "icon": "mdiLink",
   "active": true,
   "checkOnReload": true,

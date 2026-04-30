@@ -1,0 +1,25 @@
+{
+  "de": {
+    "AI Assistant": "KI-Assistent",
+    "Chat with the wwwe assistant": "Chat mit dem wwwe Assistenten",
+
+    "History": "Verlauf",
+    "New chat": "Neuer Chat",
+    "Clear chat": "Chat leeren",
+
+    "How can I help you?": "Wie kann ich dir helfen?",
+
+    "Copy": "Kopieren",
+    "Copied!": "Kopiert!",
+    "Try again": "Erneut versuchen",
+    "Write a message…": "Nachricht schreiben…",
+    "Enter to send · Shift+Enter for new line": "Enter senden · Shift+Enter neue Zeile",
+
+    "Sorry, an error occurred. Please try again.": "Entschuldigung, es gab einen Fehler. Bitte versuche es erneut.",
+    "Error: {message}": "Fehler: {message}",
+    "No response received.": "Keine Antwort erhalten."
+  },
+  "en": {
+    "Try again": "Try again"
+  }
+}

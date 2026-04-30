@@ -3,11 +3,13 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useServiceLoader } from '@/composables/loaders/useServiceLoader.js'
 import { useCheckStore }    from '@/services/web-checker/composables/useCheckStore.js'
+import { useI18n }          from '@/composables/i18n/useI18n.js'
 import { APP_NAME }         from '@/config/app.js'
 
 const router = useRouter()
 const { services } = useServiceLoader()
 const { state } = useCheckStore()
+const { t } = useI18n()
 
 const checkerRunning = computed(() =>
   Object.values(state.results).some(r => r.status === 'running')
@@ -28,13 +30,13 @@ const checkerWarnings = computed(() => {
 
 <template>
   <div class="min-h-screen bg-background flex flex-col">
-    <AppHeader :title="APP_NAME" subtitle="Wähle einen Service" />
+    <AppHeader :title="APP_NAME" :subtitle="t('Choose a service')" />
 
     <div class="flex-1 px-4 py-4 flex flex-col gap-2">
-      <SectionLabel>Services</SectionLabel>
+      <SectionLabel>{{ t('Services') }}</SectionLabel>
       <CardItem
         v-for="s in services" :key="s.id"
-        :icon="s.icon" :title="s.name" :description="s.description"
+        :icon="s.icon" :title="t(s.name)" :description="t(s.description)"
         @click="router.push(`/service/${s.id}`)"
       >
         <template v-if="s.id === 'web-checker'">
@@ -43,7 +45,7 @@ const checkerWarnings = computed(() => {
         </template>
       </CardItem>
       <EmptyState v-if="services.length === 0">
-        Keine aktiven Services gefunden.
+        {{ t('No active services found.') }}
       </EmptyState>
     </div>
   </div>

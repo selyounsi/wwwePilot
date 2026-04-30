@@ -5,12 +5,14 @@ import { useSiteCheck }    from '../composables/useSiteCheck.js'
 import { useCheckStore }   from '../composables/useCheckStore.js'
 import { useWebChecker }   from '../composables/useWebChecker.js'
 import { useModuleLoader } from '@/composables/loaders/useModuleLoader.js'
+import { useI18n }         from '@/composables/i18n/useI18n.js'
 
 const router = useRouter()
 const { loadPreflight, start, pause, resume, cancel, highlightCheckTab, store } = useSiteCheck()
 const checkStore                                                                = useCheckStore()
 const { silentRefresh }                                                         = useWebChecker()
 const { modules }                                                               = useModuleLoader('web-checker')
+const { t }                                                                     = useI18n()
 
 function pathOf(url) {
   try { return new URL(url).pathname } catch { return url }
@@ -187,18 +189,18 @@ onUnmounted(() => cancel())
 
 <template>
   <div class="h-screen bg-background flex flex-col">
-    <AppHeader showBack title="Komplette Website" subtitle="Sitemap-basierter Check" />
+    <AppHeader showBack :title="t('Full Website')" :subtitle="t('Sitemap-based check')" />
 
     <div class="flex-1 px-4 py-4 flex flex-col gap-3 min-h-0">
 
       <template v-if="isIdle || isFetching || isPreflight">
         <div class="bg-surface-soft border border-border rounded-xl px-3 py-2.5 flex flex-col gap-1 shrink-0">
           <div class="flex items-center gap-2 min-w-0">
-            <span class="text-[10px] uppercase tracking-wide text-muted/70 shrink-0">Domain</span>
+            <span class="text-[10px] uppercase tracking-wide text-muted/70 shrink-0">{{ t('Domain') }}</span>
             <span class="text-xs font-mono text-light truncate flex-1">{{ activeHost || '—' }}</span>
           </div>
           <div class="flex items-center gap-2 min-w-0">
-            <span class="text-[10px] uppercase tracking-wide text-muted/70 shrink-0">Sitemap</span>
+            <span class="text-[10px] uppercase tracking-wide text-muted/70 shrink-0">{{ t('Sitemap') }}</span>
             <a
               v-if="sitemapUrl"
               :href="sitemapUrl" target="_blank" rel="noopener"
@@ -221,7 +223,7 @@ onUnmounted(() => cancel())
               : 'text-muted border-transparent hover:text-light'"
           >
             <Icon name="mdiViewModule" :size="13" />
-            Module
+            {{ t('Modules') }}
             <span class="text-[10px] font-mono opacity-60">{{ selectedModuleCount }}/{{ modules.length }}</span>
           </button>
           <button
@@ -232,7 +234,7 @@ onUnmounted(() => cancel())
               : 'text-muted border-transparent hover:text-light'"
           >
             <Icon name="mdiFileTree" :size="13" />
-            Seiten
+            {{ t('Pages') }}
             <span class="text-[10px] font-mono opacity-60">
               {{ isPreflight ? `${selectedUrlCount}/${store.state.urls.length}` : '…' }}
             </span>
@@ -243,12 +245,12 @@ onUnmounted(() => cancel())
 
           <template v-if="activeTab === 'modules'">
             <div class="px-3 py-2 border-b border-border/60 flex items-center justify-between shrink-0">
-              <span class="text-[11px] text-muted">Wähle die Module, die laufen sollen.</span>
+              <span class="text-[11px] text-muted">{{ t('Choose the modules to run.') }}</span>
               <button
                 @click="toggleAllModules"
                 class="text-[11px] text-primary hover:underline shrink-0"
               >
-                {{ allModulesSelected ? 'Alle abwählen' : 'Alle auswählen' }}
+                {{ allModulesSelected ? t('Deselect all') : t('Select all') }}
               </button>
             </div>
             <div class="flex-1 min-h-0 overflow-y-auto">
@@ -271,19 +273,19 @@ onUnmounted(() => cancel())
           <template v-else>
             <div class="px-3 py-2 border-b border-border/60 flex items-center justify-between shrink-0">
               <span class="text-[11px] text-muted">
-                {{ isPreflight ? 'Wähle die Seiten, die geprüft werden.' : 'Sitemap wird gelesen…' }}
+                {{ isPreflight ? t('Choose the pages to check.') : t('Sitemap loading…') }}
               </span>
               <button
                 v-if="isPreflight"
                 @click="toggleAllUrls"
                 class="text-[11px] text-primary hover:underline shrink-0"
               >
-                {{ allUrlsSelected ? 'Alle abwählen' : 'Alle auswählen' }}
+                {{ allUrlsSelected ? t('Deselect all') : t('Select all') }}
               </button>
             </div>
             <div v-if="!isPreflight" class="flex-1 flex flex-col items-center justify-center gap-2 py-6">
               <LoadingSpinner size="sm" />
-              <p class="text-[11px] text-muted">Sitemap wird gelesen…</p>
+              <p class="text-[11px] text-muted">{{ t('Sitemap loading…') }}</p>
             </div>
             <div v-else class="flex-1 min-h-0 overflow-y-auto">
               <label
@@ -315,7 +317,7 @@ onUnmounted(() => cancel())
         <div v-if="isActive" class="flex flex-col gap-1.5 shrink-0">
           <div class="flex items-center justify-between text-xs">
             <span :class="isPaused ? 'text-alert' : 'text-muted'">
-              {{ isPaused ? 'Pausiert' : 'Prüfung läuft' }}
+              {{ isPaused ? t('Paused') : t('Check running') }}
             </span>
             <span class="font-mono text-light">{{ checkedCount }} / {{ selectedUrlCount }}</span>
           </div>
@@ -349,32 +351,31 @@ onUnmounted(() => cancel())
           <div class="flex items-start gap-2 min-w-0 flex-1">
             <Icon name="mdiAlertOutline" :size="13" class="text-alert shrink-0 mt-0.5" />
             <p class="text-[11px] text-muted leading-snug">
-              Hintergrund-Tab nicht schließen — sonst bricht die Prüfung ab.
+              {{ t("Don't close the background tab — otherwise the check will abort.") }}
             </p>
           </div>
           <button
             @click="highlightCheckTab"
             class="text-[11px] px-2 py-1 rounded-lg bg-surface border border-border text-light hover:bg-surface-soft-hover transition-colors shrink-0 inline-flex items-center gap-1"
-            title="Prüfungs-Tab in den Vordergrund holen"
+            :title="t('Bring the check tab to the foreground')"
           >
             <Icon name="mdiTabSearch" :size="12" />
-            Tab anzeigen
+            {{ t('Show tab') }}
           </button>
         </div>
 
         <div v-if="isDone" class="grid grid-cols-3 gap-2 shrink-0">
-          <StatBox label="Seiten">{{ total }}</StatBox>
-          <StatBox label="Fehler" :variant="totalErrors > 0 ? 'neutral' : 'success'">
+          <StatBox :label="t('Pages')">{{ total }}</StatBox>
+          <StatBox :label="t('Errors')" :variant="totalErrors > 0 ? 'neutral' : 'success'">
             <span :class="totalErrors > 0 ? 'text-error' : ''">{{ totalErrors }}</span>
           </StatBox>
-          <StatBox label="Warnungen">
+          <StatBox :label="t('Warnings')">
             <span :class="totalWarnings > 0 ? 'text-alert' : ''">{{ totalWarnings }}</span>
           </StatBox>
         </div>
 
         <p v-if="isDone" class="text-[11px] text-muted/70 px-1 leading-relaxed shrink-0">
-          Klicke auf eine Seite, um sie in einem neuen Tab zu öffnen — die
-          Sidebar zeigt dann die Detailergebnisse wie bei einem Single-Check.
+          {{ t('Click a page to open it in a new tab — the sidebar will then show the details like a single check.') }}
         </p>
 
         <div class="flex flex-col gap-1.5 flex-1 min-h-0 overflow-y-auto">
@@ -396,10 +397,10 @@ onUnmounted(() => cancel())
               <template v-if="row.status === 'done'">
                 <span v-if="row.errorCount > 0"
                   class="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-error-soft text-error shrink-0 min-w-7 text-center"
-                >{{ row.errorCount }} F</span>
+                >{{ row.errorCount }} {{ t('Err') }}</span>
                 <span v-else-if="row.warningCount > 0"
                   class="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-alert-soft text-alert shrink-0 min-w-7 text-center"
-                >{{ row.warningCount }} W</span>
+                >{{ row.warningCount }} {{ t('Warn') }}</span>
                 <span v-else
                   class="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-success-soft text-success shrink-0 min-w-7 text-center"
                 >✓</span>
@@ -412,7 +413,7 @@ onUnmounted(() => cancel())
               />
               <span v-else-if="row.status === 'skipped'"
                 class="text-[10px] text-muted/60 shrink-0 px-1.5 py-0.5 rounded bg-surface min-w-7 text-center"
-                title="Übersprungen — vor dem Start abgewählt"
+                :title="t('Skipped — deselected before start')"
               >–</span>
               <span v-else class="text-muted/40 shrink-0 text-xs w-7 text-center">○</span>
 
@@ -420,7 +421,9 @@ onUnmounted(() => cancel())
                 <span class="text-xs text-light truncate" :title="row.url">{{ pathOf(row.url) }}</span>
                 <span v-if="row.status === 'done' && row.errorCount > 0 && row.warningCount > 0"
                   class="text-[10px] text-muted/60 truncate"
-                >+{{ row.warningCount }} Warnung{{ row.warningCount === 1 ? '' : 'en' }}</span>
+                >{{ row.warningCount === 1
+                  ? t('+{count} warning',  { count: row.warningCount })
+                  : t('+{count} warnings', { count: row.warningCount }) }}</span>
               </div>
             </div>
 
@@ -435,40 +438,40 @@ onUnmounted(() => cancel())
 
     <div class="px-4 pt-3 pb-5 bg-background border-t border-border shrink-0">
       <BaseButton v-if="isPreflight" :disabled="!canStart" @click="startCheck">
-        Prüfung starten
+        {{ t('Start check') }}
         <span class="text-[11px] opacity-70 font-normal ml-1">
-          ({{ selectedUrlCount }} Seiten · {{ selectedModuleCount }} Module)
+          {{ t('({selected} pages · {modules} modules)', { selected: selectedUrlCount, modules: selectedModuleCount }) }}
         </span>
       </BaseButton>
 
       <BaseButton v-else-if="isDone" @click="reloadSitemap">
-        Erneut prüfen
+        {{ t('Recheck') }}
       </BaseButton>
 
       <BaseButton v-else-if="isFetching || isIdle" :loading="true">
-        <template #loading>Sitemap wird gelesen…</template>
+        <template #loading>{{ t('Sitemap loading…') }}</template>
       </BaseButton>
 
       <div v-else-if="isActive" class="flex gap-2">
         <BaseButton v-if="isRunning" @click="pause">
           <span class="inline-flex items-center justify-center gap-1.5">
             <Icon name="mdiPause" :size="14" />
-            Pausieren
+            {{ t('Pause') }}
           </span>
         </BaseButton>
         <BaseButton v-else @click="resume">
           <span class="inline-flex items-center justify-center gap-1.5">
             <Icon name="mdiPlay" :size="14" />
-            Fortführen
+            {{ t('Resume') }}
           </span>
         </BaseButton>
         <BaseButton variant="ghost" @click="cancel">
-          Abbrechen
+          {{ t('Cancel') }}
         </BaseButton>
       </div>
 
       <BaseButton v-else-if="store.state.status === 'error'" @click="reloadSitemap">
-        Erneut versuchen
+        {{ t('Try again') }}
       </BaseButton>
     </div>
   </div>

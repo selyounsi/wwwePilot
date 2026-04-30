@@ -1,0 +1,29 @@
+{
+  "de": {
+    "Services": "Services",
+    "Choose a service": "Wähle einen Service",
+    "No active services found.": "Keine aktiven Services gefunden.",
+    "Cancel": "Abbrechen",
+    "Recheck": "Erneut prüfen",
+    "Try again": "Erneut versuchen",
+
+    "Settings": "Einstellungen",
+    "Language": "Sprache",
+    "Default filter": "Standard-Filter",
+    "Overrides each module's configured default filter when set.": "Überschreibt den modul-spezifischen Standard-Filter, wenn gesetzt.",
+    "Use module default": "Modul-Standard verwenden",
+    "Ignore selectors": "Ignorierte Selektoren",
+    "CSS selectors matched here are skipped by checkers (links, validation, …). Useful for third-party widgets you don't control.": "CSS-Selektoren, die hier gelistet sind, werden von den Modulen (Links, Validation, …) übersprungen. Nützlich für Drittanbieter-Widgets, auf die du keinen Einfluss hast.",
+    "Built-in": "Standard",
+    "Custom": "Eigene",
+    "Toggle to enable / disable": "Klicken zum An-/Abschalten",
+    "e.g. .cookie-banner, #widget": "z.B. .cookie-banner, #widget",
+    "No custom selectors yet.": "Noch keine eigenen Selektoren.",
+    "Remove": "Entfernen",
+
+    "Menu": "Menü",
+    "General settings": "Allgemeine Einstellungen",
+    "Service settings": "Service-Einstellungen"
+  },
+  "en": {}
+}

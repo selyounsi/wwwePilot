@@ -33,7 +33,7 @@ export function useModuleOverlay(moduleId, overlayConfig) {
     overlayActive: po.active,
     overlayToggle: toggle,
     labelFn: overlayConfig?.labelFn ?? (() => ''),
-    onText:  overlayConfig?.onText  ?? 'Ausblenden',
-    offText: overlayConfig?.offText ?? 'Einblenden',
+    onText:  overlayConfig?.onText  ?? 'Hide',
+    offText: overlayConfig?.offText ?? 'Show',
   }
 }

@@ -1,0 +1,10 @@
+{
+  "de": {
+    "HTML Validation": "HTML-Validierung",
+    "Validate HTML5 markup against the W3C spec": "HTML5-Markup gegen die W3C-Spec prüfen",
+
+    "(unknown)": "(unbekannt)",
+    "Line {line}, column {column}": "Zeile {line}, Spalte {column}"
+  },
+  "en": {}
+}

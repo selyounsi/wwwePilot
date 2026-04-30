@@ -1,5 +1,5 @@
 <script setup>
-import LinkItem from './components/LinkItem.vue'
+import LinkItem from '../components/LinkItem.vue'
 </script>
 
 <template>

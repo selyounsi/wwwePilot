@@ -1,5 +1,5 @@
 <script setup>
-import PerformanceItem from './components/PerformanceItem.vue'
+import PerformanceItem from '../components/PerformanceItem.vue'
 </script>
 
 <template>

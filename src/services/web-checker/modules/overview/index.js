@@ -1,6 +1,7 @@
 export const overlay = null
 
 export default async function check() {
+  const t = window.__t
 
   const html = document.documentElement
   const head = document.head
@@ -9,7 +10,6 @@ export default async function check() {
   const fwVersion    = html.dataset.fwVersion                                                     || ''
   const websiteBrand = document.querySelector('script[data-website-brand]')?.dataset.websiteBrand || ''
 
-  // counter id is the k=XXXX query param on the usecurez.js script
   const counterEl  = document.querySelector('script[src*="usecurez"]')
   const counterSrc = counterEl?.src || counterEl?.getAttribute('src') || ''
   let counterId = ''
@@ -27,7 +27,6 @@ export default async function check() {
   let privacyControlVersion = ''
   try { privacyControlVersion = window.privacyControl?.version || '' } catch {}
 
-  // same-origin fetch with no caching, 10s timeout and one retry on network errors
   async function fetchCheck(url, method = 'GET') {
     const opts = {
       method,
@@ -78,87 +77,87 @@ export default async function check() {
     addItem(head, checks, { id, name, details: details || '', category, visible: true, _meta: {} })
   }
 
-  add('robots', 'robots.txt', server.robots?.ok ? `HTTP ${server.robots.status}` : 'Nicht erreichbar', 'Technik', [
-    { when: !server.robots?.ok,                                    type: 'error',   title: 'robots.txt nicht erreichbar' },
-    { when: server.robots?.ok && !server.robots?.hasSitemapRef,    type: 'warning', title: 'robots.txt hat keinen Sitemap-Verweis' },
-    { when: server.robots?.ok && server.robots?.hasSitemapRef,     type: 'success', title: 'robots.txt vorhanden & vollständig' },
+  add('robots', 'robots.txt', server.robots?.ok ? `HTTP ${server.robots.status}` : t('Not reachable'), t('Technical'), [
+    { when: !server.robots?.ok,                                    type: 'error',   title: t('robots.txt not reachable') },
+    { when: server.robots?.ok && !server.robots?.hasSitemapRef,    type: 'warning', title: t('robots.txt has no sitemap reference') },
+    { when: server.robots?.ok && server.robots?.hasSitemapRef,     type: 'success', title: t('robots.txt present & complete') },
   ])
 
-  add('sitemap', 'sitemap.xml', server.sitemap?.ok ? `HTTP ${server.sitemap.status}` : 'Nicht erreichbar', 'Technik', [
-    { when: !server.sitemap?.ok,                                   type: 'error',   title: 'sitemap.xml nicht erreichbar' },
-    { when: server.sitemap?.ok && !server.sitemap?.isXml,          type: 'warning', title: 'sitemap.xml: kein valides XML-Format' },
-    { when: server.sitemap?.ok && server.sitemap?.isXml,           type: 'success', title: 'sitemap.xml vorhanden' },
+  add('sitemap', 'sitemap.xml', server.sitemap?.ok ? `HTTP ${server.sitemap.status}` : t('Not reachable'), t('Technical'), [
+    { when: !server.sitemap?.ok,                                   type: 'error',   title: t('sitemap.xml not reachable') },
+    { when: server.sitemap?.ok && !server.sitemap?.isXml,          type: 'warning', title: t('sitemap.xml: not valid XML') },
+    { when: server.sitemap?.ok && server.sitemap?.isXml,           type: 'success', title: t('sitemap.xml present') },
   ])
 
   const fav = server.favicon
   const favDetails = !fav.ok
-    ? 'Nicht gefunden'
+    ? t('Not found')
     : fav.width && fav.height
       ? `${fav.width}×${fav.height}px`
       : `HTTP ${fav.status}`
-  add('favicon', 'Favicon (favicon.ico)', favDetails, 'Technik', [
-    { when: !fav.ok,                                               type: 'error',   title: 'favicon.ico nicht erreichbar' },
+  add('favicon', t('Favicon (favicon.ico)'), favDetails, t('Technical'), [
+    { when: !fav.ok,                                               type: 'error',   title: t('favicon.ico not reachable') },
     { when: fav.ok && fav.width > 0 && (fav.width !== 192 || fav.height !== 192),
-                                                                   type: 'warning', title: `favicon.ico gefunden, aber ${fav.width}×${fav.height}px – erwartet 192×192` },
-    { when: fav.ok && fav.width === 192 && fav.height === 192,     type: 'success', title: 'favicon.ico vorhanden und 192×192px' },
+                                                                   type: 'warning', title: t('favicon.ico found, but {w}×{h}px — expected 192×192', { w: fav.width, h: fav.height }) },
+    { when: fav.ok && fav.width === 192 && fav.height === 192,     type: 'success', title: t('favicon.ico present and 192×192px') },
   ])
 
-  add('counter', 'Counter', counterId || (counterSrc ? 'Key fehlt' : 'Nicht eingebunden'), 'Technik', [
-    { when: !counterSrc,                                           type: 'warning', title: 'Counter-Script (usecurez) nicht gefunden' },
-    { when: counterSrc && !counterId,                              type: 'error',   title: 'Counter: k=-Parameter (Key) fehlt' },
-    { when: counterSrc && !!counterId,                             type: 'success', title: `Counter eingebunden (${counterId})` },
+  add('counter', 'Counter', counterId || (counterSrc ? t('Key missing') : t('Not embedded')), t('Technical'), [
+    { when: !counterSrc,                                           type: 'warning', title: t('Counter script (usecurez) not found') },
+    { when: counterSrc && !counterId,                              type: 'error',   title: t('Counter: k= parameter (key) missing') },
+    { when: counterSrc && !!counterId,                             type: 'success', title: t('Counter embedded ({id})', { id: counterId }) },
   ])
 
   add('privacy-control', 'Privacy Control',
-    privacyControlVersion ? `v${privacyControlVersion}` : 'Nicht geladen', 'Technik', [
-    { when: !privacyControlVersion,                                type: 'warning', title: 'privacyControl nicht geladen oder initialisiert' },
+    privacyControlVersion ? `v${privacyControlVersion}` : t('Not loaded'), t('Technical'), [
+    { when: !privacyControlVersion,                                type: 'warning', title: t('privacyControl not loaded or initialised') },
     { when: !!privacyControlVersion,                               type: 'success', title: `privacyControl v${privacyControlVersion}` },
   ])
 
   const titleLen = metaTitle.length
-  add('meta-title', 'Meta Title',
-    metaTitle ? `${titleLen} Zeichen: ${metaTitle.slice(0, 50)}${titleLen > 50 ? '…' : ''}` : '–', 'SEO', [
-    { when: !metaTitle,                                            type: 'error',   title: 'Kein Seiten-Title vorhanden' },
-    { when: metaTitle && titleLen < 30,                            type: 'warning', title: `Title zu kurz (${titleLen} / 30–60 Zeichen)` },
-    { when: metaTitle && titleLen > 60,                            type: 'warning', title: `Title zu lang (${titleLen} / 30–60 Zeichen)` },
-    { when: metaTitle && titleLen >= 30 && titleLen <= 60,         type: 'success', title: `Meta Title OK (${titleLen} Zeichen)` },
+  add('meta-title', t('Meta Title'),
+    metaTitle ? t('{len} chars: {snippet}', { len: titleLen, snippet: `${metaTitle.slice(0, 50)}${titleLen > 50 ? '…' : ''}` }) : '–', 'SEO', [
+    { when: !metaTitle,                                            type: 'error',   title: t('No page title') },
+    { when: metaTitle && titleLen < 30,                            type: 'warning', title: t('Title too short ({len} / 30–60 chars)', { len: titleLen }) },
+    { when: metaTitle && titleLen > 60,                            type: 'warning', title: t('Title too long ({len} / 30–60 chars)',  { len: titleLen }) },
+    { when: metaTitle && titleLen >= 30 && titleLen <= 60,         type: 'success', title: t('Meta title OK ({len} chars)',           { len: titleLen }) },
   ])
 
   const descLen = metaDescription.length
-  add('meta-desc', 'Meta Description',
-    metaDescription ? `${descLen} Zeichen: ${metaDescription.slice(0, 55)}${descLen > 55 ? '…' : ''}` : '–', 'SEO', [
-    { when: !metaDescription,                                      type: 'error',   title: 'Keine Meta-Description vorhanden' },
-    { when: metaDescription && descLen < 120,                      type: 'warning', title: `Description zu kurz (${descLen} / 120–160 Zeichen)` },
-    { when: metaDescription && descLen > 160,                      type: 'warning', title: `Description zu lang (${descLen} / 120–160 Zeichen)` },
-    { when: metaDescription && descLen >= 120 && descLen <= 160,   type: 'success', title: `Meta Description OK (${descLen} Zeichen)` },
+  add('meta-desc', t('Meta Description'),
+    metaDescription ? t('{len} chars: {snippet}', { len: descLen, snippet: `${metaDescription.slice(0, 55)}${descLen > 55 ? '…' : ''}` }) : '–', 'SEO', [
+    { when: !metaDescription,                                      type: 'error',   title: t('No meta description') },
+    { when: metaDescription && descLen < 120,                      type: 'warning', title: t('Description too short ({len} / 120–160 chars)', { len: descLen }) },
+    { when: metaDescription && descLen > 160,                      type: 'warning', title: t('Description too long ({len} / 120–160 chars)',  { len: descLen }) },
+    { when: metaDescription && descLen >= 120 && descLen <= 160,   type: 'success', title: t('Meta description OK ({len} chars)',             { len: descLen }) },
   ])
 
   add('canonical', 'Canonical', canonical || '–', 'SEO', [
-    { when: !canonical,                                            type: 'warning', title: 'Kein Canonical-Tag vorhanden' },
-    { when: !!canonical,                                           type: 'success', title: 'Canonical-Tag vorhanden' },
+    { when: !canonical,                                            type: 'warning', title: t('No canonical tag') },
+    { when: !!canonical,                                           type: 'success', title: t('Canonical tag present') },
   ])
 
   const ogMissing = [!ogTitle && 'og:title', !ogDescription && 'og:description', !ogImage && 'og:image'].filter(Boolean)
   add('og-tags', 'Open Graph',
-    ogMissing.length ? `Fehlt: ${ogMissing.join(', ')}` : 'title, description, image', 'SEO', [
-    { when: ogMissing.length > 0,                                  type: 'warning', title: `OG-Tags unvollständig – fehlt: ${ogMissing.join(', ')}` },
-    { when: ogMissing.length === 0,                                type: 'success', title: 'Open Graph vollständig' },
+    ogMissing.length ? t('Missing: {fields}', { fields: ogMissing.join(', ') }) : 'title, description, image', 'SEO', [
+    { when: ogMissing.length > 0,                                  type: 'warning', title: t('OG tags incomplete — missing: {fields}', { fields: ogMissing.join(', ') }) },
+    { when: ogMissing.length === 0,                                type: 'success', title: t('Open Graph complete') },
   ])
 
-  add('html-lang', 'Sprache (lang)', lang || '–', 'HTML', [
-    { when: !lang,                                                 type: 'warning', title: 'lang-Attribut fehlt am <html>-Tag' },
-    { when: !!lang,                                                type: 'success', title: `Sprache gesetzt: ${lang}` },
+  add('html-lang', t('Language (lang)'), lang || '–', 'HTML', [
+    { when: !lang,                                                 type: 'warning', title: t('lang attribute missing on <html>') },
+    { when: !!lang,                                                type: 'success', title: t('Language set: {lang}', { lang }) },
   ])
 
-  add('viewport', 'Viewport Meta', viewport ? 'Vorhanden' : '–', 'HTML', [
-    { when: !viewport,                                             type: 'warning', title: 'Viewport-Meta-Tag fehlt' },
-    { when: !!viewport,                                            type: 'success', title: 'Viewport-Meta vorhanden' },
+  add('viewport', t('Viewport meta'), viewport ? t('Present') : '–', 'HTML', [
+    { when: !viewport,                                             type: 'warning', title: t('Viewport meta tag missing') },
+    { when: !!viewport,                                            type: 'success', title: t('Viewport meta present') },
   ])
 
   const isDefaultThemeColor = ['#000', '#000000', 'black'].includes(themeColor.trim().toLowerCase())
   add('theme-color', 'Theme-Color', themeColor || '–', 'HTML', [
-    { when: !themeColor,                                           type: 'warning', title: 'theme-color Meta-Tag fehlt' },
-    { when: themeColor && isDefaultThemeColor,                     type: 'warning', title: `theme-color hat Standardfarbe "${themeColor}" – sollte an Brand angepasst werden` },
+    { when: !themeColor,                                           type: 'warning', title: t('theme-color meta tag missing') },
+    { when: themeColor && isDefaultThemeColor,                     type: 'warning', title: t('theme-color is default "{color}" — should match brand', { color: themeColor }) },
     { when: themeColor && !isDefaultThemeColor,                    type: 'success', title: `theme-color: ${themeColor}` },
   ])
 

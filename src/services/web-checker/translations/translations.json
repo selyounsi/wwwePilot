@@ -1,0 +1,76 @@
+{
+  "de": {
+    "Web Checker": "Web Checker",
+    "SEO & quality check": "SEO & Qualitätsprüfung",
+
+    "Modules": "Module",
+    "Pages": "Seiten",
+    "Errors": "Fehler",
+    "Warnings": "Warnungen",
+    "Source": "Quelle",
+    "Domain": "Domain",
+    "Sitemap": "Sitemap",
+
+    "Full Website": "Komplette Website",
+    "Sitemap-based check": "Sitemap-basierter Check",
+    "Full Website Check": "Komplette Website prüfen",
+    "Back to overview ({count} pages)": "Zur Komplett-Übersicht ({count} Seiten)",
+
+    "Start check": "Prüfung starten",
+    "Recheck the page": "Unterseite erneut prüfen",
+    "Recheck": "Erneut prüfen",
+    "Pause": "Pausieren",
+    "Resume": "Fortführen",
+    "Cancel": "Abbrechen",
+    "Try again": "Erneut versuchen",
+
+    "Check running": "Prüfung läuft",
+    "Paused": "Pausiert",
+    "Sitemap loading…": "Sitemap wird gelesen…",
+    "Don't close the background tab — otherwise the check will abort.": "Hintergrund-Tab nicht schließen — sonst bricht die Prüfung ab.",
+    "Show tab": "Tab anzeigen",
+    "Bring the check tab to the foreground": "Prüfungs-Tab in den Vordergrund holen",
+
+    "Choose the modules to run.": "Wähle die Module, die laufen sollen.",
+    "Choose the pages to check.": "Wähle die Seiten, die geprüft werden.",
+    "Select all": "Alle auswählen",
+    "Deselect all": "Alle abwählen",
+    "({selected} pages · {modules} modules)": "({selected} Seiten · {modules} Module)",
+
+    "Click a page to open it in a new tab — the sidebar will then show the details like a single check.": "Klicke auf eine Seite, um sie in einem neuen Tab zu öffnen — die Sidebar zeigt dann die Detailergebnisse wie bei einem Single-Check.",
+    "Skipped — deselected before start": "Übersprungen — vor dem Start abgewählt",
+    "Error": "Fehler",
+    "+{count} warning": "+{count} Warnung",
+    "+{count} warnings": "+{count} Warnungen",
+
+    "Sitemap source missing": "Origin fehlt",
+    "Sitemap not reachable (HTTP {status})": "Sitemap nicht erreichbar (HTTP {status})",
+    "Sitemap is empty": "Sitemap enthält keine URLs",
+    "No pages selected — pick at least one.": "Keine Seiten ausgewählt — bitte mindestens eine wählen.",
+    "No modules selected — pick at least one.": "Keine Module ausgewählt — bitte mindestens eines wählen.",
+    "The check tab was closed — the run was cancelled.": "Der Prüfungs-Tab wurde geschlossen — die Prüfung wurde abgebrochen.",
+
+    "Skipped": "Übersprungen",
+    "Checking…": "Wird geprüft…",
+    "Done": "Abgeschlossen",
+
+    "Check": "Prüfen",
+    "Hide": "Ausblenden",
+    "Show": "Einblenden",
+    "Show all": "Alle anzeigen",
+    "Errors & warnings": "Fehler & Warnungen",
+    "Errors only": "Nur Fehler",
+    "Warnings only": "Nur Warnungen",
+    "Module settings": "Modul-Einstellungen",
+
+    "Err": "F",
+    "Warn": "W"
+  },
+  "en": {
+    "Recheck the page": "Recheck this page",
+    "+{count} warning": "+{count} warning",
+    "+{count} warnings": "+{count} warnings",
+    "Err": "E",
+    "Warn": "W"
+  }
+}

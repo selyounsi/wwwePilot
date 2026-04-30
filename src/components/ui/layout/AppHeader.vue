@@ -1,9 +1,11 @@
 <script setup>
 import { useRouter, useRoute } from 'vue-router'
 import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { useI18n } from '@/composables/i18n/useI18n.js'
 
 const router = useRouter()
 const route  = useRoute()
+const { t }  = useI18n()
 
 const props = defineProps({
   title:    { type: String, default: '' },
@@ -12,9 +14,17 @@ const props = defineProps({
   showBack: { type: Boolean, default: false },
 })
 
-const resolvedIcon     = computed(() => props.icon     || route.meta.icon        || '')
-const resolvedTitle    = computed(() => props.title    || route.meta.moduleName  || route.meta.serviceName || '')
-const resolvedSubtitle = computed(() => props.subtitle || route.meta.description || '')
+const resolvedIcon     = computed(() => props.icon || route.meta.icon || '')
+const resolvedTitle    = computed(() => {
+  if (props.title) return props.title
+  const raw = route.meta.moduleName || route.meta.serviceName || ''
+  return raw ? t(raw) : ''
+})
+const resolvedSubtitle = computed(() => {
+  if (props.subtitle) return props.subtitle
+  const raw = route.meta.description || ''
+  return raw ? t(raw) : ''
+})
 
 // hide breadcrumb once scrolled past 30px
 const scrolled = ref(false)
@@ -47,6 +57,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
         <p v-if="resolvedSubtitle" class="text-xs text-black/50 mt-0.5">{{ resolvedSubtitle }}</p>
       </div>
       <slot />
+      <QuickNav />
     </div>
 
     <div v-if="$slots.below" class="px-4 pb-3 flex items-center gap-1.5 flex-wrap">

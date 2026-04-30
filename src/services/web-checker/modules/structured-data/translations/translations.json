@@ -1,0 +1,16 @@
+{
+  "de": {
+    "Structured Data": "Strukturierte Daten",
+    "Inspect & validate JSON-LD schemas": "JSON-LD Schemas prüfen & einsehen",
+
+    "No structured data (JSON-LD) found": "Keine strukturierten Daten (JSON-LD) gefunden",
+    "No JSON-LD data": "Keine JSON-LD Daten",
+
+    "1 entity": "1 Element",
+    "{n} entities": "{n} Elemente",
+
+    "Image not reachable: {file}": "Bild nicht erreichbar: {file}",
+    "social_branding too small: {w}×{h}px (min. 250×250)": "social_branding zu klein: {w}×{h}px (min. 250×250)"
+  },
+  "en": {}
+}

@@ -17,20 +17,24 @@
   --color-success:    #4ade80;
 }
 
-/* bg-* utilities pair each background with its readable foreground */
-@layer components {
-  .bg-primary    { background-color: var(--color-primary);    color: #1c2128; }
-  .bg-secondary  { background-color: var(--color-secondary);  color: #ffffff; }
-  .bg-background { background-color: var(--color-background); color: #ffffff; }
-  .bg-surface    { background-color: var(--color-surface);    color: #ffffff; }
+/* @utility instead of @layer components — Tailwind v4 only generates
+   hover:/focus:/etc variants for utilities defined this way. */
+@utility bg-primary    { background-color: var(--color-primary);    color: #1c2128; }
+@utility bg-secondary  { background-color: var(--color-secondary);  color: #ffffff; }
+@utility bg-background { background-color: var(--color-background); color: #ffffff; }
+@utility bg-surface    { background-color: var(--color-surface);    color: #ffffff; }
 
-  .bg-surface-soft       { background-color: rgba(255, 255, 255, 0.03); }
-  .bg-surface-soft-hover { background-color: rgba(255, 255, 255, 0.06); }
+@utility bg-surface-soft       { background-color: rgba(255, 255, 255, 0.03); }
+@utility bg-surface-soft-hover { background-color: rgba(255, 255, 255, 0.09); }
 
-  .bg-primary-soft { background-color: rgba(186, 211,  44, 0.12); color: var(--color-primary); }
-  .bg-error-soft   { background-color: rgba(248, 113, 113, 0.10); color: var(--color-error);   }
-  .bg-alert-soft   { background-color: rgba(245, 158,  11, 0.10); color: var(--color-alert);   }
-  .bg-success-soft { background-color: rgba( 74, 222, 128, 0.10); color: var(--color-success); }
+@utility bg-primary-soft { background-color: rgba(186, 211,  44, 0.12); color: var(--color-primary); }
+@utility bg-error-soft   { background-color: rgba(248, 113, 113, 0.10); color: var(--color-error);   }
+@utility bg-alert-soft   { background-color: rgba(245, 158,  11, 0.10); color: var(--color-alert);   }
+@utility bg-success-soft { background-color: rgba( 74, 222, 128, 0.10); color: var(--color-success); }
+
+/* smooth color/opacity transitions on common interactive surfaces */
+.bg-primary, .bg-secondary, .bg-surface, .bg-surface-soft, .border-border {
+  transition: background-color .15s ease, border-color .15s ease, opacity .15s ease, color .15s ease;
 }
 
 * {

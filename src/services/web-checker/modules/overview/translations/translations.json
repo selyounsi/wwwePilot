@@ -1,0 +1,66 @@
+{
+  "de": {
+    "Website Overview": "Website-Übersicht",
+    "SEO, tech & site info": "SEO, Technik & Site-Infos",
+
+    "Technical": "Technik",
+    "Meta Title": "Meta Title",
+    "Meta Description": "Meta Description",
+    "Language (lang)": "Sprache (lang)",
+    "Viewport meta": "Viewport Meta",
+    "Favicon (favicon.ico)": "Favicon (favicon.ico)",
+
+    "Not reachable": "Nicht erreichbar",
+    "Not found": "Nicht gefunden",
+    "Not loaded": "Nicht geladen",
+    "Not embedded": "Nicht eingebunden",
+    "Key missing": "Key fehlt",
+    "Present": "Vorhanden",
+
+    "robots.txt not reachable": "robots.txt nicht erreichbar",
+    "robots.txt has no sitemap reference": "robots.txt hat keinen Sitemap-Verweis",
+    "robots.txt present & complete": "robots.txt vorhanden & vollständig",
+
+    "sitemap.xml not reachable": "sitemap.xml nicht erreichbar",
+    "sitemap.xml: not valid XML": "sitemap.xml: kein valides XML-Format",
+    "sitemap.xml present": "sitemap.xml vorhanden",
+
+    "favicon.ico not reachable": "favicon.ico nicht erreichbar",
+    "favicon.ico found, but {w}×{h}px — expected 192×192": "favicon.ico gefunden, aber {w}×{h}px – erwartet 192×192",
+    "favicon.ico present and 192×192px": "favicon.ico vorhanden und 192×192px",
+
+    "Counter script (usecurez) not found": "Counter-Script (usecurez) nicht gefunden",
+    "Counter: k= parameter (key) missing": "Counter: k=-Parameter (Key) fehlt",
+    "Counter embedded ({id})": "Counter eingebunden ({id})",
+
+    "privacyControl not loaded or initialised": "privacyControl nicht geladen oder initialisiert",
+
+    "{len} chars: {snippet}": "{len} Zeichen: {snippet}",
+    "No page title": "Kein Seiten-Title vorhanden",
+    "Title too short ({len} / 30–60 chars)": "Title zu kurz ({len} / 30–60 Zeichen)",
+    "Title too long ({len} / 30–60 chars)": "Title zu lang ({len} / 30–60 Zeichen)",
+    "Meta title OK ({len} chars)": "Meta Title OK ({len} Zeichen)",
+
+    "No meta description": "Keine Meta-Description vorhanden",
+    "Description too short ({len} / 120–160 chars)": "Description zu kurz ({len} / 120–160 Zeichen)",
+    "Description too long ({len} / 120–160 chars)": "Description zu lang ({len} / 120–160 Zeichen)",
+    "Meta description OK ({len} chars)": "Meta Description OK ({len} Zeichen)",
+
+    "No canonical tag": "Kein Canonical-Tag vorhanden",
+    "Canonical tag present": "Canonical-Tag vorhanden",
+
+    "Missing: {fields}": "Fehlt: {fields}",
+    "OG tags incomplete — missing: {fields}": "OG-Tags unvollständig – fehlt: {fields}",
+    "Open Graph complete": "Open Graph vollständig",
+
+    "lang attribute missing on <html>": "lang-Attribut fehlt am <html>-Tag",
+    "Language set: {lang}": "Sprache gesetzt: {lang}",
+
+    "Viewport meta tag missing": "Viewport-Meta-Tag fehlt",
+    "Viewport meta present": "Viewport-Meta vorhanden",
+
+    "theme-color meta tag missing": "theme-color Meta-Tag fehlt",
+    "theme-color is default \"{color}\" — should match brand": "theme-color hat Standardfarbe \"{color}\" – sollte an Brand angepasst werden"
+  },
+  "en": {}
+}

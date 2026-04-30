@@ -1,5 +1,5 @@
 <script setup>
-import OverviewItem from './components/OverviewItem.vue'
+import OverviewItem from '../components/OverviewItem.vue'
 
 const CATEGORY_ORDER = ['Technik', 'SEO', 'HTML']
 

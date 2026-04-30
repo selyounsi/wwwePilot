@@ -1,6 +1,6 @@
-const allConfigs  = import.meta.glob('@/services/*/modules/*/module.json', { eager: true })
-const allCheckers = import.meta.glob('@/services/*/modules/*/index.js',    { eager: true })
-const allViews    = import.meta.glob('@/services/*/modules/*/Index.vue',   { eager: true })
+const allConfigs  = import.meta.glob('@/services/*/modules/*/module.json',     { eager: true })
+const allCheckers = import.meta.glob('@/services/*/modules/*/index.js',         { eager: true })
+const allViews    = import.meta.glob('@/services/*/modules/*/views/Index.vue', { eager: true })
 
 // Merges module.json (static keys) with index.js exports (dynamic, e.g. overlay
 // with functions). JSON wins on conflicts; JS is the fallback for older modules.
@@ -18,10 +18,10 @@ export function useModuleLoader(serviceId) {
     if (!config.active) continue
 
     const checkerModule = allCheckers[`/src/services/${svcId}/modules/${modId}/index.js`]
-    const view          = allViews[`/src/services/${svcId}/modules/${modId}/Index.vue`]?.default
+    const view          = allViews[`/src/services/${svcId}/modules/${modId}/views/Index.vue`]?.default
 
     if (!checkerModule || !view) {
-      console.warn(`⚠️ Modul "${modId}" fehlt index.js oder Index.vue`)
+      console.warn(`⚠️ Modul "${modId}" fehlt index.js oder views/Index.vue`)
       continue
     }
 

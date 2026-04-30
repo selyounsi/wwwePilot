@@ -1,196 +1,87 @@
-# wwweBar – Chrome Extension
+# wwweBar
 
-wwweBar ist eine interne Chrome Extension, die allen Mitarbeitern zugänglich gemacht werden soll und die tägliche Arbeit an Webseiten vereinfacht. Sie prüft die aktuell geöffnete Seite auf SEO, Qualität, Barrierefreiheit und Performance – direkt im Browser, ohne dass externe Tools oder Tabs nötig sind.
+Inhouse Chrome Extension (Manifest V3, Side Panel) für die wwwe-Mitarbeiter.
+Sidebar mit mehreren Services, die die tägliche Arbeit an Webseiten
+vereinfachen — Qualitätsprüfung, KI-Hilfe, mehrsprachig (EN/DE).
 
-Fehler, Warnungen und Hinweise erscheinen übersichtlich in einer Seitenleiste. Ergebnisse können direkt auf der Seite als Overlay visualisiert werden, und ein integrierter KI-Assistent hilft beim Analysieren und Beheben von Problemen.
+## Services
 
----
+| Service | Pfad | Was tut er? |
+|---|---|---|
+| **Web Checker** | [`src/services/web-checker/`](src/services/web-checker/README.md) | Prüft die offene Seite auf SEO, Bilder, Links, Kontrast, Headings, Performance, strukturierte Daten, Rechtschreibung, HTML-Validität, Barrierefreiheit. Single-Page und sitemap-basierter Site-Wide-Check. |
+| **KI-Assistent** | [`src/services/chatbot/`](src/services/chatbot/README.md) | Chat-Interface mit zwei Providern: wwwe-Backend und Claude (eigener API-Key). Im Web-Checker via "Im Chat analysieren"-Button auf jedem Item ansprechbar. |
 
-## Features
-
-- **Web Checker** – Prüft Headings, Bilder, Links, Kontrast, Rechtschreibung, Performance und strukturierte Daten
-- **KI-Assistent** – Chat-Interface für kontextbezogene Hilfe bei gefundenen Problemen
-- **Live Editor Support** – Erkennt automatisch iframe-basierte Live-Editoren
-- **Overlay-System** – Zeigt Prüfergebnisse direkt auf der Seite als Badges an
-- **Einzelprüfung** – Jedes Modul kann unabhängig neu geprüft werden
-
-> **Hinweis:** Einige Features (Rechtschreibprüfung, PageSpeed, KI-Assistent) benötigen ein laufendes Backend. Dieses ist ein separates Projekt und muss lokal zusätzlich gestartet werden.
-
----
+Sobald du einen weiteren Service unter `src/services/<id>/` anlegst, taucht er
+automatisch im Dashboard und im Burger-Menü auf — siehe
+[docs/creating-a-service.md](docs/creating-a-service.md).
 
 ## Tech Stack
 
-| Bereich | Technologie |
-|---|---|
-| Extension | Chrome Manifest V3 |
-| Frontend | Vue 3, Vue Router, Vite 7, CRXJS |
-| Styling | Tailwind CSS v4 |
-
----
-
-## Voraussetzungen
-
-- [Node.js](https://nodejs.org/) v18 oder neuer
-- Google Chrome
-- Das wwweBar Backend (separates Projekt) – nur nötig für Spellcheck, PageSpeed und KI-Assistent
-
----
+- Chrome Manifest V3 (Side Panel API)
+- Vue 3, Vue Router 4, Vite 7, CRXJS
+- Tailwind CSS v4 (mit `@theme`/`@utility`)
 
 ## Setup
 
-### 1. Repository klonen
-
 ```bash
 git clone <repo-url>
-cd wwweBar
-```
-
-### 2. Abhängigkeiten installieren
-
-```bash
+cd wwweBar/extension
 npm install
+cp .env.example .env       # ggf. Backend-URLs anpassen
+npm run dev                # Dev-Build mit Hot Reload, Output nach dist/
 ```
 
-### 3. Umgebungsvariablen konfigurieren
+In Chrome:
+1. `chrome://extensions/` → **Entwicklermodus** an
+2. **"Entpackte Erweiterung laden"** → `dist/` Ordner wählen
 
-```bash
-cp .env.example .env
-```
+Icon erscheint in der Toolbar; Klick öffnet die Sidebar.
 
-`.env` öffnen und anpassen:
+### `.env`
 
 ```env
-VITE_ENV=local                        # local → localhost:3000 | production → VITE_BACKEND_URL
+VITE_ENV=local                       # local → localhost:3000 | production → VITE_BACKEND_URL
 VITE_BACKEND_LOCAL=http://localhost:3000
-VITE_BACKEND_URL=https://dein-server.de
+VITE_BACKEND_URL=https://example.com
 ```
 
-Wenn das Backend lokal läuft, reicht `VITE_ENV=local` – die Extension spricht dann automatisch `http://localhost:3000` an.
+### Backend (optional)
 
-### 4. Extension bauen
+Spellcheck, PageSpeed und der wwwe-Chatbot brauchen ein eigenes Backend
+(separates Projekt). Ohne Backend funktionieren alle DOM-basierten Module
+trotzdem (Headings, Images, Links, Contrast, Validation, Accessibility, ...).
 
-```bash
-# Entwicklungs-Build mit Hot Reload
-npm run dev
-
-# Produktions-Build
-npm run build
-```
-
-### 5. Extension in Chrome laden
-
-1. Chrome öffnen → `chrome://extensions/`
-2. Oben rechts **Entwicklermodus** aktivieren
-3. **"Entpackte Erweiterung laden"** klicken
-4. Den `dist/` Ordner auswählen
-
-Die Extension erscheint in der Toolbar. Klick auf das Icon öffnet die Seitenleiste.
-
----
-
-## Projektstruktur
+## Projektstruktur (high-level)
 
 ```
-wwweBar/
+extension/
 ├── src/
-│   ├── config/
-│   │   └── api.js                    # Backend-URL Konfiguration
-│   ├── services/
-│   │   ├── web-checker/              # Web Checker Service
-│   │   │   ├── service.json          # Service-Konfiguration
-│   │   │   ├── views/HomeView.vue    # Modulübersicht
-│   │   │   ├── composables/          # Check-Logik, Store, Tab-Watcher
-│   │   │   └── modules/              # Einzelne Prüfmodule
-│   │   └── chatbot/                  # KI-Assistent Service
+│   ├── main.js, App.vue, background.js   ← App-Bootstrap, Service Worker
+│   ├── views/                            ← Globale Views (Dashboard, Settings)
+│   ├── router/                           ← Auto-Discovery Routing
 │   ├── composables/
-│   │   ├── loaders/                  # Service- & Modul-Loader (auto via glob)
-│   │   └── overlay/                  # Overlay-System für Seiten-Badges
-│   ├── components/ui/                # Globale UI-Komponenten (auto-registriert)
-│   ├── views/
-│   │   └── DashboardView.vue         # Haupt-Dashboard
-│   └── background.js                 # Service Worker + Message Router
-├── .env                              # Lokale Umgebungsvariablen (gitignored)
-├── .env.example                      # Vorlage für .env
-└── manifest.json                     # Chrome Extension Manifest
+│   │   ├── i18n/, settings/              ← Globale Composables
+│   │   ├── loaders/                      ← Service- und Modul-Loader (auto via glob)
+│   │   └── overlay/                      ← Overlay-System für Seiten-Badges
+│   ├── components/ui/                    ← Globale UI-Komponenten (auto-registriert)
+│   ├── translations/translations.json    ← Globale Übersetzungen
+│   ├── config/                           ← Statische Konfiguration (API-URLs, Default-Ignore-Selektoren)
+│   ├── assets/css/style.css              ← Tailwind-Theme + globale Styles + Scrollbar
+│   └── services/
+│       ├── web-checker/                  ← Web Checker Service (siehe README dort)
+│       └── chatbot/                      ← Chatbot Service (siehe README dort)
+├── docs/                                 ← Doku (siehe unten)
+└── manifest.json
 ```
 
----
+## Doku
 
-## Neuen Service erstellen
-
-1. Ordner anlegen: `src/services/mein-service/`
-2. `service.json` erstellen:
-```json
-{
-  "name": "Mein Service",
-  "description": "Kurze Beschreibung",
-  "icon": "mdiRocket",
-  "active": true
-}
-```
-3. `views/HomeView.vue` erstellen
-4. Fertig – erscheint automatisch im Dashboard ✅
-
----
-
-## Neues Modul erstellen
-
-Schnelle Übersicht — siehe **[docs/creating-a-module.md](./docs/creating-a-module.md)** für die ausführliche Anleitung.
-
-1. Ordner anlegen: `src/services/web-checker/modules/mein-modul/`
-2. `module.json`:
-```json
-{
-  "id":            "mein-modul",
-  "name":          "Mein Modul",
-  "description":   "Kurze Beschreibung",
-  "icon":          "mdiMagnify",
-  "active":        true,
-  "order":         5,
-  "checkOnReload": true,
-  "allowChatBot":  true,
-  "defaultFilter": "issues"
-}
-```
-3. `index.js` – Checker-Logik (läuft im DOM der Zielseite):
-```js
-export const overlay = {
-  enabled: true,
-  labelFn: (item) => item.title,
-  onText:  'Ausblenden',
-  offText: 'Einblenden',
-}
-
-export default function check() {
-  const { addItem, finish } = createCheckResult()
-
-  document.querySelectorAll('h1').forEach((el, idx) => {
-    addItem(el, [
-      { when: !el.textContent.trim(), type: 'error',   title: 'H1 ist leer' },
-      { when: true,                   type: 'success', title: el.textContent.trim() },
-    ], { _meta: { tag: 'H1', idx } })
-  })
-
-  return finish()
-}
-```
-4. `Index.vue` – Sidebar-Seite (einzeiler über `<ModulePage>`):
-```vue
-<script setup>
-import MyItem from './components/MyItem.vue'
-</script>
-<template>
-  <ModulePage moduleId="mein-modul" label="Mein Modul" :itemComponent="MyItem" />
-</template>
-```
-5. `components/MyItem.vue` – Item-Darstellung
-6. Fertig – erscheint automatisch im Web Checker ✅
-
----
-
-## Dokumentation
-
-- **[docs/architecture.md](./docs/architecture.md)** — Aufbau, Kontexte und Datenfluss
-- **[docs/creating-a-module.md](./docs/creating-a-module.md)** — Schritt-für-Schritt-Guide für neue Module
-- **[docs/module-api.md](./docs/module-api.md)** — vollständige API-Referenz
-- **Per-Modul-READMEs** in `src/services/web-checker/modules/<id>/README.md` — was jedes Modul prüft, Edge Cases, Limitierungen
+| Datei | Inhalt |
+|---|---|
+| [docs/architecture.md](docs/architecture.md) | Aufbau, Kontexte, Auto-Discovery, Settings/i18n-System, Datenflüsse |
+| [docs/creating-a-service.md](docs/creating-a-service.md) | Neuen Service anlegen (Step-by-Step) |
+| [docs/creating-a-module.md](docs/creating-a-module.md) | Neues Modul anlegen (Web-Checker-Modul oder Chatbot-Provider) |
+| [docs/module-api.md](docs/module-api.md) | Vollständige Modul-API-Referenz |
+| [docs/i18n.md](docs/i18n.md) | Übersetzungssystem, Translation-Files, `t()` und `window.__t` |
+| `services/<id>/README.md` | Pro-Service-Doku |
+| `services/web-checker/modules/<id>/README.md` | Pro-Modul-Doku (was prüft das Modul, Edge Cases) |

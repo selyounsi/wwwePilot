@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
-import { useModuleLoader } from '@/composables/loaders/useModuleLoader.js'
+import { useModuleLoader }        from '@/composables/loaders/useModuleLoader.js'
+import { useWebCheckerSettings } from '@/services/web-checker/composables/useWebCheckerSettings.js'
 
 const props = defineProps({
   moduleId:        { type: String,  required: true },
@@ -11,9 +12,11 @@ const props = defineProps({
   showStats:       { type: Boolean, default: true },
 })
 
-const { modules } = useModuleLoader('web-checker')
+const { modules }         = useModuleLoader('web-checker')
+const { state: settings } = useWebCheckerSettings()
 const config = computed(() => modules.find(m => m.id === props.moduleId))
-const defaultFilter = computed(() => config.value?.defaultFilter ?? 'issues')
+// service-level override (Web Checker settings) wins over module-config default
+const defaultFilter = computed(() => settings.defaultFilter ?? config.value?.defaultFilter ?? 'issues')
 </script>
 
 <!--

@@ -1,14 +1,15 @@
 export const overlay = null
 
 export default async function check() {
-  // CSS selectors — matched elements (and everything inside them) are
-  // stripped before validation
+  const t = window.__t
+
+  // module-specific exclusions stay here; .WidgetSealContainer + general
+  // third-party widgets live in Settings → window.__ignoreSelectors
   const IGNORE_SELECTORS = [
-    '.WidgetSealContainer',
     '#cookie-banner',
+    ...(window.__ignoreSelectors ?? []),
   ]
 
-  // HTMLHint rule IDs — silenced globally
   const IGNORE_RULES = [
     // 'inline-style-disabled',
   ]
@@ -35,8 +36,8 @@ export default async function check() {
     addItem(target, [{
       when:        true,
       type:        m.type,
-      title:       m.message || '(unbekannt)',
-      description: m.line ? `Zeile ${m.line}, Spalte ${m.column}` : '',
+      title:       m.message || t('(unknown)'),
+      description: m.line ? t('Line {line}, column {column}', { line: m.line, column: m.column }) : '',
     }], {
       ruleId:   m.ruleId,
       ruleLink: m.ruleLink,

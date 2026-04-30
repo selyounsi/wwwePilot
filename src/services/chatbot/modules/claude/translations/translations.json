@@ -1,0 +1,20 @@
+{
+  "de": {
+    "Claude": "Claude",
+    "Ask me a question — I'm Claude from Anthropic.": "Stelle mir eine Frage – ich bin Claude von Anthropic.",
+    "Explain this element on the page.": "Erkläre mir dieses Element auf der Seite.",
+    "How can I improve accessibility?": "Wie kann ich die Accessibility verbessern?",
+    "What do these SEO errors mean?": "Was bedeuten diese SEO-Fehler?",
+
+    "Add API key to use Claude": "API-Key hinterlegen, um Claude zu nutzen",
+    "Claude API Key": "Claude API-Key",
+    "Get your key from console.anthropic.com and paste it here.": "Hol dir deinen Key auf console.anthropic.com und füge ihn hier ein.",
+    "API key is saved": "API-Key ist gespeichert",
+    "New API key": "Neuer API-Key",
+    "Enter API key": "API-Key eingeben",
+    "Save": "Speichern",
+    "Saving…": "Speichern…",
+    "Delete key": "Key löschen"
+  },
+  "en": {}
+}

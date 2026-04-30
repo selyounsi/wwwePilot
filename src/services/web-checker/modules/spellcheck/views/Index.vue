@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import SpellItem from './components/SpellItem.vue'
+import SpellItem from '../components/SpellItem.vue'
 
 function groupItems(items) {
   const map = {}

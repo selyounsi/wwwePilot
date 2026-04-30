@@ -1,12 +1,17 @@
+import { useI18n } from '@/composables/i18n/useI18n.js'
+
+const { t: tSidebar } = useI18n()
+
 export const overlay = {
   enabled: true,
-  labelFn: (item) => `${item.ratio}:1 – ${item.level}`,
-  onText:  'Kontrast ausblenden',
-  offText: 'Kontrast einblenden',
+  labelFn: (item) => `${item.ratio}:1 – ${tSidebar(item.level)}`,
+  onText:  'Hide contrast',
+  offText: 'Show contrast',
 }
 
 export default async function check() {
   const { errors, warnings, items, addItem, finish } = createCheckResult()
+  const t = window.__t
 
   function parseColor(str) {
     const m = str.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/)
@@ -86,7 +91,6 @@ export default async function check() {
         const s = window.getComputedStyle(node, pseudo)
         if (s.backgroundImage && s.backgroundImage !== 'none') return true
       }
-      // fully opaque bg-color blocks any image below — no need to sample
       const bg = parseColor(own.backgroundColor)
       if (bg && bg.a >= 1) return false
       node = node.parentElement
@@ -100,9 +104,6 @@ export default async function check() {
       rect.right  > 0 && rect.left < window.innerWidth
   }
 
-  // text node is effectively invisible — common when an icon is rendered via
-  // ::before and the actual text is hidden via font-size:0, transparent color,
-  // text-indent off-screen, etc.
   function isTextVisible(style, fgColor) {
     if (style.display    === 'none')   return false
     if (style.visibility === 'hidden') return false
@@ -113,9 +114,6 @@ export default async function check() {
     return true
   }
 
-  // when text is hidden, fall back to the colour of a visible pseudo-element.
-  // pseudo with content (icon font etc.) — its `color` is the icon colour.
-  // pseudo with only background-image — we can't determine pixel colour, skip.
   function getPseudoFg(el) {
     for (const pseudo of ['::before', '::after']) {
       const s = window.getComputedStyle(el, pseudo)
@@ -127,7 +125,6 @@ export default async function check() {
     return null
   }
 
-  // Collect text candidates
   const TAGS = 'h1,h2,h3,h4,h5,h6,p,a,span,li,td,th,label,button,figcaption,blockquote,small,b,strong'
   const textEls = Array.from(document.querySelectorAll(TAGS)).filter(el => {
     const text = (el.innerText || el.textContent || '').trim()
@@ -143,13 +140,11 @@ export default async function check() {
     let   fontWeight  = parseInt(style.fontWeight)
     let   pseudoFg    = false
 
-    // text invisible — try to fall back to a visible ::before/::after colour
     if (!isTextVisible(style, fgColor)) {
       const pseudo = getPseudoFg(el)
-      if (!pseudo) continue // truly invisible (sr-only / display:none / etc.)
+      if (!pseudo) continue
       fgColor    = pseudo
       pseudoFg   = true
-      // pseudo's font metrics drive the size threshold
       const ps   = window.getComputedStyle(el, '::before')
       const pf   = parseFloat(ps.fontSize)
       const pw   = parseInt(ps.fontWeight)
@@ -166,7 +161,6 @@ export default async function check() {
     })
   }
 
-  // Collect placeholder candidates (input/textarea with placeholder attr)
   const inputs = document.querySelectorAll('input[placeholder], textarea[placeholder]')
   inputs.forEach(input => {
     const placeholder = input.getAttribute('placeholder')
@@ -183,11 +177,10 @@ export default async function check() {
   })
 
   if (candidates.length === 0) {
-    errors.push({ message: 'Keine Textelemente gefunden' })
+    errors.push({ message: t('No text elements found') })
     return finish()
   }
 
-  // Tag candidates with CSS-based bg + screenshot-sample candidates
   const toSample = []
   for (const c of candidates) {
     c.cssBg     = getBgColor(c.el)
@@ -203,7 +196,6 @@ export default async function check() {
     }
   }
 
-  // Capture & sample via service worker
   if (toSample.length > 0) {
     const reply = await runInBackground('CONTRAST_SAMPLE_BG', {
       viewportWidth: window.innerWidth,
@@ -218,7 +210,6 @@ export default async function check() {
     })
   }
 
-  // Emit items
   for (const c of candidates) {
     const bg          = c.sampledBg || c.cssBg
     const fg          = premultiply(c.fgColor, bg)
@@ -227,29 +218,29 @@ export default async function check() {
     const aaMin       = isLarge ? 3.0 : 4.5
     const passAA      = ratio >= aaMin
     const unreliable  = !passAA && c.onBgImage && !c.sampledBg
-    const level       = passAA ? 'AA' : unreliable ? 'Unsicher' : 'Fail'
+    const level       = passAA ? 'AA' : unreliable ? 'Unsafe' : 'Fail'
     const fgHex       = toHex(fg)
     const bgHex       = toHex(bg)
     const tagIdx      = Array.from(document.querySelectorAll(c.el.tagName)).indexOf(c.el)
-    const titleSuffix = c.isPlaceholder ? ' (Placeholder)' : c.pseudoFg ? ' (Icon)' : ''
+    const titleSuffix = c.isPlaceholder ? ` (${t('Placeholder')})` : c.pseudoFg ? ` (${t('Icon')})` : ''
 
     addItem(c.el, [
       {
         when:  !passAA && !unreliable,
         type:  'error',
-        title: `Kontrast zu gering (${ratio}:1)${titleSuffix}`,
-        description: `Mindestens ${aaMin}:1 erforderlich (WCAG AA)`,
+        title: `${t('Contrast too low ({ratio}:1)', { ratio })}${titleSuffix}`,
+        description: t('At least {min}:1 required (WCAG AA)', { min: aaMin }),
       },
       {
         when:  unreliable,
         type:  'warning',
-        title: `Kontrast nicht prüfbar — außerhalb Viewport${titleSuffix}`,
-        description: 'Element sichtbar scrollen und Modul erneut prüfen',
+        title: `${t('Contrast not measurable — outside viewport')}${titleSuffix}`,
+        description: t('Scroll the element into view and recheck'),
       },
       {
         when:  passAA,
         type:  'success',
-        title: `${ratio}:1 – AA${titleSuffix}`,
+        title: `${ratio}:1 – ${t('AA')}${titleSuffix}`,
         description: c.text,
       },
     ], {

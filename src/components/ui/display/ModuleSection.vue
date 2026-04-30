@@ -4,6 +4,7 @@ import { useModuleSetup }   from '@/services/web-checker/composables/useModuleSe
 import { useModuleFilter }  from '@/services/web-checker/composables/useModuleFilter.js'
 import { useModuleLoader }  from '@/composables/loaders/useModuleLoader.js'
 import { useCheckStore }    from '@/services/web-checker/composables/useCheckStore.js'
+import { useI18n }          from '@/composables/i18n/useI18n.js'
 
 const props = defineProps({
   label:         { type: String, required: true },
@@ -12,6 +13,7 @@ const props = defineProps({
 })
 
 const { modules } = useModuleLoader('web-checker')
+const { t }       = useI18n()
 const moduleConfig = props.moduleId ? modules.find(m => m.id === props.moduleId) : null
 
 const setup = moduleConfig
@@ -34,10 +36,10 @@ const hasOverlay    = computed(() =>
   (setup?.result?.value?.items?.length ?? 0) > 0
 )
 const overlayActive = computed(() => overlay?.overlayActive?.value ?? false)
-const onText        = computed(() => overlay?.onText  ?? 'Ausblenden')
-const offText       = computed(() => overlay?.offText ?? 'Einblenden')
+const onText        = computed(() => t(overlay?.onText  ?? 'Hide'))
+const offText       = computed(() => t(overlay?.offText ?? 'Show'))
 const canRecheck    = computed(() => !!setup && setup.result?.value?.status !== 'running')
-const recheckLabel  = computed(() => setup?.result?.value?.status === 'idle' ? 'Prüfen' : 'Erneut prüfen')
+const recheckLabel  = computed(() => setup?.result?.value?.status === 'idle' ? t('Check') : t('Recheck'))
 
 function toggle()   { overlay?.overlayToggle?.() }
 function recheck()  { setup?.recheck?.() }
@@ -72,10 +74,10 @@ function recheck()  { setup?.recheck?.() }
         v-model="filter"
         class="w-full bg-surface-soft border border-border text-muted text-xs rounded-lg px-3 py-2 outline-none focus:border-primary/50 cursor-pointer"
       >
-        <option value="all">Alle anzeigen</option>
-        <option value="issues">Fehler & Warnungen</option>
-        <option value="errors">Nur Fehler</option>
-        <option value="warnings">Nur Warnungen</option>
+        <option value="all">{{ t('Show all') }}</option>
+        <option value="issues">{{ t('Errors & warnings') }}</option>
+        <option value="errors">{{ t('Errors only') }}</option>
+        <option value="warnings">{{ t('Warnings only') }}</option>
       </select>
     </div>
 

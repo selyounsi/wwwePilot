@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWebChecker }     from '../composables/useWebChecker.js'
 import { useSiteCheckStore } from '../composables/useSiteCheckStore.js'
+import { useI18n }           from '@/composables/i18n/useI18n.js'
 
 const router = useRouter()
 const {
@@ -15,13 +16,14 @@ const {
   runChecks,
   switchToCheckedTab,
 } = useWebChecker()
+const { t } = useI18n()
 
 const siteCheck = useSiteCheckStore()
 const siteCheckCount = computed(() => siteCheck.state.urls.length)
 const hasSiteCheck   = computed(() => siteCheckCount.value > 0)
 const siteCheckLabel = computed(() => hasSiteCheck.value
-  ? `Zur Komplett-Übersicht (${siteCheckCount.value} Seiten)`
-  : 'Komplette Website prüfen',
+  ? t('Back to overview ({count} pages)', { count: siteCheckCount.value })
+  : t('Full Website Check'),
 )
 
 const sortedModules = computed(() => {
@@ -36,14 +38,13 @@ const sortedModules = computed(() => {
   return [...modules].sort((a, b) => order(a) - order(b))
 })
 
-// only editor-match means the live editor is showing the actual checked page
 const isLiveEditor   = computed(() => tabStatus.value === 'editor-match')
 const alreadyChecked = computed(() => tabStatus.value === 'current' || tabStatus.value === 'url-changed' || tabStatus.value === 'reloaded')
 
 const buttonLabel = computed(() => {
-  if (isLiveEditor.value)   return 'Unterseite erneut prüfen'
-  if (alreadyChecked.value) return 'Erneut prüfen'
-  return 'Prüfung starten'
+  if (isLiveEditor.value)   return t('Recheck the page')
+  if (alreadyChecked.value) return t('Recheck')
+  return t('Start check')
 })
 
 async function handleCheck() {
@@ -63,7 +64,7 @@ async function handleCheck() {
 
     <div class="flex-1 px-4 py-4 flex flex-col gap-2 overflow-y-auto">
       <div class="flex items-center justify-between mb-1">
-        <SectionLabel>Module</SectionLabel>
+        <SectionLabel>{{ t('Modules') }}</SectionLabel>
         <div class="flex items-center gap-2">
           <TabStatusBadge
             :status="tabStatus"
@@ -76,7 +77,7 @@ async function handleCheck() {
 
       <CardItem
         v-for="mod in sortedModules" :key="mod.id"
-        :icon="mod.icon" :title="mod.name" :description="mod.description"
+        :icon="mod.icon" :title="t(mod.name)" :description="t(mod.description)"
         @click="router.push(`/service/web-checker/module/${mod.id}`)"
       >
         <LoadingSpinner v-if="state.results[mod.id]?.status === 'running'" size="sm" />
@@ -84,7 +85,7 @@ async function handleCheck() {
           v-else-if="state.results[mod.id]?.status === 'skipped'"
           class="text-xs text-muted/60 px-2 py-0.5 rounded-lg bg-surface-soft"
           :title="state.results[mod.id]?.skippedReason || ''"
-        >Übersprungen</span>
+        >{{ t('Skipped') }}</span>
         <StatusPill v-else :count="errorCount(mod.id)" :warning-count="warningCount(mod.id)" />
       </CardItem>
     </div>
@@ -92,7 +93,7 @@ async function handleCheck() {
     <div class="px-4 pt-3 pb-5 bg-background border-t border-border shrink-0 flex flex-col gap-2">
       <BaseButton :loading="isChecking" @click="handleCheck">
         {{ buttonLabel }}
-        <template #loading>Wird geprüft…</template>
+        <template #loading>{{ t('Checking…') }}</template>
       </BaseButton>
       <BaseButton variant="ghost" @click="router.push('/service/web-checker/site-check')">
         <span class="inline-flex items-center gap-1.5">

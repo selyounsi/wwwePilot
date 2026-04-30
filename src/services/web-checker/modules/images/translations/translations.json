@@ -1,0 +1,29 @@
+{
+  "de": {
+    "Images": "Bilder",
+    "Check alt texts & image quality": "Alt-Texte & Bildqualität prüfen",
+
+    "Hide alt": "Alt ausblenden",
+    "Show alt": "Alt einblenden",
+    "CSS background image": "CSS-Hintergrundbild",
+    "No alt": "Kein Alt",
+    "Alt": "Alt",
+    "(empty)": "(leer)",
+
+    "Unknown": "Unbekannt",
+    "No images found": "Keine Bilder gefunden",
+
+    "Image used as CSS background": "Bild als CSS-Hintergrundbild eingebunden",
+    "data-cms-src on non-image element": "data-cms-src auf Nicht-Bild-Element",
+    "Image cannot load": "Bild nicht ladbar",
+    "Disallowed filename: \"{name}\"": "Dateiname nicht erlaubt: \"{name}\"",
+    "Missing alt attribute": "Fehlendes Alt-Attribut",
+    "Alt text too short: \"{alt}\"": "Alt-Text zu kurz: \"{alt}\"",
+    "Auto-generated alt text: \"{alt}\"": "Alt-Text automatisch gesetzt: \"{alt}\"",
+    "Lightbox class missing (lightbox-zoom-image)": "Lightbox-Klasse fehlt (lightbox-zoom-image)",
+    "Image upscaled: rendered {rw}×{rh}px, original {w}×{h}px": "Bild wird hochskaliert: {rw}×{rh}px gerendert, Original {w}×{h}px",
+    "Image OK": "Bild korrekt",
+    "Lightbox correctly configured": "Lightbox korrekt konfiguriert"
+  },
+  "en": {}
+}

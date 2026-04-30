@@ -1,5 +1,5 @@
 <script setup>
-import ValidationItem from './components/ValidationItem.vue'
+import ValidationItem from '../components/ValidationItem.vue'
 </script>
 
 <template>

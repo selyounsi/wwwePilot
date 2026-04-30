@@ -1,121 +1,208 @@
 # Modul-API-Referenz
 
-Vollständiger Vertrag für Modul-Autoren. Für die übergreifende Einführung lies
-zuerst [architecture.md](./architecture.md) und das Rezept in
-[creating-a-module.md](./creating-a-module.md).
+Vollständiger Vertrag für Modul-Autoren. Schnellstart in
+[creating-a-module.md](./creating-a-module.md), Architektur in
+[architecture.md](./architecture.md).
 
 ---
 
 ## `module.json`
 
-Statische Modul-Konfiguration. Wird beim Start von `useModuleLoader` gelesen.
-
 ```jsonc
 {
-  "id":            "my-check",       // string, erforderlich, eindeutig, kebab-case
-  "name":          "Mein Check",     // string, erforderlich, Dashboard-Label
-  "description":   "Was prüft das",  // string, Dashboard-Untertitel
-  "icon":          "mdiCheck",       // MDI-Icon-Name (camelCase)
-  "active":        true,             // boolean, Default true. false zum Ausblenden
-  "order":         50,               // number, Sortierreihenfolge im Dashboard
-  "checkOnReload": false,            // boolean, erneut ausführen wenn Tab fertig lädt
-  "allowChatBot":  true,             // boolean, "Im Chat analysieren" auf Items zeigen
-  "defaultFilter": "issues",         // 'issues' | 'errors' | 'warnings' | 'all'
+  "id":            "my-check",       // string, Pflicht, kebab-case, eindeutig
+  "name":          "My Check",       // string, Pflicht, Translation-Key
+  "description":   "Beschreibung",   // string, optional, Translation-Key
+  "icon":          "mdiCheck",       // string, optional, MDI-Icon (camelCase)
+  "active":        true,             // boolean, default true
+  "order":         50,               // number, optional
 
-  // Pfad-Filter pro Check-Modus. Beide Keys sind optional —
-  // fehlt ein Context oder sind beide Listen leer, läuft das
-  // Modul in diesem Modus auf ALLEN URLs.
-  "singlePage": {
-    "runOnPaths":  ["/", "/impressum"],   // Whitelist (leer = überall)
-    "skipOnPaths": ["/checkout"]          // Blacklist, gewinnt über runOnPaths
+  // Web-Checker-spezifisch:
+  "checkOnReload": false,            // boolean, optional
+  "allowChatBot":  true,             // boolean, optional
+  "defaultFilter": "issues",         // 'all' | 'issues' | 'errors' | 'warnings'
+
+  // Pfad-Filter, optional pro Modus:
+  "singlePage": {                    // (Single-Page-Check)
+    "runOnPaths":  ["/", "/contact"],  // Whitelist (leer/fehlt = überall)
+    "skipOnPaths": ["/checkout"]       // Blacklist, gewinnt
   },
-  "fullSite": {
+  "fullSite": {                      // (Site-Wide-Check)
     "runOnPaths":  [],
     "skipOnPaths": []
   }
 }
 ```
 
-Statische Keys können aus Gründen der Rückwärtskompatibilität auch aus
-`index.js` exportiert werden (der Loader merged, wobei `module.json` gewinnt).
-
-### Pfad-Filter (`singlePage` / `fullSite`)
-
-```ts
-interface PathFilter {
-  runOnPaths?:  string[]   // Whitelist exakter Pfade. Leer/fehlt = keine Einschränkung.
-  skipOnPaths?: string[]   // Blacklist exakter Pfade. Gewinnt über runOnPaths.
-}
-```
-
-- Pfade werden **exakt** gegen `new URL(tabUrl).pathname` gematched. Trailing-Slash
-  wird normalisiert (`/foo/` ≡ `/foo`), aber sonst kein Pattern-Matching, kein
-  Regex, kein Glob.
-- **Default ist "läuft überall":** Fehlt der ganze Context-Block (`singlePage`
-  oder `fullSite`), oder sind beide Listen leer, gilt das Modul für alle URLs in
-  diesem Modus. Du musst die Keys nur setzen, wenn du tatsächlich filtern willst.
-- Übersprungene Module bekommen im Dashboard ein graues "Übersprungen"-Badge
-  statt Stats — sie sind nicht "fehlgeschlagen", sie wurden bewusst ausgelassen.
-
-Implementierung: [`composables/useUrlFilter.js`](../src/services/web-checker/composables/useUrlFilter.js).
+Statische Keys können auch aus `index.js` exportiert werden — Loader merged,
+JSON gewinnt bei Konflikten.
 
 ---
 
 ## `index.js`
 
-Der Checker des Moduls. Läuft im **Page-Kontext** der geprüften Webseite.
+### Web-Checker-Modul
 
-### Default-Export — der Checker
+Default-Export ist die Checker-Funktion. Läuft im Page-Kontext, wird via
+`Function.toString()` serialisiert — Modulebene-Imports und -Konstanten gehen
+verloren!
 
 ```ts
 type Check = (apiConfig?: any) => Result | Promise<Result>
 ```
 
-Sync oder async. Erhält den `apiConfig`-Export des Moduls (falls vorhanden) als
-erstes Argument.
-
 ```js
-export default async function check() {
+export const overlay = null    // OverlayConfig | null
+export const apiConfig = null  // any — wird als erstes Argument übergeben
+
+export default async function check(config) {
+  const t = window.__t
   const { addItem, finish } = createCheckResult()
-  // ...
+  // ... DOM-Inspektion ...
   return finish()
 }
 ```
 
-### Benannte Exports
-
-| Export | Typ | Default | Verwendung |
+| Named-Export | Typ | Default | Verwendung |
 |---|---|---|---|
-| `overlay` | `OverlayConfig \| null` | `null` | Aktiviert die Badge-Ebene (siehe unten) |
-| `apiConfig` | `any` | `null` | Objekt, das als erstes Argument an `check()` übergeben wird — nutze dies, um Werte aus deiner Bundler-importierten Config (z.B. URLs aus `@/config/api.js`) durchzureichen |
+| `overlay` | `OverlayConfig \| null` | `null` | Aktiviert die Badge-Ebene auf der Seite |
+| `apiConfig` | `any` | `null` | Wird als erstes Argument an `check()` übergeben — z.B. für Backend-URLs aus `@/config/api.js` |
 
-### `OverlayConfig`
+#### `OverlayConfig`
 
 ```ts
 interface OverlayConfig {
-  enabled: boolean              // Hauptschalter
-  labelFn: (item) => string     // Text, der im Badge über jedem Element angezeigt wird
-  onText:  string               // Button-Label, wenn Overlay aktiv ist
-  offText: string               // Button-Label, wenn Overlay versteckt ist
+  enabled: boolean
+  labelFn: (item) => string    // Badge-Text. Läuft im Sidebar-Kontext (nicht Page!)
+  onText:  string              // Translation-Key des Toggle-Labels (aktiv)
+  offText: string              // Translation-Key des Toggle-Labels (inaktiv)
 }
 ```
 
-Beispiel:
+`labelFn` läuft in der Sidebar — kann reguläre Imports und `useI18n` nutzen:
+
 ```js
+import { useI18n } from '@/composables/i18n/useI18n.js'
+const { t: tSidebar } = useI18n()
+
 export const overlay = {
   enabled: true,
-  labelFn: (item) => item.tag,
-  onText:  'Tags ausblenden',
-  offText: 'Tags einblenden',
+  labelFn: (item) => `${item.ratio}:1 — ${tSidebar(item.level)}`,
+  onText:  'Hide contrast',
+  offText: 'Show contrast',
 }
 ```
+
+### Chatbot-Provider-Modul
+
+Default-Export ist die `send`-Funktion:
+
+```ts
+type Send = (ctx: { text: string, history: ChatMessage[], chatId: string })
+  => Promise<{ reply: string } | { error: string }>
+```
+
+| Named-Export | Typ | Verwendung |
+|---|---|---|
+| `accentColor` | `string` | CSS-Farbe des Avatars (`'#D97757'` oder `'var(--color-primary)'`) |
+| `welcomeText` | `string` | Translation-Key des Empty-State-Texts |
+| `suggestions` | `string[]` | Translation-Keys der Suggestion-Buttons |
 
 ---
 
-## Window-Helper (Page-Kontext)
+## `views/Index.vue`
 
-Vorab injiziert von `useCheckRunner.injectHelper()`, bevor irgendein Checker
-läuft. Innerhalb deiner `check()`-Funktion auf `window.*` verfügbar.
+Sidebar-Page des Moduls.
+
+**Web-Checker minimal:**
+```vue
+<script setup>
+import MyItem from '../components/MyItem.vue'
+</script>
+<template>
+  <ModulePage moduleId="my-check" label="My Check" :itemComponent="MyItem" />
+</template>
+```
+
+**Web-Checker mit custom Slot:**
+```vue
+<template>
+  <ModulePage moduleId="my-check" label="My Check">
+    <template #default="{ result, raw }">
+      <CustomStats :result="raw ?? result" />
+      <YourGrouping :items="result.items" />
+    </template>
+  </ModulePage>
+</template>
+```
+
+**Chatbot-Provider:** Empty-State-Komponente — siehe `chatbot/modules/wwwe/views/Index.vue` und `chatbot/modules/claude/views/Index.vue`.
+
+---
+
+## `views/SettingsView.vue` (optional)
+
+Modul-eigene Settings. Erscheint automatisch unter Service-Einstellungen, wenn
+der Service `<ServiceSettingsPage>` benutzt.
+
+```vue
+<script setup>
+import { useI18n } from '@/composables/i18n/useI18n.js'
+import { useModuleSettings } from '@/composables/settings/useModuleSettings.js'
+
+const { t } = useI18n()
+const settings = useModuleSettings('my-check', { foo: '', items: [] })
+</script>
+
+<template>
+  <div class="min-h-screen bg-background flex flex-col">
+    <AppHeader showBack :subtitle="t('Settings')" />
+    <div class="flex-1 px-4 py-4 flex flex-col gap-4 overflow-y-auto">
+      <!-- ... deine Settings-Cards ... -->
+    </div>
+  </div>
+</template>
+```
+
+`useModuleSettings(moduleId, defaults)` gibt das reaktive State-Slice zurück.
+Persistiert in `chrome.storage.local` unter `wp-module-settings` (eine Map über
+alle Module). Im Page-Kontext zugänglich als `window.__moduleSettings.<moduleId>`.
+
+---
+
+## `background.js` (optional)
+
+```ts
+export const type:  string         // einzelner Message-Type
+export const types: string[]       // ODER mehrere Types
+
+export async function handle(
+  msg: any,
+  sendResponse: (reply: any) => void,
+  sender: chrome.runtime.MessageSender,
+): Promise<void>
+```
+
+```js
+export const types = ['MY_KEY_SET', 'MY_KEY_GET']
+
+export async function handle(msg, sendResponse) {
+  switch (msg.type) {
+    case 'MY_KEY_SET': /* ... */ break
+    case 'MY_KEY_GET': /* ... */ break
+  }
+}
+```
+
+Auto-loaded vom `src/background.js`. Aufruf aus dem Sidebar-Code via
+`chrome.runtime.sendMessage`, oder im Web-Checker-Checker via
+`runInBackground(type, payload)`.
+
+---
+
+## Window-Helper im Page-Kontext
+
+Vor jedem Web-Checker-Run via `useCheckRunner.injectHelper()` injiziert.
 
 ### `createCheckResult()`
 
@@ -129,22 +216,22 @@ function createCheckResult(): {
 }
 
 interface Check {
-  when:        boolean              // diesen Check einbeziehen?
+  when:        boolean
   type:        'error' | 'warning' | 'success'
-  title:       string               // wird als Issue-Nachricht angezeigt
-  description?: string              // optionaler Kontext (aktuell nicht gerendert)
+  title:       string
+  description?: string
 }
 
 interface Item {
-  type:    'error' | 'warning' | 'success'   // schlimmster Schweregrad in `issues`
+  type:    'error' | 'warning' | 'success'
   issues:  { type, message }[]
-  visible: boolean                  // Ergebnis von isElementVisible(el)
-  element: string                   // UUID für Overlay-/Highlight-Lookup
-  ...extra                          // alles, was das Modul in `extra` übergeben hat
+  visible: boolean
+  element: string                       // UUID
+  ...extra                              // alles aus addItem(_, _, extra)
 }
 
 interface Result {
-  errors:       { message: string }[]   // dedupliziert, mit (Nx)-Suffix
+  errors:       { message: string }[]   // dedupliziert mit (Nx)-Suffix
   warnings:     { message: string }[]
   errorCount:   number
   warningCount: number
@@ -153,148 +240,129 @@ interface Result {
 ```
 
 `addItem(el, checks, extra)`:
-- `checks` filtert `when: false` und `type: 'success'` für die Issues-Liste heraus
-  und leitet daraus den Gesamt-`type` des Items vom schlimmsten Schweregrad ab
-- `extra` wird ins Item gespreaded — enthält typischerweise Display-Props (`text`,
-  `name`, `href`), das `_meta` für das Element-Lookup und modulspezifische Felder
+- `checks` filtert `when: false` und `type: 'success'` aus den Issues; leitet
+  Item-Type vom schlimmsten Schweregrad ab
+- `extra` wird ins Item gespreaded — typisch: `text`, `name`, `href`, `_meta`,
+  modul-spezifische Felder
 
-### `setHighlightElement()`
+### `setHighlightElement(): string`
 
-```ts
-function setHighlightElement(): string   // gibt crypto.randomUUID() zurück
-```
+Frische UUID. Wird intern von `addItem` aufgerufen — selten direkt nötig.
 
-Gibt eine frische UUID zurück. `addItem` ruft das für dich auf und speichert das
-Ergebnis in `item.element`. Du musst es selten direkt aufrufen.
+### `isElementVisible(el): boolean`
 
-### `isElementVisible(el)`
+Rekursive Sichtbarkeitsprüfung (display, visibility, opacity, transform,
+Vorfahren). Setzt `item.visible` in `addItem`.
 
-```ts
-function isElementVisible(el: Element): boolean
-```
+### `hasVisualContent(el): boolean`
 
-Rekursive Sichtbarkeitsprüfung, die `display`, `visibility`, `opacity`,
-Zero-Scale-`transform` und Vorfahren-Sichtbarkeit abdeckt. Wird intern von
-`addItem` genutzt, um `item.visible` zu setzen.
+`true` wenn das Element irgendetwas rendert — Text, Kind-Medien,
+Pseudo-Element-Content, background-image. Nützlich um Icon-only-Elemente von
+leeren zu unterscheiden.
 
-### `hasVisualContent(el)`
+### `runInBackground(type, payload?): Promise<any>`
 
-```ts
-function hasVisualContent(el: Element): boolean
-```
-
-Gibt `true` zurück, wenn das Element irgendetwas Sichtbares rendert — Text, Kind-
-`<img>/<svg>/<picture>/<video>/<canvas>`, `::before`/`::after`-Content
-(Icon-Fonts) oder ein background-image (CSS-Icons).
-
-Nützlich, um wirklich leere Elemente von Icon-gestylten zu unterscheiden.
-Wird von `links` benutzt, um Icon-only-`<a>`-Tags zu erkennen, und von `contrast`,
-um auf die Pseudo-Farbe zurückzufallen, wenn der Text selbst versteckt ist.
-
-### `runInBackground(type, payload?)`
-
-```ts
-function runInBackground(type: string, payload?: object): Promise<any>
-```
-
-Promise-gewrappter `chrome.runtime.sendMessage`. Ruft einen Service-Worker-
-Handler über seinen `type` auf und löst mit der Response des Handlers auf.
+Promise-Wrapper um `chrome.runtime.sendMessage`.
 
 ```js
-const reply = await runInBackground('CHECK_LINKS', { urls })
+const reply = await runInBackground('MY_FETCH', { url })
+```
+
+### `__t(key, params?): string`
+
+Übersetzungsfunktion. Lookup: `currentLang[key] → en[key] → key`. Platzhalter
+`{name}` mit `params: { name: '...' }`. Siehe [i18n.md](./i18n.md).
+
+### `__ignoreSelectors: string[]`
+
+Globale Ignore-Liste (Built-ins minus User-Disabled, plus User-Custom). Module
+können sie zusätzlich zu eigenen Filtern berücksichtigen:
+
+```js
+const IGNORE = ['.my-skip', ...(window.__ignoreSelectors ?? [])]
+```
+
+### `__moduleSettings: { [moduleId]: any }`
+
+Snapshot aller `useModuleSettings`-Stores. Modul-eigene Settings:
+
+```js
+const ignoreWords = window.__moduleSettings?.spellcheck?.ignoreWords ?? []
 ```
 
 ---
 
 ## `_meta` — Element-Lookup
 
-Das Framework muss das Element jedes Items später wiederfinden (für Overlays,
-Highlight, "Im Chat analysieren"). Das `_meta`-Feld jedes Items sagt
-`useModuleAttributes.findEl`, wie es nachschlagen soll.
+`_meta` jedes Items sagt dem Framework, wie es das Element auf der Seite
+wiederfindet. Auflösungsreihenfolge in `useModuleAttributes.findEl`:
 
-Auflösungsreihenfolge (erster Treffer gewinnt):
-
-| Strategie | `_meta`-Form | Wann verwenden |
+| Strategie | Form | Wann |
 |---|---|---|
-| **CSS-Selektor** | `{ selector: '#x' }` | Du hast das Element selbst injiziert |
-| **Tag + Index** | `{ tag: 'H1', idx: 3 }` | Häufigster Fall — n-tes Element dieses Tags |
-| **Text-basiert** | `{ text: 'foo', tag: 'P' }` | Match über Textinhalt (verwendet von Contrast) |
-| **Background-Image** | `{ isBackground: true, idx: 2 }` | `<div>` mit CSS-background-image |
-| **Bild-Fingerprint** | `{ src, name, alt }` | Bild-Lookup über Dateiname / alt |
+| CSS-Selektor | `{ selector: '#x' }` | Du hast das Element selbst injiziert |
+| Tag + Index | `{ tag: 'A', idx: 5 }` | n-tes Element dieses Tags (häufigster Fall) |
+| Text-basiert | `{ text: 'foo', tag: 'P' }` | Match über Textinhalt |
+| Background-Image | `{ isBackground: true, idx: 2 }` | `<div>` mit CSS-bg-image |
+| Bild-Fingerprint | `{ src, name, alt }` | Bild-Lookup (Heuristik) |
 
-Setze `_meta` immer — ohne es funktionieren weder Badges noch HTML-Extraktion.
+**Wichtig**: ohne `_meta` funktionieren Overlays, Highlight und HTML-Extraktion
+für den Chatbot nicht.
 
 ---
 
-## `background.js` (optional)
+## `translations/translations.json`
 
-Service-Worker-Handler. Wird von `src/background.js` aus dem Verzeichnis jedes
-Moduls automatisch geladen.
-
-```ts
-export const type: string         // Nachrichtentyp, für den registriert wird
-
-export async function handle(
-  msg: any,                       // der Nachrichtenkörper
-  sendResponse: (reply: any) => void,
-  sender: chrome.runtime.MessageSender,   // sender.tab.id ist der aufrufende Tab
-): Promise<void>
-```
-
-Einzelner Type:
-```js
-export const type = 'AXE_RUN'
-export async function handle(msg, sendResponse, sender) {
-  sendResponse({ ... })
+```json
+{
+  "de": {
+    "Some Key": "Übersetzung",
+    "Found {count} items": "{count} Treffer gefunden"
+  },
+  "en": { /* optionale Overrides — fehlende Keys fallen auf den Key zurück */ }
 }
 ```
 
-Mehrere Types (ein Handler):
-```js
-export const types = ['CLAUDE_KEY_SET', 'CLAUDE_KEY_GET']
-export async function handle(msg, sendResponse) {
-  switch (msg.type) {
-    case 'CLAUDE_KEY_SET': /* ... */ break
-    case 'CLAUDE_KEY_GET': /* ... */ break
-  }
-}
-```
-
-Der Handler kann jede `chrome.*`-API nutzen, die für Service Worker verfügbar ist —
-`chrome.tabs`, `chrome.scripting`, `chrome.tabs.captureVisibleTab`,
-`chrome.storage`, `fetch` (kein CORS-Preflight aus dem SW-Kontext) usw.
+Auto-Discovered an drei Ebenen (global, service, modul). Mehr in [i18n.md](./i18n.md).
 
 ---
 
 ## Sidebar-UI-Komponenten
 
-### `<ModulePage>`
+Alle global registriert via `components/ui/index.js` — kein manueller Import
+nötig.
 
-Wrappt die Sidebar-Seite eines Moduls mit dem Standard-Layout. Props:
+### `<ModulePage>` (`components/ui/layout/`)
 
-| Prop | Typ | Default | Verwendung |
+Wrappt Modul-Sidebar-Page mit Standard-Layout (Web-Checker).
+
+| Prop | Typ | Default | Beschreibung |
 |---|---|---|---|
-| `moduleId` | String | erforderlich | Schlägt die Modul-Konfiguration nach |
+| `moduleId` | String | erforderlich | Schlägt Modul-Config nach |
 | `label` | String | erforderlich | Section-Titel |
-| `itemComponent` | Vue Component | null | Wird für jedes `result.items[i]` gerendert |
-| `runningMessage` | String | '' | Optionale Caption unter dem Spinner |
-| `emptyMessage` | String | "Noch nicht geprüft …" | Wird im Idle-State angezeigt |
-| `showStats` | Boolean | true | ModuleStats über den Items anzeigen |
+| `itemComponent` | Component | `null` | Wird pro `result.items[i]` gerendert |
+| `runningMessage` | String | `''` | Caption unter dem Spinner |
+| `emptyMessage` | String | `'Noch nicht geprüft …'` | Idle-State-Text |
+| `showStats` | Boolean | `true` | ModuleStats-Header anzeigen |
 
-Der Default-Slot erhält `{ result, raw }` für vollständig eigenes Rendering.
+Default-Slot: `{ result, raw }` für custom Rendering.
 
-### `<ModuleSection>`
+### `<ServiceSettingsPage>` (`components/ui/layout/`)
 
-Innerer Teil: Filter-Dropdown, Recheck-Button, Overlay-Toggle, Items-Slot.
-Du nutzt das normalerweise nicht direkt — `<ModulePage>` wrappt es.
+Wrapper für Service-Settings-Pages. Rendert AppHeader, Slot, und automatisch
+unten dran die Liste der Modul-Settings.
 
-Slot exponiert `{ result, raw }`:
-- `result` — eventuell gefiltert, was der Nutzer sehen will
-- `raw` — ungefiltert, für Statistiken / Gesamtzahlen
+```vue
+<ServiceSettingsPage>
+  <!-- service-spezifische Settings hier -->
+</ServiceSettingsPage>
+```
 
-### `<ModuleItem>`
+### `<ModuleSection>` (`components/ui/display/`)
 
-Einzelne Ergebniszeile. Verwende sie innerhalb einer Item-Komponente:
+Innerer Teil von ModulePage: Filter-Dropdown, Recheck-Button, Overlay-Toggle,
+Items-Slot. Normal nicht direkt nötig.
+
+### `<ModuleItem>` (`components/ui/display/`)
 
 ```vue
 <ModuleItem :item="normalized" variant="box">
@@ -304,40 +372,46 @@ Einzelne Ergebniszeile. Verwende sie innerhalb einer Item-Komponente:
 </ModuleItem>
 ```
 
-Varianten: `'box'` (gerundete Karte) oder `'list'` (flache Listenzeile).
+`variant`: `'box'` (Card) oder `'list'` (flach). Leitet Display-Felder vom
+Item ab (`title` aus `title|text|name|href`, `details` aus `details|tag|href`,
+`image` aus `image|src`).
 
-Die Komponente leitet die Anzeige-Felder vom Item ab:
-- `title` aus `item.title ?? item.text ?? item.name ?? item.href`
-- `details` aus `item.details ?? item.tag ?? item.href`
-- `image` aus `item.image ?? item.src`
-- Status-Farbe aus `item.issues` (schlimmster Type)
-
-### `<DetailRow>`
-
-Zeile mit Label und Wert, verwendet in den Expand-Views der Items.
+### `<DetailRow>` (`components/ui/display/`)
 
 ```vue
-<DetailRow label="Selector" mono width="w-24">
-  {{ selector }}
-</DetailRow>
+<DetailRow label="Selector" mono width="w-24">{{ selector }}</DetailRow>
 ```
 
-Props:
-- `label` (erforderlich) — Label-Text auf der linken Seite
-- `width` — Tailwind-Width-Klasse für das Label, Default `w-20`
-- `mono` — boolean, wendet `font-mono` auf das Label an
+Props: `label` (Pflicht), `width` (Default `w-20`), `mono` (boolean).
 
-Slot ist der Wert (rechte Seite).
+### `<ModuleStats>` (`components/ui/display/`)
 
-### `<ModuleStats>`
+Gesamt/Fehler/Warnungen-Badges.
 
-Gesamt / Fehler / Warnungen Badges. Props:
-
-| Prop | Default | Verwendung |
-|---|---|---|
-| `result` | erforderlich | Item-Array-Container |
-| `total` | true | "Gesamt"-Badge anzeigen |
-| `errors` | true | "Fehler"-Badge anzeigen |
-| `warnings` | true | "Warnungen"-Badge anzeigen |
+| Prop | Default |
+|---|---|
+| `result` | erforderlich |
+| `total` | `true` |
+| `errors` | `true` |
+| `warnings` | `true` |
 
 Default-Slot für zusätzliche StatBox-Zellen.
+
+### Weitere Bausteine
+
+| Komponente | Zweck |
+|---|---|
+| `<AppHeader>` | Header mit Title/Subtitle/Back-Button/QuickNav |
+| `<BreadCrumb>` | Auto-Pfad aus `route.meta` |
+| `<QuickNav>` | Burger-Sidebar (Dashboard, Services, Einstellungen) |
+| `<CardItem>` | Klickbare Liste-Item-Card mit Icon/Title/Description |
+| `<StatBox>` | Großer Stat-Wert mit Label (Variants: neutral/success/muted) |
+| `<EmptyState>` | Zentrierter Text-Wrapper |
+| `<LoadingSpinner>` | Spinner |
+| `<AlertItem>` | Farbige Alarm-Box (`type`: error/warning/info) |
+| `<StatusPill>` | Inline-Pill für Errors+Warnings-Counts |
+| `<TabStatusBadge>` | Live-Editor / URL-changed / etc. Anzeige |
+| `<SectionLabel>` | Uppercase muted Section-Header |
+| `<BaseButton>` | Primary/Secondary/Ghost-Button mit Loading-State |
+| `<InputField>` | Standard-Input |
+| `<Icon>` | MDI-Icon-Wrapper |

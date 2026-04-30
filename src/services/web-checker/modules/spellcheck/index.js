@@ -4,12 +4,12 @@ export const overlay   = null
 export const apiConfig = { prefix: APP_NAME_LOWER }
 
 export default async function check(config) {
+  const t = window.__t
 
   // constants must live inside check() — chrome.scripting only serializes the function body
   const prefix            = config.prefix
   const SEO_OFFSET_MARKER = 2_000_000
 
-  // remove spans injected by a previous run
   document.querySelectorAll(`[data-${prefix}-injected="spellcheck"]`).forEach(span => {
     const parent = span.parentNode
     if (!parent) return
@@ -19,7 +19,7 @@ export default async function check(config) {
 
   const text = document.body.innerText?.trim()
   if (!text) {
-    return { errors: [{ message: 'Kein Text gefunden' }], warnings: [], errorCount: 1, warningCount: 0, items: [] }
+    return { errors: [{ message: t('No text found') }], warnings: [], errorCount: 1, warningCount: 0, items: [] }
   }
 
   const images = Array.from(document.querySelectorAll('img')).map(img => ({
@@ -37,7 +37,13 @@ export default async function check(config) {
     return { errors: [{ message: result.error }], warnings: [], errorCount: 1, warningCount: 0, items: [] }
   }
 
-  const matches = result?.matches ?? []
+  // Drop matches whose offending word is on the user's ignore list
+  // (configured via Spellcheck → Settings).
+  const ignoreWords = (window.__moduleSettings?.spellcheck?.ignoreWords ?? []).map(w => w.toLowerCase())
+  const matches = (result?.matches ?? []).filter(m => {
+    const word = (m.fehler ?? '').trim().toLowerCase()
+    return !word || !ignoreWords.includes(word)
+  })
   const { errors, warnings, items, addItem, finish } = createCheckResult()
 
   function severityToType(severity) {
@@ -195,7 +201,7 @@ export default async function check(config) {
       fehler:      m.fehler,
       korrektur:   m.korrektur,
       message:     m.message,
-      category:    m.category ?? 'Sonstiges',
+      category:    m.category ?? t('Other'),
       suggestions: m.suggestions ?? [],
       context:     m.context?.text ?? '',
       ruleId:      m.ruleId ?? '',

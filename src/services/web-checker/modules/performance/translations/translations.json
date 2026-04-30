@@ -1,0 +1,35 @@
+{
+  "de": {
+    "Performance": "Performance",
+    "Analyze load times & resources": "Ladezeiten & Ressourcen analysieren",
+
+    "Total resources": "Ressourcen gesamt",
+    "Transfer size": "Transfergröße",
+    "Images": "Bilder",
+    "{n} files": "{n} Dateien",
+
+    "Not available for local URLs": "Nicht verfügbar für lokale URLs",
+    "Score not retrievable": "Score nicht abrufbar",
+    "{score}/100 — Critical": "{score}/100 – Kritisch",
+    "{score}/100 — Needs improvement": "{score}/100 – Optimierungsbedarf",
+
+    "Very many resources ({n} files)": "Sehr viele Ressourcen ({n} Dateien)",
+    "Many resources ({n} files)": "Viele Ressourcen ({n} Dateien)",
+    "Resources OK ({n} files)": "Ressourcen OK ({n} Dateien)",
+
+    "Very large: {size}": "Sehr groß: {size}",
+    "Large: {size}": "Groß: {size}",
+    "Transfer size OK: {size}": "Transfergröße OK: {size}",
+
+    "Very many scripts ({n})": "Sehr viele Scripts ({n})",
+    "Many scripts ({n})": "Viele Scripts ({n})",
+    "Scripts OK ({n})": "Scripts OK ({n})",
+
+    "Many images loaded ({n})": "Viele Bilder geladen ({n})",
+    "Images OK ({n})": "Bilder OK ({n})",
+
+    "Many stylesheet requests ({n})": "Viele Stylesheet-Anfragen ({n})",
+    "CSS OK ({n})": "CSS OK ({n})"
+  },
+  "en": {}
+}

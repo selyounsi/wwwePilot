@@ -1,17 +1,18 @@
 export const overlay = {
   enabled: true,
   labelFn: (item) => item.tag,
-  onText:  'Tags ausblenden',
-  offText: 'Tags einblenden',
+  onText:  'Hide tags',
+  offText: 'Show tags',
 }
 
 export default function check() {
   const { errors, warnings, items, addItem, finish } = createCheckResult()
+  const t = window.__t
 
   const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'))
   const h1s      = document.querySelectorAll('h1')
 
-  if (h1s.length === 0) errors.push({ message: 'Kein H1 Tag gefunden' })
+  if (h1s.length === 0) errors.push({ message: t('No H1 tag found') })
 
   let lastLevel = 0
   headings.forEach((h) => {
@@ -31,26 +32,26 @@ export default function check() {
       {
         when:        isEmpty,
         type:        'error',
-        title:       `${h.tagName} ist leer`,
-        description: 'Dieser Heading hat keinen Inhalt',
+        title:       t('{tag} is empty', { tag: h.tagName }),
+        description: t('This heading has no content'),
       },
       {
         when:        isDuplH1,
         type:        'error',
-        title:       'H1 mehrfach vorhanden',
-        description: `Es gibt ${h1s.length}x H1 – sollte nur einmal vorkommen`,
+        title:       t('Multiple H1 tags'),
+        description: t('Found {count}× H1 — should appear only once', { count: h1s.length }),
       },
       {
         when:        beforeH1,
         type:        'warning',
-        title:       `${h.tagName} vor H1`,
-        description: 'Kein H1 vor diesem Heading – Hierarchie beginnt falsch',
+        title:       t('{tag} appears before H1', { tag: h.tagName }),
+        description: t('No H1 before this heading — hierarchy starts incorrectly'),
       },
       {
         when:        skipsLevel,
         type:        'warning',
-        title:       `Sprung von H${lastLevel} auf H${level}`,
-        description: `H${lastLevel + 1} wurde übersprungen`,
+        title:       t('Jump from H{from} to H{to}', { from: lastLevel, to: level }),
+        description: t('H{level} was skipped', { level: lastLevel + 1 }),
       },
       {
         when:        true,
@@ -60,10 +61,10 @@ export default function check() {
       },
     ], {
       level,
-      text:  text || '(leer)',
+      text:  text || t('(empty)'),
       tag:   h.tagName,
       name:  text || h.tagName,
-      _meta: { tag: h.tagName, idx: tagIdx }, // idx is per tag-type, not global
+      _meta: { tag: h.tagName, idx: tagIdx },
     })
 
     lastLevel = level

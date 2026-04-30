@@ -2,267 +2,226 @@
 
 Wie die wwweBar Chrome Extension aufgebaut ist.
 
-## Großes Bild
+## Drei JS-Kontexte
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Chrome Side Panel (Vue 3 SPA)                              │
-│  ───────────────────────────                                │
-│  Dashboard → Service → Modul → Items                        │
-│                                                             │
-│  Alles Vue + Vite + Tailwind + CRXJS                        │
-└─────────────────────────────────────────────────────────────┘
-                          ↓ chrome.runtime.sendMessage
-┌─────────────────────────────────────────────────────────────┐
-│  Service Worker (background.js)                             │
-│  ──────────────────────────────                             │
-│  Lädt Handler aus jedem background.js der Module automatisch│
-│  und routet Nachrichten anhand des `type` an sie weiter.    │
-└─────────────────────────────────────────────────────────────┘
-                          ↓ chrome.scripting.executeScript
-┌─────────────────────────────────────────────────────────────┐
-│  Page-Kontext (die geprüfte Webseite)                       │
-│  ──────────────────────────────────                         │
-│  Die Checker-Funktion jedes Moduls läuft hier mit Zugriff   │
-│  auf das echte DOM via Window-Helpern (createCheckResult,   │
-│  setHighlightElement, hasVisualContent, runInBackground).   │
-└─────────────────────────────────────────────────────────────┘
-```
-
-## Drei Ausführungskontexte
-
-Die Extension führt Code in drei verschiedenen JavaScript-Kontexten aus, die
-nur über `chrome.*`-APIs miteinander kommunizieren.
+Die Extension läuft in drei unabhängigen JS-Welten, die nur per `chrome.*`-API
+miteinander kommunizieren:
 
 | Kontext | Wo er lebt | Was er kann |
 |---|---|---|
-| **Sidebar** | `src/App.vue` und darunter | Vue UI, Routing, Store, kann `chrome.scripting.executeScript` und `chrome.runtime.sendMessage` aufrufen |
-| **Service Worker** | `src/background.js` + jeweils `*/background.js` | Persistent über Tabs hinweg, zuständig für Netzwerkaufrufe an externe APIs, `chrome.tabs.captureVisibleTab`, `chrome.scripting.executeScript`, `chrome.storage` |
-| **Page-Kontext** | injiziert via `chrome.scripting.executeScript` | Läuft in der isolierten Welt der Webseite, hat direkten DOM-Zugriff, teilt sich *keinen* JS-Scope mit der Sidebar |
+| **Sidebar** | `src/main.js` und der Vue-Tree | UI, Routing, Stores, kann `chrome.scripting.executeScript` und `chrome.runtime.sendMessage` |
+| **Service Worker** | `src/background.js` + jeder `*/background.js` | Persistent über Tabs hinweg, externe API-Calls, `chrome.tabs`, `chrome.storage`, `chrome.scripting`, `chrome.tabs.captureVisibleTab` |
+| **Page-Kontext** | per `chrome.scripting.executeScript` injiziert | DOM-Zugriff der geprüften Seite, isolierter Scope, kein Vue, keine Modul-Imports |
 
-Die Page-Kontext-Funktionen werden **via `Function.prototype.toString()` serialisiert**
-und im Ziel-Tab neu geparst. Das bedeutet:
+Page-Kontext-Funktionen werden via `Function.prototype.toString()` serialisiert
+und im Ziel-Tab neu geparst. Konsequenz:
 
-- Modulebene `import`s und `const`s außerhalb des Funktionskörpers gehen **verloren**
-- Alle Konstanten, Helper und Konfigurationen, die der Checker braucht, müssen
-  **innerhalb** der Funktion liegen oder via `args` übergeben werden
-- Window-Helper (`window.createCheckResult` etc.) werden einmalig vorab via
-  `useCheckRunner.injectHelper` injiziert, sodass Checker sie ohne erneute
-  Definition nutzen können
-
-## Datenfluss einer einzelnen Prüfung
-
-```
-Nutzer klickt "Prüfung starten" im Dashboard
-            │
-            ▼
-useWebChecker.runChecks()           ─── Sidebar
-  • setRunning(modId) für jedes
-  • injectHelper(tabId)             ─── injiziert window.createCheckResult,
-  • Promise.all(modules.map(...))       window.setHighlightElement,
-            │                          window.hasVisualContent,
-            │                          window.runInBackground
-            ▼
-chrome.scripting.executeScript({func: mod.checker})  ─── Page-Kontext
-            │
-            ▼
-mod.checker() läuft auf der Seite
-  • durchwandert das DOM
-  • ruft createCheckResult / addItem auf
-  • optional: runInBackground('CHECK_X', payload)  ─── Service Worker
-            │
-            ▼
-gibt zurück { errors, warnings, errorCount, warningCount, items }
-            │
-            ▼
-useCheckStore.setResult(modId, result)              ─── zurück in der Sidebar,
-            │                                          reaktiv — UI aktualisiert sich
-            ▼
-useModuleAttributes.apply()
-  • findet das Element jedes Items auf der Seite (via _meta)
-  • schreibt data-${prefix}-* Attribute für das Overlay-Lookup
-```
+- Modulebene-`import`s und -`const`s außerhalb des Funktionskörpers gehen
+  **verloren**
+- Konstanten/Helper innerhalb der Funktion deklarieren oder via `args`
+  übergeben
+- Window-Helper (`window.createCheckResult`, `window.__t`, ...) werden vorab
+  einmal pro Run via `useCheckRunner.injectHelper` injiziert
 
 ## Service-Struktur
 
-Ein Service ist ein Top-Level-Bereich der Extension (z.B. der Web-Checker).
-Konvention pro Service:
-
 ```
-src/services/web-checker/
-├── service.json          ← id, name, icon, order, active
-├── background.js         ← optional: Service-Level SW-Handler (z.B. FETCH_SITEMAP)
+src/services/<id>/
+├── service.json                ← name, description, icon, active, order
 ├── views/
-│   ├── HomeView.vue      ← Service-Übersicht, Route /service/<id>
-│   └── *View.vue         ← optionale Sub-Seiten, Route /service/<id>/<kebab-name>
-├── composables/
-│   └── use*.js           ← geteilte Composables (Store, Runner, Watcher, Filter, …)
-└── modules/
-    └── <id>/             ← auto-discovered Module (siehe unten)
+│   ├── HomeView.vue            ← (Pflicht) Service-Root, Route /service/<id>
+│   ├── SettingsView.vue        ← (optional) Service-Settings, /service/<id>/settings
+│   └── *View.vue               ← (optional) weitere Sub-Views, /service/<id>/<kebab-name>
+├── composables/                ← service-spezifische Composables
+├── components/                 ← service-spezifische Komponenten
+├── translations/translations.json   ← service-spezifische Übersetzungen
+├── background.js               ← (optional) Service-Worker-Handler
+└── modules/<mid>/              ← (optional) auto-entdeckte Module
 ```
 
-`views/`, `composables/`, `modules/` und `background.js` werden alle per Glob
-auto-entdeckt — kein manuelles Registrieren nötig:
-
-| Slot | Glob | Wer lädt es |
-|---|---|---|
-| `service.json` + `views/HomeView.vue` | `services/*/service.json` | `useServiceLoader` |
-| `views/*View.vue` (außer HomeView) | `services/*/views/*View.vue` | `router/index.js` (Slug aus Dateiname) |
-| `composables/use*.js` | – | per direktem Import in Views/Modulen |
-| `background.js` | `services/*/background.js` | `src/background.js` |
-| `modules/<id>/` | `services/*/modules/*/module.json` | `useModuleLoader` |
-
-## Modulsystem
-
-Jedes Modul ist ein **eigenständiges Verzeichnis** unter
-`src/services/web-checker/modules/<id>/`:
+## Modul-Struktur
 
 ```
-links/
-├── module.json                ← statische Konfiguration (id, name, icon, allowChatBot, ...)
-├── index.js                   ← Checker-Funktion im Page-Kontext (Default-Export)
-├── Index.vue                  ← Sidebar-Seite (meist ein Einzeiler um <ModulePage>)
-├── background.js              ← optional: Service-Worker-Handler für sendMessage
-├── components/
-│   └── LinkItem.vue           ← Anzeige pro Item
-└── README.md                  ← was prüft das Modul, Edge Cases, Warum
+modules/<mid>/
+├── module.json                 ← (Pflicht) id, name, icon, optional Filter etc.
+├── index.js                    ← (Pflicht) Default-Export = Logik
+├── views/
+│   ├── Index.vue               ← (Pflicht) Modul-Detail-Seite oder Empty-State
+│   └── SettingsView.vue        ← (optional) Modul-Settings → Service-Settings-Page
+├── components/                 ← Item-Komponenten etc.
+├── composables/                ← (optional) modul-eigene Composables
+├── translations/translations.json   ← (optional) Modul-Übersetzungen
+├── background.js               ← (optional) Service-Worker-Handler
+└── README.md                   ← Was prüft das Modul, Edge Cases
 ```
 
-Module werden via Vites Glob-Imports (`import.meta.glob`) **automatisch entdeckt**.
-Lege ein neues Verzeichnis in `modules/` ab und es taucht im Dashboard auf — keine
-Registrierung nötig.
+## Auto-Discovery
 
-## Statische vs. dynamische Konfiguration
+Alles via Vite `import.meta.glob` — kein manuelles Registrieren nötig.
 
-Jedes Modul hat zwei Arten von Konfiguration:
-
-| **Statisch** (in `module.json`) | **Dynamisch** (in `index.js`) |
+| Ressource | Glob |
 |---|---|
-| `id`, `name`, `description`, `icon` | `overlay = { labelFn, onText, offText }` (Funktionen passen nicht in JSON) |
-| `active`, `order` | `apiConfig = { ... }` (Werte, die aus Imports kommen) |
-| `checkOnReload`, `allowChatBot`, `defaultFilter` | `default function check()` (der Checker selbst) |
-| `singlePage`, `fullSite` (Pfad-Filter, siehe unten) | |
+| Service-Definition | `services/*/service.json` |
+| Service-HomeView | `services/*/views/HomeView.vue` |
+| Service-Sub-Views | `services/*/views/*View.vue` (außer `HomeView`, Slug = kebab-Filename) |
+| Modul-Definition | `services/*/modules/*/module.json` |
+| Modul-Logik | `services/*/modules/*/index.js` |
+| Modul-Index-View | `services/*/modules/*/views/Index.vue` |
+| Modul-Sub-Views | `services/*/modules/*/views/*View.vue` (außer `Index`) |
+| Service-SW-Handler | `services/*/background.js` |
+| Modul-SW-Handler | `services/*/modules/*/background.js` |
+| Translations | `translations/translations.json` (global) + `services/*/translations/...` + `services/*/modules/*/translations/...` |
+| Globale UI-Komponenten | `components/ui/**/*.vue` |
 
-Der Loader merged beide, wobei `module.json` gewinnt, wenn beide denselben Key definieren.
+→ Welche Composable jeden Glob liest, steht in [composables.md](./composables.md)
+(`useServiceLoader`, `useModuleLoader`, `useI18n`, …). Routing wird in
+`router/index.js` aufgebaut, UI-Plugin in `components/ui/index.js`.
 
-## Pfad-Filter pro Modul
+## Routing
 
-Module können ihre Ausführung pro URL einschränken — getrennt für die zwei
-Check-Modi (Single-Page in der Sidebar / Site-Wide via Sitemap):
+Auto-generierte Pfade:
+
+```
+/                                            ← Dashboard (Service-Liste)
+/settings                                    ← Globale Settings (Sprache + Service-Settings-Liste)
+/service/<sid>                               ← Service-HomeView
+/service/<sid>/settings                      ← Service-Settings (isServiceSettings)
+/service/<sid>/<slug>                        ← weitere Service-Sub-Views (z.B. /site-check)
+/service/<sid>/module/<mid>                  ← Modul-Detail
+/service/<sid>/module/<mid>/settings         ← Modul-Settings (isModuleSettings)
+/service/<sid>/module/<mid>/<slug>           ← weitere Modul-Sub-Views
+```
+
+`route.meta` enthält `serviceName`, `serviceId`, `moduleName`, `moduleId`,
+`isServiceSettings`/`isModuleSettings`/`settingsRoot`. Die `BreadCrumb`-Komponente
+nutzt das, um die korrekte Hierarchie anzuzeigen — z.B.
+`Dashboard › Einstellungen › Web Checker › Spellchecker`.
+
+## Settings-System
+
+Drei Ebenen, jede mit eigener Persistenz in `chrome.storage.local`:
+
+| Ebene | Storage-Key | Beispiel |
+|---|---|---|
+| Global | `wp-lang` | Sprache (en/de) |
+| Service | service-spezifisch (z.B. `wp-web-checker-settings`) | Filter-Override, Ignore-Selektoren |
+| Modul | `wp-module-settings` (Map über alle Module) | Spellcheck-Ignore-Wörter |
+
+UI-Aggregation:
+- Globale Settings-Page (`/settings`) listet automatisch alle Services mit
+  `views/SettingsView.vue`
+- `<ServiceSettingsPage>`-Wrapper listet automatisch alle Module mit
+  `views/SettingsView.vue` für den aktuellen Service
+
+Persistenz-Mechanik (Hydrate-on-Load, Watch+Save in detached Scope, JSON-Clone,
+Multi-Tab-Sync, Schema-Versionierung) ist in
+`composables/settings/createSettingsStore.js` zentralisiert und wird von den
+konkreten Stores (`useI18n`, `useModuleSettings`, `useWebCheckerSettings`)
+verwendet — Details in [composables.md](./composables.md).
+
+Modul-Settings landen vor jedem Web-Checker-Run als
+`window.__moduleSettings.<id>` im Page-Kontext — Checker können direkt drauf
+zugreifen.
+
+## i18n-System
+
+Drei-Ebenen-Auto-Discovery:
+
+```
+src/translations/translations.json                       ← Global (App-Shell)
+src/services/<id>/translations/translations.json         ← Pro Service
+src/services/<id>/modules/<mid>/translations/...         ← Pro Modul
+```
+
+Format:
 
 ```json
 {
-  "singlePage": {
-    "runOnPaths":  ["/"],
-    "skipOnPaths": []
-  },
-  "fullSite": {
-    "runOnPaths":  ["/"],
-    "skipOnPaths": []
-  }
+  "de": { "Some Key": "Übersetzung", "Found {count} items": "{count} Treffer" },
+  "en": { /* optionale en-Overrides; sonst fällt t() auf den Key zurück */ }
 }
 ```
 
-Pfade sind **exakte Matches** auf `URL.pathname` (Trailing-Slash wird ignoriert).
-`skipOnPaths` gewinnt über `runOnPaths`. **Wenn ein Context (`singlePage` /
-`fullSite`) komplett fehlt, läuft das Modul in diesem Modus auf allen URLs.**
-Beispiel: Performance-Modul nur auf der Startseite — `runOnPaths: ["/"]` für
-beide Contexts.
+Lookup-Reihenfolge: `merged[currentLang][key] → merged.en[key] → key`.
+Platzhalter `{name}` mit `t('Hello {name}', { name: 'world' })`.
 
-Auf der Dashboard-Übersicht erscheint ein übersprungenes Modul mit grauem
-"Übersprungen"-Badge statt Stats.
+- Sidebar-Code: `const { t } = useI18n()`
+- Page-Kontext: `const t = window.__t` (vor jedem Run frisch injiziert)
 
-## Site-Wide-Check
+Sprachwechsel ist live — keine Reload-nötig. Details in [i18n.md](./i18n.md).
 
-Neben dem Single-Page-Check (aktiver Tab) gibt es einen **Sitemap-basierten
-Site-Check**. Klick auf "Komplette Website prüfen" auf der Web-Checker-Übersicht:
+## Datenfluss: Single-Page-Check
 
-1. Service-Worker (`web-checker/background.js`, Handler `FETCH_SITEMAP`) lädt
-   `/sitemap.xml` vom aktuellen Origin (Regex-Parsing wegen fehlendem
-   `DOMParser` in MV3-SW), folgt Sitemap-Index-Dateien rekursiv. `<image:image>`
-   Einträge werden ignoriert — nur `<url><loc>`.
-2. `composables/useSiteCheck.js` öffnet einen neuen Tab im Hintergrund
-   (`active: false`) und navigiert ihn durch alle URLs nacheinander.
-3. Pro URL: kurze Settle-Zeit für Lazy-Load, `injectHelper`, alle
-   `fullSite`-passenden Module parallel ausführen, Ergebnisse via
-   `useSiteCheckStore` pro URL+Modul ablegen.
-4. Tab schließt am Ende. `views/SiteCheckView.vue` zeigt Progress +
-   per-URL Drill-Down.
+```
+Sidebar (HomeView)
+  └→ useWebChecker.runChecks()
+       ├→ injectHelper(tabId)                                  ← Page-Kontext: window.createCheckResult, __t, __ignoreSelectors, __moduleSettings
+       └→ Promise.all(applicable.map(runModule))
+            └→ chrome.scripting.executeScript({ func: mod.checker, args: [apiConfig] })
+                 └→ checker liefert { errors, warnings, items }
+                      └→ useCheckStore.setResult(modId, result)         ← reaktiv → UI updates
+                           └→ useModuleAttributes.apply()              ← Page-Kontext: data-* Attribute via _meta-Lookup
+```
 
-## Geteilte Bausteine
+## Datenfluss: Site-Wide-Check
 
-Dinge, die **mehrere Module** verwenden, entweder als Vue-Komponenten oder
-Window-Helper exponiert (je nachdem, in welchem Kontext sie laufen):
+```
+SiteCheckView
+  └→ useSiteCheck.loadPreflight(origin)     ← SW: FETCH_SITEMAP → URL-Liste → Preflight (User wählt Module/URLs)
+  └→ useSiteCheck.start()                   ← gepinnter Hintergrund-Tab + onRemoved-Listener
+       └→ for-each selected URL:
+            ├→ chrome.tabs.update(checkTab, { url })
+            ├→ wait for complete + 800ms settle
+            ├→ injectHelper
+            └→ Promise.all(applicable.map(checker))
+                 └→ siteCheckStore.setUrlResult(url, modId, result)
+       └→ chrome.tabs.remove(checkTab)
+```
 
-### Vue-Komponenten (Sidebar)
-- **`<ModulePage>`** — wrappt AppHeader + ModuleSection + idle/running/done-States.
-  Reduziert die typische `Index.vue` eines Moduls von ~25 Zeilen auf 1-3.
-- **`<ModuleSection>`** — der innere Teil: Filter-Dropdown, Recheck-Button,
-  Overlay-Toggle, Items-Slot.
-- **`<ModuleItem>`** — einzelne Ergebniszeile. Kümmert sich um Status-Farbe,
-  Expand, Klick-zum-Highlighten, "Im Chat analysieren"-Button.
-- **`<DetailRow>`** — Zeile mit Label und Wert, verwendet in den Expand-Views der Items.
-- **`<ModuleStats>`** — Gesamt / Fehler / Warnungen Badges.
+Klick auf URL-Zeile nach Abschluss: `chrome.tabs.create(url)` + `silentRefresh`
+auf den neuen Tab — `_meta` wird gegen den real geladenen DOM aufgefrischt,
+Click-to-Highlight funktioniert.
 
-### Window-Helper (Page-Kontext, injiziert von `injectHelper`)
-- **`createCheckResult()`** — gibt `{ errors, warnings, items, addItem,
-  finish }` zurück. Der Vertrag des Frameworks für Modul-Ergebnisse.
-- **`setHighlightElement()`** — gibt eine frische UUID zurück, die als Element-ID dient.
-- **`isElementVisible(el)`** — rekursive Sichtbarkeitsprüfung (display, opacity,
-  versteckte Vorfahren, Transforms).
-- **`hasVisualContent(el)`** — rendert das Element irgendetwas? (Text, Kind-
-  Medien, ::before/::after-Content, background-image)
-- **`runInBackground(type, payload)`** — Promise-gewrappter
-  `chrome.runtime.sendMessage` für Service-Worker-Aufrufe.
+## Datenfluss: Chatbot-Send
 
-### Composables (Sidebar)
-- **`useModuleLoader(serviceId)`** — entdeckt Module eines Services automatisch,
-  merged JSON + JS-Exports zu einem einheitlichen Modul-Objekt.
-- **`useCheckStore()`** — Vue-reaktiver Store von `state.results[moduleId]`.
-- **`useCheckRunner()`** — `injectHelper(tabId)` zum Installieren der Window-Helper.
-- **`useModuleSetup(moduleId, ...)`** — verdrahtet Overlay + Sichtbarkeits-Watcher
-  + Attribut-Manager für eine einzelne Modul-Seite.
-- **`useModuleAttributes(moduleId)`** — schreibt `data-${prefix}-*`-Attribute auf
-  Seitenelemente, damit Overlays sie später finden können.
-- **`useModuleOverlay(moduleId, overlayConfig)`** — schaltet die Badge-Ebene um.
-- **`useModuleFilter(result, defaultFilter)`** — wendet den Filter (Errors/Warnings/All)
-  des Nutzers an und sortiert nach Schweregrad.
-- **`useTabWatcher(modules)`** — führt `checkOnReload`-Module erneut aus, wenn der
-  Tab fertig geladen ist.
-- **`useVisibilityWatcher(moduleId)`** — pollt die Sichtbarkeit der Items, falls
-  die Seite lazy-loaded oder gescrollt wird.
+```
+HomeView Input → useChat.send(text)
+  └→ activeModule.checker({ text, history, chatId })
+       ├→ wwwe → fetch wwwe-Backend → { reply } | { error }
+       └→ claude → chrome.runtime.sendMessage('CLAUDE_CHAT')
+                    └→ modules/claude/background.js → fetch Anthropic API → { reply } | { error }
+  └→ useChat.push('assistant', reply)
+```
 
-## Element-Identifikation
+## Element-Identifikation (Web-Checker)
 
-Jedes Ergebnis-Item hat ein `element`-Feld, das eine UUID enthält, die von
-`setHighlightElement()` generiert wird. Nach Abschluss einer Prüfung:
+Jedes Result-Item hat:
+- `element: <UUID>` — generiert von `setHighlightElement()`
+- `_meta` — Lookup-Hint, mit dem `useModuleAttributes.findEl` das Element auf
+  der Seite wiederfindet
 
-1. `useModuleAttributes.apply()` schreibt `data-${prefix}-id="<uuid>"` und eine
-   Handvoll verwandter Attribute auf das entsprechende Seitenelement.
-2. Das Overlay-System sucht Elemente über dieses Attribut.
-3. Der "Im Chat analysieren"-Button entfernt dieselben Attribute, bevor er das
-   HTML des Elements an den Chatbot sendet.
+Nach jedem Run schreibt `apply()` `data-${prefix}-id="<uuid>"` auf das gefundene
+Element. Lookup-Strategien (in Reihenfolge):
 
-Das Element wird über das `_meta`-Feld jedes Items **gefunden**, das ein Modul
-beim Aufruf von `addItem` setzt. Das Framework unterstützt mehrere Lookup-
-Strategien in Prioritätsreihenfolge (siehe `useModuleAttributes.findEl`):
+1. `_meta.selector` — direkter CSS-Selektor (z.B. injizierte Spans)
+2. `_meta.tag + _meta.idx` — n-tes Element dieses Tags (häufigster Fall)
+3. `_meta.text + _meta.tag` — Text-basiert (Contrast)
+4. `_meta.isBackground + _meta.idx` — `<div>`-mit-bg-image (Images)
+5. `_meta.src` / `_meta.name` / `_meta.alt` — Bild-Heuristik
 
-- `meta.selector` — direkter CSS-Selektor (verwendet von Spellcheck für seine
-  injizierten Spans)
-- `meta.tag` + `meta.idx` — das n-te Element dieses Tags (verwendet von Headings
-  und den meisten Modulen)
-- `meta.text` + `meta.tag` — text-basierter Fallback (Contrast)
-- `meta.isBackground` + `meta.idx` — für `<div>`-mit-bg-image-Items (Images-Modul)
-- `meta.src` / `meta.name` / `meta.alt` — bildbasierte Heuristik
+Overlay-System und "Im Chat analysieren"-Button finden Elemente per
+Data-Attribut.
 
 ## Parallele Ausführung und ID-Sicherheit
 
-Alle Module laufen parallel via `Promise.all`. Um ID-Kollisionen über parallele
-Läufe hinweg zu vermeiden, gibt `setHighlightElement` `crypto.randomUUID()` zurück —
-es gibt keinen geteilten Counter, sodass parallele `addItem`-Aufrufe in
-verschiedenen Modulen sich nicht gegenseitig die IDs überschreiben können.
+Alle Module laufen parallel via `Promise.all`. `setHighlightElement` gibt
+`crypto.randomUUID()` zurück — kein geteilter Counter, also keine Kollisionen
+zwischen parallelen Modul-Runs.
 
 ## Siehe auch
 
-- [creating-a-module.md](./creating-a-module.md) — Schritt-für-Schritt-Anleitung
-- [module-api.md](./module-api.md) — vollständige API-Referenz für Modul-Autoren
+- [composables.md](./composables.md) — alle Composables/Stores einzeln erklärt
+- [creating-a-service.md](./creating-a-service.md) — neuen Service anlegen
+- [creating-a-module.md](./creating-a-module.md) — neues Modul anlegen
+- [module-api.md](./module-api.md) — vollständige API-Referenz
+- [i18n.md](./i18n.md) — Übersetzungssystem

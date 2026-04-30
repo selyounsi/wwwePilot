@@ -1,6 +1,6 @@
 <script setup>
-import HeadingItem  from './components/HeadingItem.vue'
-import HeadingStats from './components/HeadingStats.vue'
+import HeadingItem  from '../components/HeadingItem.vue'
+import HeadingStats from '../components/HeadingStats.vue'
 </script>
 
 <!-- Headings has an extra HeadingStats above the standard ModuleStats — use ModulePage with a custom items slot -->

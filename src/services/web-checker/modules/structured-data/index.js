@@ -1,6 +1,7 @@
 export const overlay = null
 
 export default async function check() {
+  const t = window.__t
   const head = document.head
 
   // Must live inside check() — executeScript serializes only the function body,
@@ -88,8 +89,8 @@ export default async function check() {
 
   if (jsonLdBlocks.length === 0) {
     addItem(head, [
-      { when: true, type: 'warning', title: 'Keine strukturierten Daten (JSON-LD) gefunden' },
-    ], { id: 'no-json-ld', name: 'Keine JSON-LD Daten', details: '', category: 'JSON-LD', visible: true, _meta: null })
+      { when: true, type: 'warning', title: t('No structured data (JSON-LD) found') },
+    ], { id: 'no-json-ld', name: t('No JSON-LD data'), details: '', category: 'JSON-LD', visible: true, _meta: null })
     return finish()
   }
 
@@ -112,20 +113,20 @@ export default async function check() {
       checks.push({
         when: info.reachable === false,
         type: 'error',
-        title: `Bild nicht erreichbar: ${filename}`,
+        title: t('Image not reachable: {file}', { file: filename }),
       })
       const isSocialBranding = filename.toLowerCase().includes('social_branding')
       checks.push({
         when: isSocialBranding && info.reachable === true && (info.width < 250 || info.height < 250),
         type: 'error',
-        title: `social_branding zu klein: ${info.width}×${info.height}px (min. 250×250)`,
+        title: t('social_branding too small: {w}×{h}px (min. 250×250)', { w: info.width, h: info.height }),
       })
     })
 
     addItem(head, checks, {
       id:       `type-${type}`,
       name:     type,
-      details:  `${entities.length} ${entities.length === 1 ? 'Element' : 'Elemente'}`,
+      details:  entities.length === 1 ? t('1 entity') : t('{n} entities', { n: entities.length }),
       category: 'JSON-LD',
       visible:  true,
       _meta: {

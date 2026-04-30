@@ -1,0 +1,27 @@
+{
+  "de": {
+    "Links": "Links",
+    "Check link quality & reachability": "Link-Qualität & Erreichbarkeit prüfen",
+
+    "Hide titles": "Titles ausblenden",
+    "Show titles": "Titles einblenden",
+    "Title": "Title",
+    "No title": "Kein Title",
+    "Icon": "Icon",
+    "empty": "leer",
+
+    "No links found": "Keine Links gefunden",
+    "Link unreachable (404)": "Link nicht erreichbar (404)",
+    "Empty link": "Leerer Link",
+    "href=\"{href}\" has no visible text": "href=\"{href}\" hat keinen sichtbaren Text",
+    "Icon link without aria-label or title": "Icon-Link ohne aria-label oder title",
+    "href=\"{href}\" — screen readers cannot label this link": "href=\"{href}\" — Screenreader können den Link nicht beschriften",
+    "Missing title attribute": "Fehlendes title-Attribut",
+    "Title identical to link text": "Title identisch mit Linktext",
+    "\"{title}\" — title should provide additional info": "\"{title}\" – title sollte zusätzliche Info liefern",
+    "External link without target=\"_blank\"": "Externer Link ohne target=\"_blank\"",
+    "Mailto without title": "Mailto ohne title",
+    "Tel without title": "Tel ohne title"
+  },
+  "en": {}
+}

@@ -1,7 +1,7 @@
 {
   "id": "performance",
   "name": "Performance",
-  "description": "Ladezeiten & Ressourcen analysieren",
+  "description": "Analyze load times & resources",
   "icon": "mdiSpeedometer",
   "active": true,
   "order": 3,

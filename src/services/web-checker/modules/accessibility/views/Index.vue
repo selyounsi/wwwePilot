@@ -1,5 +1,5 @@
 <script setup>
-import AxeItem from './components/AxeItem.vue'
+import AxeItem from '../components/AxeItem.vue'
 </script>
 
 <template>

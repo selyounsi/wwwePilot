@@ -1,0 +1,23 @@
+{
+  "de": {
+    "Contrast": "Kontrast",
+    "Check color contrast & readability": "Farbkontrast & Lesbarkeit prüfen",
+
+    "Hide contrast": "Kontrast ausblenden",
+    "Show contrast": "Kontrast einblenden",
+
+    "AA": "AA",
+    "Fail": "Fail",
+    "Unsafe": "Unsicher",
+
+    "Placeholder": "Placeholder",
+    "Icon": "Icon",
+
+    "No text elements found": "Keine Textelemente gefunden",
+    "Contrast too low ({ratio}:1)": "Kontrast zu gering ({ratio}:1)",
+    "At least {min}:1 required (WCAG AA)": "Mindestens {min}:1 erforderlich (WCAG AA)",
+    "Contrast not measurable — outside viewport": "Kontrast nicht prüfbar — außerhalb Viewport",
+    "Scroll the element into view and recheck": "Element sichtbar scrollen und Modul erneut prüfen"
+  },
+  "en": {}
+}

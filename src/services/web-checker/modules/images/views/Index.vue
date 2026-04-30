@@ -1,5 +1,5 @@
 <script setup>
-import ImageItem from './components/ImageItem.vue'
+import ImageItem from '../components/ImageItem.vue'
 </script>
 
 <template>

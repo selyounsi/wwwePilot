@@ -1,5 +1,5 @@
 <script setup>
-import ContrastItem from './components/ContrastItem.vue'
+import ContrastItem from '../components/ContrastItem.vue'
 </script>
 
 <template>

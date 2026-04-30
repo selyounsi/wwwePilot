@@ -1,0 +1,21 @@
+{
+  "de": {
+    "Headings": "Headings",
+    "Check H1-H6 structure": "H1-H6 Struktur prüfen",
+
+    "Hide tags": "Tags ausblenden",
+    "Show tags": "Tags einblenden",
+
+    "No H1 tag found": "Kein H1 Tag gefunden",
+    "{tag} is empty": "{tag} ist leer",
+    "This heading has no content": "Dieser Heading hat keinen Inhalt",
+    "Multiple H1 tags": "H1 mehrfach vorhanden",
+    "Found {count}× H1 — should appear only once": "Es gibt {count}× H1 – sollte nur einmal vorkommen",
+    "{tag} appears before H1": "{tag} vor H1",
+    "No H1 before this heading — hierarchy starts incorrectly": "Kein H1 vor diesem Heading – Hierarchie beginnt falsch",
+    "Jump from H{from} to H{to}": "Sprung von H{from} auf H{to}",
+    "H{level} was skipped": "H{level} wurde übersprungen",
+    "(empty)": "(leer)"
+  },
+  "en": {}
+}

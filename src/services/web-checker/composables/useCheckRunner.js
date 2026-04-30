@@ -1,9 +1,28 @@
+import { useI18n }                from '@/composables/i18n/useI18n.js'
+import { useWebCheckerSettings } from './useWebCheckerSettings.js'
+import { getAllModuleSettings }  from '@/composables/settings/useModuleSettings.js'
+
 export function useCheckRunner() {
+  const { getTable }                 = useI18n()
+  const { effectiveIgnoreSelectors } = useWebCheckerSettings()
 
   async function injectHelper(tabId) {
+    const translations    = getTable()
+    const ignoreSelectors = [...effectiveIgnoreSelectors.value]
+    const moduleSettings  = getAllModuleSettings()
     await chrome.scripting.executeScript({
       target: { tabId },
-      func: () => {
+      func: (translations, ignoreSelectors, moduleSettings) => {
+        // always update translations + settings so language / ignore changes propagate
+        window.__translations    = translations
+        window.__ignoreSelectors = ignoreSelectors
+        window.__moduleSettings  = moduleSettings
+        window.__t = (key, params) => {
+          let s = translations[key] ?? key
+          if (params) s = s.replace(/\{(\w+)\}/g, (_, k) => params[k] ?? `{${k}}`)
+          return s
+        }
+
         if (window.__wpHelpersInjected) return
         window.__wpHelpersInjected = true
 
@@ -110,7 +129,8 @@ export function useCheckRunner() {
 
           return { errors, warnings, items, addItem, finish }
         }
-      }
+      },
+      args: [translations, ignoreSelectors, moduleSettings],
     })
   }
 

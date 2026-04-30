@@ -1,7 +1,7 @@
 {
   "id": "images",
-  "name": "Bilder",
-  "description": "Alt-Texte & Bildqualität prüfen",
+  "name": "Images",
+  "description": "Check alt texts & image quality",
   "icon": "mdiImage",
   "active": true,
   "checkOnReload": true,

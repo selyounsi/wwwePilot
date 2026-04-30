@@ -1,0 +1,15 @@
+{
+  "de": {
+    "Spellchecker": "Spellchecker",
+    "Check spelling & grammar": "Rechtschreibung & Grammatik prüfen",
+
+    "No text found": "Kein Text gefunden",
+    "Other": "Sonstiges",
+
+    "Ignore words": "Ignorierte Wörter",
+    "Words listed here are skipped by the spellchecker. Useful for brand names, technical terms or proper nouns.": "Hier gelistete Wörter werden vom Rechtschreibprüfer übersprungen. Nützlich für Markennamen, Fachbegriffe oder Eigennamen.",
+    "e.g. wwwe, Anthropic, Schönfeldt": "z.B. wwwe, Anthropic, Schönfeldt",
+    "No words yet.": "Noch keine Wörter."
+  },
+  "en": {}
+}

@@ -1,0 +1,3 @@
+<template>
+  <ServiceSettingsPage />
+</template>

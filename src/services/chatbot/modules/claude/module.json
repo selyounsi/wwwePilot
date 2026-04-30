@@ -1,0 +1,7 @@
+{
+  "id": "claude",
+  "name": "Claude",
+  "icon": "mdiRobot",
+  "active": true,
+  "order": 2
+}

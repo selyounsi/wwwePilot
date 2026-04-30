@@ -1,5 +1,5 @@
 <script setup>
-import SchemaItem from './components/SchemaItem.vue'
+import SchemaItem from '../components/SchemaItem.vue'
 </script>
 
 <template>

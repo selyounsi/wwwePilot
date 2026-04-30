@@ -25,7 +25,7 @@ export async function handle(msg, sendResponse) {
       const data = await chrome.storage.local.get('claude_api_key')
       const apiKey = data.claude_api_key
       if (!apiKey) {
-        sendResponse({ error: 'Kein API-Key gespeichert. Bitte trage deinen Claude API-Key in den Einstellungen ein.' })
+        sendResponse({ error: 'No API key saved. Please add your Claude API key in settings.' })
         break
       }
 
@@ -37,9 +37,9 @@ export async function handle(msg, sendResponse) {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
-          'Content-Type':  'application/json',
-          'x-api-key':     apiKey,
-          'anthropic-version': '2023-06-01',
+          'Content-Type':       'application/json',
+          'x-api-key':          apiKey,
+          'anthropic-version':  '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true',
         },
         body: JSON.stringify({
@@ -56,7 +56,7 @@ export async function handle(msg, sendResponse) {
       }
 
       const result = await res.json()
-      const reply  = result.content?.[0]?.text ?? 'Keine Antwort erhalten.'
+      const reply  = result.content?.[0]?.text ?? 'No response received.'
       sendResponse({ reply })
       break
     }

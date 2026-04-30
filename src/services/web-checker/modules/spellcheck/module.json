@@ -1,7 +1,7 @@
 {
   "id": "spellcheck",
   "name": "Spellchecker",
-  "description": "Rechtschreibung & Grammatik prüfen",
+  "description": "Check spelling & grammar",
   "icon": "mdiSpellcheck",
   "active": true,
   "order": 4,

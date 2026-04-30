@@ -1,7 +1,7 @@
 {
   "id": "overview",
-  "name": "Website-Übersicht",
-  "description": "SEO, Technik & Site-Infos",
+  "name": "Website Overview",
+  "description": "SEO, tech & site info",
   "icon": "mdiMonitorDashboard",
   "active": true,
   "order": 1,

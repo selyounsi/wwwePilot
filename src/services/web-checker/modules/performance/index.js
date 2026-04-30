@@ -4,6 +4,7 @@ export const overlay   = null
 export const apiConfig = { pagespeedUrl: API.pagespeed.url }
 
 export default async function check(config = {}) {
+  const t = window.__t
 
   function formatBytes(bytes) {
     if (!bytes) return '0 B'
@@ -82,47 +83,47 @@ export default async function check(config = {}) {
   const mob = psi.mobile
   add('psi-mobile', 'PageSpeed Mobile',
     mob?.score !== null && mob?.score !== undefined ? `${mob.score}/100` : '–', [
-    { when: psi.local,                                                              type: 'warning', title: 'Nicht verfügbar für lokale URLs' },
-    { when: !psi.local && !mob,                                                     type: 'warning', title: 'Score nicht abrufbar' },
-    { when: mob?.score !== null && mob?.score !== undefined && mob.score < 50,      type: 'error',   title: `${mob.score}/100 – Kritisch` },
-    { when: mob?.score !== null && mob?.score !== undefined && mob.score >= 50 && mob.score < 90, type: 'warning', title: `${mob.score}/100 – Optimierungsbedarf` },
+    { when: psi.local,                                                              type: 'warning', title: t('Not available for local URLs') },
+    { when: !psi.local && !mob,                                                     type: 'warning', title: t('Score not retrievable') },
+    { when: mob?.score !== null && mob?.score !== undefined && mob.score < 50,      type: 'error',   title: t('{score}/100 — Critical',           { score: mob?.score }) },
+    { when: mob?.score !== null && mob?.score !== undefined && mob.score >= 50 && mob.score < 90, type: 'warning', title: t('{score}/100 — Needs improvement', { score: mob?.score }) },
   ], mob ?? {})
 
   const desk = psi.desktop
   add('psi-desktop', 'PageSpeed Desktop',
     desk?.score !== null && desk?.score !== undefined ? `${desk.score}/100` : '–', [
-    { when: psi.local,                                                                type: 'warning', title: 'Nicht verfügbar für lokale URLs' },
-    { when: !psi.local && !desk,                                                      type: 'warning', title: 'Score nicht abrufbar' },
-    { when: desk?.score !== null && desk?.score !== undefined && desk.score < 50,     type: 'error',   title: `${desk.score}/100 – Kritisch` },
-    { when: desk?.score !== null && desk?.score !== undefined && desk.score >= 50 && desk.score < 90, type: 'warning', title: `${desk.score}/100 – Optimierungsbedarf` },
+    { when: psi.local,                                                                type: 'warning', title: t('Not available for local URLs') },
+    { when: !psi.local && !desk,                                                      type: 'warning', title: t('Score not retrievable') },
+    { when: desk?.score !== null && desk?.score !== undefined && desk.score < 50,     type: 'error',   title: t('{score}/100 — Critical',           { score: desk?.score }) },
+    { when: desk?.score !== null && desk?.score !== undefined && desk.score >= 50 && desk.score < 90, type: 'warning', title: t('{score}/100 — Needs improvement', { score: desk?.score }) },
   ], desk ?? {})
 
-  add('resources-total', 'Ressourcen gesamt', `${resources} Dateien`, [
-    { when: resources > 150,                    type: 'error',   title: `Sehr viele Ressourcen (${resources} Dateien)` },
-    { when: resources > 80 && resources <= 150, type: 'warning', title: `Viele Ressourcen (${resources} Dateien)` },
-    { when: resources <= 80,                    type: 'success', title: `Ressourcen OK (${resources} Dateien)` },
+  add('resources-total', t('Total resources'), t('{n} files', { n: resources }), [
+    { when: resources > 150,                    type: 'error',   title: t('Very many resources ({n} files)', { n: resources }) },
+    { when: resources > 80 && resources <= 150, type: 'warning', title: t('Many resources ({n} files)',      { n: resources }) },
+    { when: resources <= 80,                    type: 'success', title: t('Resources OK ({n} files)',        { n: resources }) },
   ])
 
-  add('transfer-size', 'Transfergröße', formatBytes(totalBytes), [
-    { when: totalBytes > 5 * 1048576,                            type: 'error',   title: `Sehr groß: ${formatBytes(totalBytes)}` },
-    { when: totalBytes > 2 * 1048576 && totalBytes <= 5*1048576, type: 'warning', title: `Groß: ${formatBytes(totalBytes)}` },
-    { when: totalBytes <= 2 * 1048576,                           type: 'success', title: `Transfergröße OK: ${formatBytes(totalBytes)}` },
+  add('transfer-size', t('Transfer size'), formatBytes(totalBytes), [
+    { when: totalBytes > 5 * 1048576,                            type: 'error',   title: t('Very large: {size}',     { size: formatBytes(totalBytes) }) },
+    { when: totalBytes > 2 * 1048576 && totalBytes <= 5*1048576, type: 'warning', title: t('Large: {size}',          { size: formatBytes(totalBytes) }) },
+    { when: totalBytes <= 2 * 1048576,                           type: 'success', title: t('Transfer size OK: {size}', { size: formatBytes(totalBytes) }) },
   ])
 
-  add('scripts', 'Scripts', `${scripts} Dateien`, [
-    { when: scripts > 30,                  type: 'error',   title: `Sehr viele Scripts (${scripts})` },
-    { when: scripts > 15 && scripts <= 30, type: 'warning', title: `Viele Scripts (${scripts})` },
-    { when: scripts <= 15,                 type: 'success', title: `Scripts OK (${scripts})` },
+  add('scripts', 'Scripts', t('{n} files', { n: scripts }), [
+    { when: scripts > 30,                  type: 'error',   title: t('Very many scripts ({n})', { n: scripts }) },
+    { when: scripts > 15 && scripts <= 30, type: 'warning', title: t('Many scripts ({n})',      { n: scripts }) },
+    { when: scripts <= 15,                 type: 'success', title: t('Scripts OK ({n})',        { n: scripts }) },
   ])
 
-  add('images', 'Bilder', `${images} Dateien`, [
-    { when: images > 40,  type: 'warning', title: `Viele Bilder geladen (${images})` },
-    { when: images <= 40, type: 'success', title: `Bilder OK (${images})` },
+  add('images', t('Images'), t('{n} files', { n: images }), [
+    { when: images > 40,  type: 'warning', title: t('Many images loaded ({n})', { n: images }) },
+    { when: images <= 40, type: 'success', title: t('Images OK ({n})',          { n: images }) },
   ])
 
-  add('css', 'Stylesheets', `${cssFiles} Dateien`, [
-    { when: cssFiles > 10,  type: 'warning', title: `Viele Stylesheet-Anfragen (${cssFiles})` },
-    { when: cssFiles <= 10, type: 'success', title: `CSS OK (${cssFiles})` },
+  add('css', 'Stylesheets', t('{n} files', { n: cssFiles }), [
+    { when: cssFiles > 10,  type: 'warning', title: t('Many stylesheet requests ({n})', { n: cssFiles }) },
+    { when: cssFiles <= 10, type: 'success', title: t('CSS OK ({n})',                   { n: cssFiles }) },
   ])
 
   return finish()

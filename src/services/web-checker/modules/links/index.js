@@ -1,26 +1,35 @@
+import { useI18n } from '@/composables/i18n/useI18n.js'
+
+const { t: tSidebar } = useI18n()
+
 export const overlay = {
   enabled: true,
-  labelFn: (item) => item.title ? `Title: ${item.title}` : '⚠ Kein Title',
-  onText:  'Titles ausblenden',
-  offText: 'Titles einblenden',
+  labelFn: (item) => item.title
+    ? `${tSidebar('Title')}: ${item.title}`
+    : `⚠ ${tSidebar('No title')}`,
+  onText:  'Hide titles',
+  offText: 'Show titles',
 }
 
 export default async function check() {
 
+  // module-specific anchors stay here; .WidgetSealContainer + general
+  // third-party widgets live in Settings → window.__ignoreSelectors
   const IGNORE_SELECTORS = [
     '[href="#content"]',
     '[href="#back-to-top"]',
     '[href="/sitemap"]',
     '.cms-logo',
-    '.WidgetSealContainer',
+    ...(window.__ignoreSelectors ?? []),
   ]
 
   const { errors, warnings, items, addItem, finish } = createCheckResult()
+  const t = window.__t
 
   const links = Array.from(document.querySelectorAll('a[href]'))
 
   if (links.length === 0) {
-    errors.push({ message: 'Keine Links gefunden' })
+    errors.push({ message: t('No links found') })
     return finish()
   }
 
@@ -58,7 +67,7 @@ export default async function check() {
     const imgAlt      = a.querySelector('img')?.getAttribute('alt') ?? ''
     const linkContent = text || imgAlt || ariaLabel
     const hasIcon     = !linkContent && hasVisualContent(a)
-    const visibleText = linkContent || title || (hasIcon ? '(Icon)' : '')
+    const visibleText = linkContent || title || (hasIcon ? `(${t('Icon')})` : '')
 
     const noText         = !linkContent && !hasIcon
     const iconNoLabel    = hasIcon && !title && !ariaLabel
@@ -73,43 +82,43 @@ export default async function check() {
       {
         when:        isBroken,
         type:        'error',
-        title:       'Link nicht erreichbar (404)',
+        title:       t('Link unreachable (404)'),
         description: href,
       },
       {
         when:        noText,
         type:        'error',
-        title:       'Leerer Link',
-        description: `href="${href}" hat keinen sichtbaren Text`,
+        title:       t('Empty link'),
+        description: t('href="{href}" has no visible text', { href }),
       },
       {
         when:        iconNoLabel,
         type:        'error',
-        title:       'Icon-Link ohne aria-label oder title',
-        description: `href="${href}" — Screenreader können den Link nicht beschriften`,
+        title:       t('Icon link without aria-label or title'),
+        description: t('href="{href}" — screen readers cannot label this link', { href }),
       },
       {
         when:        noTitle && !isMailto && !isTel,
         type:        'error',
-        title:       'Fehlendes title-Attribut',
+        title:       t('Missing title attribute'),
         description: `"${visibleText || href}"`,
       },
       {
         when:        titleEqualsText,
         type:        'warning',
-        title:       'Title identisch mit Linktext',
-        description: `"${title}" – title sollte zusätzliche Info liefern`,
+        title:       t('Title identical to link text'),
+        description: t('"{title}" — title should provide additional info', { title }),
       },
       {
         when:        noBlank,
         type:        'warning',
-        title:       'Externer Link ohne target="_blank"',
+        title:       t('External link without target="_blank"'),
         description: href,
       },
       {
         when:        noMailTitle,
         type:        'warning',
-        title:       isMailto ? 'Mailto ohne title' : 'Tel ohne title',
+        title:       isMailto ? t('Mailto without title') : t('Tel without title'),
         description: href,
       },
       {
@@ -120,7 +129,7 @@ export default async function check() {
       },
     ], {
       href,
-      text:      visibleText || '(leer)',
+      text:      visibleText || `(${t('empty')})`,
       title:     title ?? null,
       isExternal,
       isMailto,

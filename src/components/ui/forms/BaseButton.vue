@@ -15,10 +15,10 @@ defineProps({
       (disabled || loading)
         ? 'bg-surface-soft text-muted cursor-not-allowed'
         : variant === 'secondary'
-          ? 'bg-secondary'
+          ? 'bg-secondary hover:opacity-90'
           : variant === 'ghost'
-            ? 'bg-surface-soft hover:bg-surface-soft-hover text-muted'
-            : 'bg-primary',
+            ? 'bg-surface-soft hover:bg-surface-soft-hover text-muted hover:text-light'
+            : 'bg-primary hover:opacity-90 hover:brightness-110',
     ]"
   >
     <span v-if="loading" class="flex items-center justify-center gap-2">
