@@ -24,9 +24,6 @@ export default async function check() {
   const viewport        = document.querySelector('meta[name="viewport"]')?.content               || ''
   const themeColor      = document.querySelector('meta[name="theme-color"]')?.content            || ''
 
-  let privacyControlVersion = ''
-  try { privacyControlVersion = window.privacyControl?.version || '' } catch {}
-
   async function fetchCheck(url, method = 'GET') {
     const opts = {
       method,
@@ -106,12 +103,6 @@ export default async function check() {
     { when: !counterSrc,                                           type: 'warning', title: t('Counter script (usecurez) not found') },
     { when: counterSrc && !counterId,                              type: 'error',   title: t('Counter: k= parameter (key) missing') },
     { when: counterSrc && !!counterId,                             type: 'success', title: t('Counter embedded ({id})', { id: counterId }) },
-  ])
-
-  add('privacy-control', 'Privacy Control',
-    privacyControlVersion ? `v${privacyControlVersion}` : t('Not loaded'), t('Technical'), [
-    { when: !privacyControlVersion,                                type: 'warning', title: t('privacyControl not loaded or initialised') },
-    { when: !!privacyControlVersion,                               type: 'success', title: `privacyControl v${privacyControlVersion}` },
   ])
 
   const titleLen = metaTitle.length

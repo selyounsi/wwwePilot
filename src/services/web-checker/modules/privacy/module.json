@@ -1,0 +1,10 @@
+{
+  "id": "privacy",
+  "name": "Privacy",
+  "description": "Cookie & tracking masking via privacyControl",
+  "icon": "mdiShieldLockOutline",
+  "active": true,
+  "checkOnReload": false,
+  "allowChatBot": true,
+  "defaultFilter": "issues"
+}

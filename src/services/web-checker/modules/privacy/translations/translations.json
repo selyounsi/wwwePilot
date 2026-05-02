@@ -1,0 +1,36 @@
+{
+  "de": {
+    "Privacy": "Privacy",
+    "Cookie & tracking masking via privacyControl": "Cookie- & Tracking-Maskierung via privacyControl",
+
+    "Tracking element": "Tracking-Element",
+    "Masked": "Maskiert",
+    "Unmasked": "Unmaskiert",
+    "Consent given": "Consent erteilt",
+    "No consent": "Kein Consent",
+
+    "privacyControl not loaded": "privacyControl nicht geladen",
+    "privacyControl is not present on this page — tracking elements cannot be masked": "privacyControl fehlt auf dieser Seite – Tracking-Elemente können nicht maskiert werden",
+
+    "Unmasked {kind} from {host}": "Unmaskiertes {kind} von {host}",
+    "Element is not gated by privacyControl — cookies load on every visit, before any consent. Add data-iframe/data-script/data-img.": "Element wird nicht durch privacyControl maskiert – Cookies laden bei jedem Besuch, ohne Zustimmung. data-iframe/data-script/data-img setzen.",
+
+    "Masked {kind} ({service})": "Maskiertes {kind} ({service})",
+    "Loaded after consent for {service}": "Nach Consent für {service} geladen",
+    "Properly masked, waiting for consent ({service})": "Korrekt maskiert, wartet auf Consent ({service})",
+
+    "Tracking element without privacyControl": "Tracking-Element ohne privacyControl",
+    "{kind} from {host} is loaded directly — install privacyControl to gate it": "{kind} von {host} wird direkt geladen – privacyControl installieren um zu maskieren",
+
+    "iframe": "iframe",
+    "script": "script",
+    "image": "image",
+    "unknown": "unbekannt",
+
+    "Unknown service \"{service}\" — not in pCServiceTemplates": "Unbekannter Service \"{service}\" – nicht in pCServiceTemplates",
+    "Service-Key ist deklariert aber im privacyControl-Config nicht definiert": "Service-Key ist deklariert aber im privacyControl-Config nicht definiert",
+    "Type mismatch for \"{service}\"": "Type-Mismatch für \"{service}\"",
+    "Template erwartet {expected}, gefunden {found}": "Template erwartet {expected}, gefunden {found}"
+  },
+  "en": {}
+}
