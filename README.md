@@ -79,9 +79,11 @@ extension/
 | Datei | Inhalt |
 |---|---|
 | [docs/architecture.md](docs/architecture.md) | Aufbau, Kontexte, Auto-Discovery, Settings/i18n-System, Datenflüsse |
+| [docs/composables.md](docs/composables.md) | Alle Composables/Stores einzeln erklärt |
 | [docs/creating-a-service.md](docs/creating-a-service.md) | Neuen Service anlegen (Step-by-Step) |
 | [docs/creating-a-module.md](docs/creating-a-module.md) | Neues Modul anlegen (Web-Checker-Modul oder Chatbot-Provider) |
 | [docs/module-api.md](docs/module-api.md) | Vollständige Modul-API-Referenz |
 | [docs/i18n.md](docs/i18n.md) | Übersetzungssystem, Translation-Files, `t()` und `window.__t` |
+| [docs/dev-mcp.md](docs/dev-mcp.md) | Extension mit Claude Code + chrome-devtools-mcp automatisiert testen/debuggen |
 | `services/<id>/README.md` | Pro-Service-Doku |
 | `services/web-checker/modules/<id>/README.md` | Pro-Modul-Doku (was prüft das Modul, Edge Cases) |
