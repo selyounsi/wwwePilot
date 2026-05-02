@@ -23,32 +23,39 @@ export function useModuleFilter(result, defaultFilter = 'issues', moduleId = nul
   const filteredResult = computed(() => {
     const r = result?.value ?? { status: 'idle', errors: [], warnings: [], items: [], errorCount: 0, warningCount: 0 }
 
-    let items = r.items ?? []
-    let ignoredCount = 0
-    let recountedErrors   = 0
-    let recountedWarnings = 0
+    const visibleItems = []
+    const ignoredItems = []
 
     if (origin.value && moduleId) {
-      items = items.filter(item => {
+      ;(r.items ?? []).forEach(item => {
         const nonSuccessIssues = (item.issues ?? []).filter(i => i.type !== 'success')
-        if (nonSuccessIssues.length === 0) return true
+        if (nonSuccessIssues.length === 0) { visibleItems.push(item); return }
         const allIgnored = nonSuccessIssues.every(i => isIgnored(origin.value, moduleId, i.message))
-        if (allIgnored) { ignoredCount++; return false }
-        return true
+        if (allIgnored) ignoredItems.push({ ...item, _ignored: true })
+        else            visibleItems.push(item)
       })
+    } else {
+      ;(r.items ?? []).forEach(item => visibleItems.push(item))
     }
 
-    items.forEach(item => {
-      if (item.type === 'error')   recountedErrors++
+    if (filter.value === 'ignored') {
+      return { ...r, items: sortBySeverity(ignoredItems), ignoredCount: ignoredItems.length }
+    }
+
+    let recountedErrors   = 0
+    let recountedWarnings = 0
+    visibleItems.forEach(item => {
+      if      (item.type === 'error')   recountedErrors++
       else if (item.type === 'warning') recountedWarnings++
     })
 
-    const adjusted = ignoredCount > 0
-      ? { ...r, items, errorCount: recountedErrors, warningCount: recountedWarnings, ignoredCount }
-      : { ...r, items, ignoredCount: 0 }
+    const adjusted = ignoredItems.length > 0
+      ? { ...r, items: visibleItems, errorCount: recountedErrors, warningCount: recountedWarnings, ignoredCount: ignoredItems.length }
+      : { ...r, items: visibleItems, ignoredCount: 0 }
 
-    if (!hasIssues.value && ignoredCount === 0) return adjusted
+    if (!hasIssues.value && ignoredItems.length === 0) return adjusted
 
+    let items = visibleItems
     if      (filter.value === 'errors')   items = items.filter(i => i.type === 'error')
     else if (filter.value === 'warnings') items = items.filter(i => i.type === 'warning')
     else if (filter.value === 'issues')   items = items.filter(i => i.type === 'error' || i.type === 'warning')

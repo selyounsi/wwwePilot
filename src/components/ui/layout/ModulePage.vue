@@ -53,7 +53,7 @@ const defaultFilter = computed(() => settings.defaultFilter ?? config.value?.def
       </template>
 
       <template v-else>
-        <ModuleStats v-if="showStats" :result="raw ?? result" />
+        <ModuleStats v-if="showStats" :result="result" />
         <slot :result="result" :raw="raw">
           <component
             :is="itemComponent"

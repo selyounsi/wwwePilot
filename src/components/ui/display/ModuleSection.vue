@@ -84,6 +84,7 @@ const issueCount = computed(() => {
   const items = rawResult.value?.items ?? []
   return items.reduce((n, item) => n + (item.issues?.filter(i => i.type !== 'success').length ?? 0), 0)
 })
+const ignoredCount = computed(() => filteredResult.value?.ignoredCount ?? 0)
 
 const router    = useRouter()
 const { send }  = useChat()
@@ -142,7 +143,7 @@ function clusterInChat() {
       </div>
     </div>
 
-    <div v-if="hasIssues" class="mb-3 flex flex-col gap-2">
+    <div v-if="hasIssues || ignoredCount > 0" class="mb-3 flex flex-col gap-2">
       <select
         v-model="filter"
         class="w-full bg-surface-soft border border-border text-muted text-xs rounded-lg px-3 py-2 outline-none focus:border-primary/50 cursor-pointer"
@@ -151,6 +152,7 @@ function clusterInChat() {
         <option value="issues">{{ t('Errors & warnings') }}</option>
         <option value="errors">{{ t('Errors only') }}</option>
         <option value="warnings">{{ t('Warnings only') }}</option>
+        <option v-if="ignoredCount > 0" value="ignored">{{ t('Ignored ({n})', { n: ignoredCount }) }}</option>
       </select>
     </div>
 

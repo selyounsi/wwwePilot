@@ -74,6 +74,8 @@
     "Hide details":      "Details ausblenden",
     "Analyze in chat":   "Im Chat analysieren",
     "Ignore hint":       "Hinweis ignorieren",
+    "Restore hint":      "Hinweis wiederherstellen",
+    "Ignored ({n})":     "Ignoriert ({n})",
     "Module settings": "Modul-Einstellungen",
 
     "Err": "F",

@@ -24,7 +24,7 @@ const open         = ref(false)
 
 const { labelFn = () => '', allowChatBot = false, moduleId = null } = inject('moduleOverlay', {})
 
-const { add: addIgnore } = useIgnoreList()
+const { add: addIgnore, remove: removeIgnore } = useIgnoreList()
 const origin = computed(() => {
   try { return new URL(checkStore.state.checkedUrl ?? '').origin } catch { return null }
 })
@@ -34,6 +34,13 @@ function ignoreItem() {
   ;(props.item.issues ?? [])
     .filter(i => i.type !== 'success')
     .forEach(i => addIgnore(origin.value, moduleId, i.message))
+}
+
+function unignoreItem() {
+  if (!origin.value || !moduleId) return
+  ;(props.item.issues ?? [])
+    .filter(i => i.type !== 'success')
+    .forEach(i => removeIgnore(origin.value, moduleId, i.message))
 }
 
 const highlight = (clickType) => {
@@ -122,6 +129,7 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
     :id="item.element ? `item-${item.element}` : undefined"
     :class="[
       !item.visible ? 'opacity-40' : '',
+      item._ignored  ? 'opacity-60' : '',
       indent,
       variant === 'box'
         ? ['rounded-xl border overflow-hidden', borderColor[status]]
@@ -177,12 +185,20 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
             <Icon name="mdiRobot" :size="13" />
           </button>
           <button
-            v-if="moduleId && item.issues?.some(i => i.type === 'error' || i.type === 'warning')"
+            v-if="moduleId && !item._ignored && item.issues?.some(i => i.type === 'error' || i.type === 'warning')"
             @click.stop="ignoreItem"
             class="transition-all text-muted/40 hover:text-error hover:bg-error/10 rounded p-0.5 hover:scale-110"
             :title="t('Ignore hint')"
           >
             <Icon name="mdiEyeOffOutline" :size="13" />
+          </button>
+          <button
+            v-if="moduleId && item._ignored"
+            @click.stop="unignoreItem"
+            class="transition-all text-muted/60 hover:text-success hover:bg-success/10 rounded p-0.5 hover:scale-110"
+            :title="t('Restore hint')"
+          >
+            <Icon name="mdiEyeOutline" :size="13" />
           </button>
           <slot name="trailing" />
         </div>
