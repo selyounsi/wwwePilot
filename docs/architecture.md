@@ -20,8 +20,19 @@ und im Ziel-Tab neu geparst. Konsequenz:
   **verloren**
 - Konstanten/Helper innerhalb der Funktion deklarieren oder via `args`
   übergeben
-- Window-Helper (`window.createCheckResult`, `window.__t`, ...) werden vorab
-  einmal pro Run via `useCheckRunner.injectHelper` injiziert
+- Window-Helper (`window.createCheckResult`, `window.__t`, `window.cms`,
+  `window.consent`, ...) werden vorab einmal pro Run via
+  `useCheckRunner.injectHelper` injiziert
+- Page-Main-World-Globals (`window.accessibility`, `window.privacyControl`,
+  `window.jQuery`, …) werden zusätzlich vor jedem Audit von Main → Isolated
+  kopiert, damit Modul-Code sie direkt via `window.X` lesen kann.
+  Vollständige Form in [module-api.md](./module-api.md#page-globals-direkt-auf-window)
+- Ein Content-Script ([src/console-capture.js](../src/console-capture.js))
+  läuft auf jeder besuchten Seite ab `document_start` im Main World und
+  hookt `console.error`/`console.warn`/`window.error`/`unhandledrejection`.
+  Captured Messages landen in `window.__capturedConsole` (Page-Main-World),
+  werden via Snapshot ins Isolated-World propagiert und vom Console-Modul
+  ausgelesen.
 
 ## Service-Struktur
 
@@ -225,3 +236,4 @@ zwischen parallelen Modul-Runs.
 - [creating-a-module.md](./creating-a-module.md) — neues Modul anlegen
 - [module-api.md](./module-api.md) — vollständige API-Referenz
 - [i18n.md](./i18n.md) — Übersetzungssystem
+- [dev-mcp.md](./dev-mcp.md) — Extension mit Claude Code + chrome-devtools-mcp testen

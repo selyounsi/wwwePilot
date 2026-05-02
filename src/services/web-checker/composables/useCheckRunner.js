@@ -10,13 +10,47 @@ export function useCheckRunner() {
     const translations    = getTable()
     const ignoreSelectors = [...effectiveIgnoreSelectors.value]
     const moduleSettings  = getAllModuleSettings()
+    const pageSnap        = await snapshotPageWindow(tabId)
     await chrome.scripting.executeScript({
       target: { tabId },
-      func: (translations, ignoreSelectors, moduleSettings) => {
+      func: (translations, ignoreSelectors, moduleSettings, pageWindow, pageConsent) => {
         // always update translations + settings so language / ignore changes propagate
         window.__translations    = translations
         window.__ignoreSelectors = ignoreSelectors
         window.__moduleSettings  = moduleSettings
+
+        function detectCms() {
+          const html          = document.documentElement
+          const dataFwVersion = html.getAttribute('data-fw-version')
+          const dataFw        = html.getAttribute('data-fw')
+
+          if (dataFwVersion) return { version: 'cms4', dataFwVersion, dataFw: null, legacy: false }
+          if (dataFw)        return { version: 'cms3', dataFwVersion: null, dataFw, legacy: false }
+
+          const hasScript    = (sub) => !!document.querySelector(`script[src*="${sub}"]`)
+          const hasEwcms3    = hasScript('/ewcms3/js/ewcms_js.js')
+          const hasSiteJs    = hasScript('/js/site.js')
+          const hasRequireJs = hasScript('/js/_require.js')
+          const files        = { ewcms3: hasEwcms3, siteJs: hasSiteJs, requireJs: hasRequireJs }
+
+          if (hasEwcms3 && !hasRequireJs) return { version: 'cms3', dataFwVersion: null, dataFw: null, legacy: true,  files }
+          if (hasEwcms3)                  return { version: 'cms3', dataFwVersion: null, dataFw: null, legacy: false, files }
+          return { version: 'unknown', dataFwVersion: null, dataFw: null, legacy: false, files }
+        }
+
+        const cms = detectCms()
+        cms.hasPrivacyControl = !!(pageWindow?.privacyControl || pageWindow?.PrivacyControl)
+        cms.hasRequireIt      = !!(pageWindow?.rIt || pageWindow?.requireJS)
+
+        window.cms     = cms
+        window.consent = pageConsent
+
+        const isolatedOwn = new Set(Object.getOwnPropertyNames(window))
+        for (const [key, value] of Object.entries(pageWindow ?? {})) {
+          if (isolatedOwn.has(key)) continue
+          try { window[key] = value } catch {}
+        }
+
         window.__t = (key, params) => {
           let s = translations[key] ?? key
           if (params) s = s.replace(/\{(\w+)\}/g, (_, k) => params[k] ?? `{${k}}`)
@@ -130,9 +164,44 @@ export function useCheckRunner() {
           return { errors, warnings, items, addItem, finish }
         }
       },
-      args: [translations, ignoreSelectors, moduleSettings],
+      args: [translations, ignoreSelectors, moduleSettings, pageSnap.window, pageSnap.consent],
     })
   }
 
-  return { injectHelper }
+  async function snapshotPageWindow(tabId) {
+    try {
+      const [res] = await chrome.scripting.executeScript({
+        target: { tabId },
+        world:  'MAIN',
+        func:   () => {
+          const out = {}
+          for (const key of Object.keys(window)) {
+            try {
+              const json = JSON.stringify(window[key], (_, v) => typeof v === 'function' ? undefined : v)
+              if (json && json.length <= 200_000) out[key] = JSON.parse(json)
+            } catch {}
+          }
+          let consent = null
+          try {
+            const pc = window.privacyControl ?? window.PrivacyControl
+            if (pc && typeof pc.get === 'function') consent = pc.get('all') ?? null
+          } catch {}
+          return { window: out, consent }
+        },
+      })
+      return res?.result ?? { window: {}, consent: null }
+    } catch {
+      return { window: {}, consent: null }
+    }
+  }
+
+  async function runChecker(tabId, mod) {
+    return chrome.scripting.executeScript({
+      target: { tabId },
+      func:   mod.checker,
+      args:   mod.apiConfig ? [mod.apiConfig] : [],
+    })
+  }
+
+  return { injectHelper, runChecker }
 }

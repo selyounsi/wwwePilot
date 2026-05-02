@@ -9,7 +9,7 @@ import { moduleAppliesTo }    from '@/services/web-checker/composables/useUrlFil
 export function useWebChecker() {
   const { modules }                                                         = useModuleLoader('web-checker')
   const { state, setRunning, setResult, setSkipped, setCheckedTab, reset } = useCheckStore()
-  const { injectHelper }                                                    = useCheckRunner()
+  const { injectHelper, runChecker }                                        = useCheckRunner()
   const siteCheckStore                                                      = useSiteCheckStore()
 
   const isChecking = ref(false)
@@ -57,11 +57,7 @@ export function useWebChecker() {
   async function runModule(tabId, tabUrl, mod) {
     setRunning(mod.id)
     try {
-      const [res] = await chrome.scripting.executeScript({
-        target: { tabId },
-        func:   mod.checker,
-        args:   mod.apiConfig ? [mod.apiConfig] : [],
-      })
+      const [res] = await runChecker(tabId, mod)
       const result = res.result ?? { errors: [], warnings: [] }
       setResult(mod.id, result)
       siteCheckStore.syncFromSingleCheck(tabUrl, mod.id, result)
@@ -111,11 +107,7 @@ export function useWebChecker() {
     const applicable = modules.filter(mod => moduleAppliesTo(mod, tab.url, 'singlePage'))
     await Promise.all(applicable.map(async mod => {
       try {
-        const [res] = await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          func:   mod.checker,
-          args:   mod.apiConfig ? [mod.apiConfig] : [],
-        })
+        const [res] = await runChecker(tab.id, mod)
         const result = res.result ?? { errors: [], warnings: [] }
         setResult(mod.id, result)
         siteCheckStore.syncFromSingleCheck(tab.url, mod.id, result)

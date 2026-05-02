@@ -13,6 +13,15 @@ export default async function check() {
   const { errors, warnings, items, addItem, finish } = createCheckResult()
   const t = window.__t
 
+  const contrastClass = window.accessibility?.settings?.services?.contrast?.config?.htmlClass ?? null
+  let activatedByUs   = false
+
+  if (contrastClass && !document.documentElement.classList.contains(contrastClass)) {
+    document.documentElement.classList.add(contrastClass)
+    activatedByUs = true
+    await new Promise(r => setTimeout(r, 500))
+  }
+
   function parseColor(str) {
     const m = str.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/)
     if (!m) return null
@@ -178,6 +187,7 @@ export default async function check() {
 
   if (candidates.length === 0) {
     errors.push({ message: t('No text elements found') })
+    if (activatedByUs) document.documentElement.classList.remove(contrastClass)
     return finish()
   }
 
@@ -250,5 +260,6 @@ export default async function check() {
     })
   }
 
+  if (activatedByUs) document.documentElement.classList.remove(contrastClass)
   return finish()
 }

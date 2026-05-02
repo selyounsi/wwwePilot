@@ -268,6 +268,66 @@ Promise-Wrapper um `chrome.runtime.sendMessage`.
 const reply = await runInBackground('MY_FETCH', { url })
 ```
 
+### Page-Globals direkt auf `window`
+
+Modul-Checker laufen im **Isolated Content-Script World** — Page-Skript-Globals
+wie `window.accessibility` (CMS-Bars, Plugins, jQuery, GSAP, …) sind dort
+normalerweise **unsichtbar**. `injectHelper` snapshottet vor jedem Audit das
+Page-Main-World-`window` (via `world: 'MAIN'` Bridge) und kopiert die
+Page-Script-Properties auf das Isolated-World-`window`. Browser-Built-Ins
+(`location`, `document`, `fetch`, …) werden **nicht** überschrieben.
+
+Modul-Code greift damit einfach via `window.X` zu:
+
+```js
+const a11y     = window.accessibility?.settings?.services?.contrast
+const pcConfig = window.pCServiceTemplates
+const $        = window.jQuery
+```
+
+Funktionen werden bei der Serialisierung gestrippt (Message-Passing-Limit) —
+nur Property-Reads, keine Methoden-Calls auf Page-Globals.
+
+`document`, `location`, etc. sind echte Live-Refs (DOM ist cross-world
+geteilt). Mutationen wirken sofort auf das gerenderte Page-DOM:
+
+```js
+document.querySelectorAll('iframe').forEach(...)
+document.documentElement.classList.add('foo')   // für Audit-Dauer
+location.hostname
+```
+
+### `window.cms` — CMS-Version-Erkennung
+
+```ts
+interface Cms {
+  version:           'cms4' | 'cms3' | 'unknown'
+  dataFwVersion:     string | null     // CMS4 framework version, z.B. '1.13.1'
+  dataFw:            string | null     // CMS3 framework version
+  legacy:            boolean           // true wenn CMS3 ohne /js/_require.js
+  hasPrivacyControl: boolean
+  hasRequireIt:      boolean
+  files?:            { ewcms3: boolean, siteJs: boolean, requireJs: boolean }
+}
+```
+
+Detection-Reihenfolge: HTML-`data-fw-version` → CMS4 / `data-fw` → CMS3 /
+HEAD-Probes auf `/ewcms3/js/ewcms_js.js`, `/js/_require.js`, `/js/site.js`
+als Fallback.
+
+```js
+if (window.cms.version === 'cms4') { … }
+```
+
+### `window.consent` — privacyControl-Consent-State
+
+`Record<string, boolean> | null` — Snapshot von `window.privacyControl.get('all')`
+zur Audit-Zeit. Per-Service-Lookup:
+
+```js
+if (window.consent?.googlemaps === true) { … }
+```
+
 ### `__t(key, params?): string`
 
 Übersetzungsfunktion. Lookup: `currentLang[key] → en[key] → key`. Platzhalter

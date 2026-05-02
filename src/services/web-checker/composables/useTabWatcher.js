@@ -4,16 +4,13 @@ import { useSiteCheckStore } from './useSiteCheckStore.js'
 
 export function useTabWatcher(modules) {
   const { state, setRunning, setResult, setCheckedTab, markCheckedAt } = useCheckStore()
-  const { injectHelper }                                               = useCheckRunner()
+  const { injectHelper, runChecker }                                   = useCheckRunner()
   const siteCheckStore                                                 = useSiteCheckStore()
 
   async function runModule(tabId, tabUrl, mod) {
     setRunning(mod.id)
     try {
-      const [res] = await chrome.scripting.executeScript({
-        target: { tabId },
-        func:   mod.checker,
-      })
+      const [res] = await runChecker(tabId, mod)
       const result = res.result ?? { errors: [], warnings: [] }
       setResult(mod.id, result)
       siteCheckStore.syncFromSingleCheck(tabUrl, mod.id, result)

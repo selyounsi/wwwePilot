@@ -24,6 +24,29 @@ button, figcaption, blockquote, small, b, strong`):
 5. Vergleicht mit AA-Schwellen — 4.5:1 für normalen Text, 3.0:1 für "großen
    Text" (≥ 18px oder ≥ 14px fett)
 
+## AccessibilityBar-Integration (BFSG-Modus)
+
+Wenn die Seite die wwwe `AccessibilityBar` (`window.accessibility`) ausliefert
+und der `contrast`-Service konfiguriert ist, prüft der Checker im
+**Hochkontrast-Modus** statt im Default-Theme — denn das ist der für
+BFSG/WCAG-Compliance relevante Zustand.
+
+Ablauf:
+
+1. `window.accessibility?.settings?.services?.contrast?.config?.htmlClass`
+   wird gelesen (typischerweise `'contrast-intensify'`)
+2. Wenn die Klasse noch nicht auf `<html>` ist, wird sie für die Dauer des
+   Audits gesetzt
+3. **500 ms warten** — komplexe CSS-Variable-Cascades (`hsla(var(--color-primary-h)…)`)
+   brauchen mehr als 2 RAFs bis `getComputedStyle` die neuen Werte liefert.
+   Empirisch ermittelt, kürzere Waits führen zu falschen Messungen.
+4. Audit läuft, schreibt finale Items
+5. Klasse wird am Ende wieder entfernt — Page-Zustand bleibt unverändert für
+   den User
+
+Sites ohne AccessibilityBar oder mit deaktiviertem Contrast-Service prüfen
+unverändert im Default-Theme.
+
 ## Sonderfälle
 
 ### Placeholder

@@ -10,7 +10,7 @@ const EMPTY_RESULT = { status: 'idle', errors: [], warnings: [], items: [], erro
 
 export function useModuleSetup(moduleId, overlayConfig = null, allowChatBot = false) {
   const { state, setRunning, setResult, setCheckedTab } = useCheckStore()
-  const { injectHelper }                                = useCheckRunner()
+  const { injectHelper, runChecker }                    = useCheckRunner()
   const { modules }                      = useModuleLoader('web-checker')
 
   const result = computed(() => state.results[moduleId] ?? EMPTY_RESULT)
@@ -30,11 +30,7 @@ export function useModuleSetup(moduleId, overlayConfig = null, allowChatBot = fa
     setRunning(moduleId)
     try {
       await injectHelper(tabId)
-      const [res] = await chrome.scripting.executeScript({
-        target: { tabId },
-        func:   mod.checker,
-        args:   mod.apiConfig ? [mod.apiConfig] : [],
-      })
+      const [res] = await runChecker(tabId, mod)
       setResult(moduleId, res.result ?? { errors: [], warnings: [] })
     } catch (e) {
       setResult(moduleId, { errors: [{ message: e.message }], warnings: [] })

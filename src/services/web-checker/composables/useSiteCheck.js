@@ -6,7 +6,7 @@ import { useSiteCheckStore } from './useSiteCheckStore.js'
 
 export function useSiteCheck() {
   const { modules }      = useModuleLoader('web-checker')
-  const { injectHelper } = useCheckRunner()
+  const { injectHelper, runChecker } = useCheckRunner()
   const store            = useSiteCheckStore()
   const cancelled        = ref(false)
   const paused           = ref(false)
@@ -97,11 +97,7 @@ export function useSiteCheck() {
 
           await Promise.all(applicable.map(async mod => {
             try {
-              const [res] = await chrome.scripting.executeScript({
-                target: { tabId: checkTab.id },
-                func:   mod.checker,
-                args:   mod.apiConfig ? [mod.apiConfig] : [],
-              })
+              const [res] = await runChecker(checkTab.id, mod)
               store.setUrlResult(url, mod.id, { status: 'done', ...(res.result ?? { errors: [], warnings: [], errorCount: 0, warningCount: 0, items: [] }) })
             } catch (e) {
               store.setUrlResult(url, mod.id, { status: 'done', errors: [{ message: e.message }], warnings: [], errorCount: 1, warningCount: 0, items: [] })
