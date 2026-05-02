@@ -21,6 +21,27 @@ console.log('[background] Registrierte Handler:', Object.keys(handlerMap))
 
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
 
+// register MAIN-world content-script via API — bypasses page CSP and the
+// crxjs HMR loader, hooks console.* before any page script runs
+;(async () => {
+  try {
+    const id  = 'console-capture'
+    const cur = await chrome.scripting.getRegisteredContentScripts({ ids: [id] }).catch(() => [])
+    const def = {
+      id,
+      matches:   ['<all_urls>'],
+      js:        ['console-capture.js'],
+      runAt:     'document_start',
+      world:     'MAIN',
+      allFrames: false,
+    }
+    if (cur.length) await chrome.scripting.updateRegisteredContentScripts([def])
+    else            await chrome.scripting.registerContentScripts([def])
+  } catch (e) {
+    console.error('[background] failed to register console-capture:', e)
+  }
+})()
+
 // strip overlays + listeners injected by modules when sidebar disconnects
 chrome.runtime.onConnect.addListener(port => {
   if (port.name !== 'sidebar') return

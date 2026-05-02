@@ -1,0 +1,17 @@
+{
+  "de": {
+    "Console": "Console",
+    "Capture console errors & warnings": "Console-Fehler & -Warnungen erfassen",
+
+    "Console error": "Console-Fehler",
+    "Console warning": "Console-Warnung",
+
+    "{n} message captured": "{n} Meldung erfasst",
+    "{n} messages captured": "{n} Meldungen erfasst",
+
+    "Capture not active — reload the page to enable console-capture": "Capture nicht aktiv – Seite neu laden um console-capture zu aktivieren",
+
+    "Source: {source}": "Quelle: {source}"
+  },
+  "en": {}
+}

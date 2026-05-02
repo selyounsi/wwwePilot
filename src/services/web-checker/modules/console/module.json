@@ -1,0 +1,10 @@
+{
+  "id": "console",
+  "name": "Console",
+  "description": "Capture console errors & warnings",
+  "icon": "mdiConsoleLine",
+  "active": true,
+  "checkOnReload": false,
+  "allowChatBot": true,
+  "defaultFilter": "issues"
+}
