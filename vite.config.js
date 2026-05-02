@@ -42,7 +42,7 @@ export default defineConfig(({ mode }) => {
       name: 'fix-manifest-permissions',
       closeBundle() {
         const distManifest = JSON.parse(fs.readFileSync('dist/manifest.json', 'utf-8'))
-        distManifest.permissions = ['sidePanel', 'scripting', 'tabs', 'activeTab', 'storage']
+        distManifest.permissions = ['sidePanel', 'scripting', 'tabs', 'activeTab', 'storage', 'webRequest']
         distManifest.host_permissions = ['<all_urls>']
         fs.writeFileSync('dist/manifest.json', JSON.stringify(distManifest, null, 2))
         console.log('✅ Permissions in dist/manifest.json gefixt!')

@@ -33,22 +33,4 @@
     const reason = e.reason?.message || (typeof e.reason === 'string' ? e.reason : null) || String(e.reason)
     record('error', reason, 'unhandledrejection', e.reason?.stack || null)
   })
-
-  const seenResources    = new Set()
-  const RESOURCE_INITIATOR = new Set(['css', 'link'])
-  function checkResource(entry) {
-    if (entry.entryType !== 'resource')             return
-    if (!RESOURCE_INITIATOR.has(entry.initiatorType)) return
-    if (seenResources.has(entry.name))              return
-    if (entry.transferSize !== 0)                   return
-    if (entry.decodedBodySize > 0)                  return
-    if (entry.duration <= 0)                        return
-    seenResources.add(entry.name)
-    record('error', `Failed to load resource: ${entry.name}`, 'resource', null)
-  }
-  try {
-    new PerformanceObserver((list) => list.getEntries().forEach(checkResource))
-      .observe({ type: 'resource', buffered: true })
-  } catch {}
-  try { performance.getEntriesByType('resource').forEach(checkResource) } catch {}
 })()

@@ -11,7 +11,8 @@
 
     "Capture not active — reload the page to enable console-capture": "Capture nicht aktiv – Seite neu laden um console-capture zu aktivieren",
 
-    "Source: {source}": "Quelle: {source}"
+    "Source: {source}": "Quelle: {source}",
+    "Network error: {code}": "Netzwerkfehler: {code}"
   },
   "en": {}
 }
