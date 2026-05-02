@@ -38,7 +38,7 @@ export function useModuleSetup(moduleId, overlayConfig = null, allowChatBot = fa
   }
 
   const moduleOverlay        = useModuleOverlay(moduleId, overlayConfig)
-  const moduleOverlayWithBot = { ...moduleOverlay, allowChatBot }
+  const moduleOverlayWithBot = { ...moduleOverlay, allowChatBot, moduleId }
   provide('moduleOverlay', moduleOverlayWithBot)
 
   useVisibilityWatcher(moduleId)

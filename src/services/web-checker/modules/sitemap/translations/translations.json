@@ -1,0 +1,21 @@
+{
+  "de": {
+    "Sitemap": "Sitemap",
+    "Sitemap.xml vs. linked URLs coverage": "sitemap.xml vs. verlinkte URLs",
+
+    "Sitemap not reachable": "sitemap.xml nicht erreichbar",
+    "No URLs in sitemap": "sitemap.xml enthält keine URLs",
+
+    "Linked but not in sitemap": "Verlinkt aber nicht im sitemap.xml",
+    "Page is reachable from this site but missing from the sitemap — search engines may not index it": "Seite ist von dieser Domain verlinkt aber fehlt im sitemap.xml – Suchmaschinen indexieren sie evtl. nicht",
+
+    "Orphan in sitemap": "Verwaiste URL im sitemap.xml",
+    "Listed in sitemap but no internal link found — content is unreachable from navigation": "Im sitemap.xml gelistet aber keine interne Verlinkung – Inhalt ist über die Navigation nicht erreichbar",
+
+    "URL OK": "URL OK",
+    "Both linked and in sitemap": "Sowohl verlinkt als auch im sitemap.xml",
+
+    "Found {n} URLs in sitemap, {m} linked from this page": "{n} URLs im sitemap.xml, {m} von dieser Seite verlinkt"
+  },
+  "en": {}
+}

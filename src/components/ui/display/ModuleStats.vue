@@ -1,5 +1,7 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, inject } from 'vue'
+import { useRunHistory } from '@/services/web-checker/composables/useRunHistory.js'
+import { useCheckStore } from '@/services/web-checker/composables/useCheckStore.js'
 
 const props = defineProps({
   result:   { type: Object,  required: true  },
@@ -14,6 +16,29 @@ const allIssues = computed(() => [
   ...(props.result.errors   ?? []).map(e => ({ ...e, type: 'error'   })),
   ...(props.result.warnings ?? []).map(w => ({ ...w, type: 'warning' })),
 ])
+
+const { moduleId = null } = inject('moduleOverlay', {})
+const checkStore = useCheckStore()
+const { get: getHistory } = useRunHistory()
+
+const origin = computed(() => {
+  try { return new URL(checkStore.state.checkedUrl ?? '').origin } catch { return null }
+})
+
+const history = computed(() => {
+  if (!origin.value || !moduleId) return []
+  return getHistory(origin.value, moduleId)
+})
+
+function deltaFor(field, current) {
+  const hist = history.value
+  if (hist.length < 2) return null
+  const prev = hist[hist.length - 2][field] ?? 0
+  return (current ?? 0) - prev
+}
+
+const errorDelta   = computed(() => deltaFor('errorCount',   props.result.errorCount))
+const warningDelta = computed(() => deltaFor('warningCount', props.result.warningCount))
 </script>
 
 <template>
@@ -28,12 +53,26 @@ const allIssues = computed(() => [
 
       <div v-if="errors" class="bg-error-soft border border-error/30 rounded-xl p-3 text-center">
         <p class="text-xs text-muted">Fehler</p>
-        <p class="text-lg font-bold mt-0.5">{{ result.errorCount ?? 0 }}</p>
+        <p class="text-lg font-bold mt-0.5">
+          {{ result.errorCount ?? 0 }}
+          <span v-if="errorDelta !== null && errorDelta !== 0"
+            class="text-[10px] font-medium ml-1 tabular-nums"
+            :class="errorDelta < 0 ? 'text-success' : 'text-error/80'"
+            :title="`Vorheriger Audit: ${(history[history.length - 2].errorCount ?? 0)}`"
+          >{{ errorDelta < 0 ? '▼' : '▲' }}{{ Math.abs(errorDelta) }}</span>
+        </p>
       </div>
 
       <div v-if="warnings" class="bg-alert-soft border border-alert/20 rounded-xl p-3 text-center">
         <p class="text-xs text-muted">Warnungen</p>
-        <p class="text-lg font-bold mt-0.5">{{ result.warningCount ?? 0 }}</p>
+        <p class="text-lg font-bold mt-0.5">
+          {{ result.warningCount ?? 0 }}
+          <span v-if="warningDelta !== null && warningDelta !== 0"
+            class="text-[10px] font-medium ml-1 tabular-nums"
+            :class="warningDelta < 0 ? 'text-success' : 'text-alert/80'"
+            :title="`Vorheriger Audit: ${(history[history.length - 2].warningCount ?? 0)}`"
+          >{{ warningDelta < 0 ? '▼' : '▲' }}{{ Math.abs(warningDelta) }}</span>
+        </p>
       </div>
 
       <slot />

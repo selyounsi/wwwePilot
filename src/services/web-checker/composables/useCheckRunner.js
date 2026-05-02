@@ -1,10 +1,12 @@
 import { useI18n }                from '@/composables/i18n/useI18n.js'
 import { useWebCheckerSettings } from './useWebCheckerSettings.js'
+import { useRunHistory }         from './useRunHistory.js'
 import { getAllModuleSettings }  from '@/composables/settings/useModuleSettings.js'
 
 export function useCheckRunner() {
   const { getTable }                 = useI18n()
   const { effectiveIgnoreSelectors } = useWebCheckerSettings()
+  const { record: recordHistory }    = useRunHistory()
 
   async function injectHelper(tabId) {
     const translations    = getTable()
@@ -196,11 +198,18 @@ export function useCheckRunner() {
   }
 
   async function runChecker(tabId, mod) {
-    return chrome.scripting.executeScript({
+    const res = await chrome.scripting.executeScript({
       target: { tabId },
       func:   mod.checker,
       args:   mod.apiConfig ? [mod.apiConfig] : [],
     })
+    try {
+      const tab = await chrome.tabs.get(tabId)
+      const origin = tab?.url ? new URL(tab.url).origin : null
+      const result = res?.[0]?.result
+      if (origin && result) recordHistory(origin, mod.id, result)
+    } catch {}
+    return res
   }
 
   return { injectHelper, runChecker }

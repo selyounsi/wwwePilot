@@ -1,0 +1,10 @@
+{
+  "id": "sitemap",
+  "name": "Sitemap",
+  "description": "Sitemap.xml vs. linked URLs coverage",
+  "icon": "mdiSitemapOutline",
+  "active": true,
+  "checkOnReload": false,
+  "allowChatBot": true,
+  "defaultFilter": "issues"
+}

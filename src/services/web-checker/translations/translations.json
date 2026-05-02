@@ -61,6 +61,10 @@
     "Errors & warnings": "Fehler & Warnungen",
     "Errors only": "Nur Fehler",
     "Warnings only": "Nur Warnungen",
+    "Search items…": "Items durchsuchen…",
+    "Group by rule": "Nach Regel gruppieren",
+    "Cluster ({n})": "Cluster ({n})",
+    "Cluster {n} issues with AI": "{n} Probleme via KI clustern",
     "Module settings": "Modul-Einstellungen",
 
     "Err": "F",

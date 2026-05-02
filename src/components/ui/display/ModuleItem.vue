@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { highlightElement } from '@/composables/highlight/index.js'
 import { useChat } from '@/services/chatbot/composables/useChat.js'
 import { useCheckStore } from '@/services/web-checker/composables/useCheckStore.js'
+import { useIgnoreList } from '@/services/web-checker/composables/useIgnoreList.js'
 import { APP_NAME_LOWER } from '@/config/app.js'
 
 const props = defineProps({
@@ -18,7 +19,19 @@ const checkStore   = useCheckStore()
 const slots        = useSlots()
 const open         = ref(false)
 
-const { labelFn = () => '', allowChatBot = false } = inject('moduleOverlay', {})
+const { labelFn = () => '', allowChatBot = false, moduleId = null } = inject('moduleOverlay', {})
+
+const { add: addIgnore } = useIgnoreList()
+const origin = computed(() => {
+  try { return new URL(checkStore.state.checkedUrl ?? '').origin } catch { return null }
+})
+
+function ignoreItem() {
+  if (!origin.value || !moduleId) return
+  ;(props.item.issues ?? [])
+    .filter(i => i.type !== 'success')
+    .forEach(i => addIgnore(origin.value, moduleId, i.message))
+}
 
 const highlight = (clickType) => {
   highlightElement(props.item, labelFn(props.item), clickType)
@@ -159,6 +172,14 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
             title="Im Chat analysieren"
           >
             <Icon name="mdiRobot" :size="13" />
+          </button>
+          <button
+            v-if="moduleId && item.issues?.some(i => i.type === 'error' || i.type === 'warning')"
+            @click.stop="ignoreItem"
+            class="transition-all text-muted/40 hover:text-error hover:bg-error/10 rounded p-0.5 hover:scale-110"
+            title="Hinweis ignorieren"
+          >
+            <Icon name="mdiEyeOffOutline" :size="13" />
           </button>
           <slot name="trailing" />
         </div>
