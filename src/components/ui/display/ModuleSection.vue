@@ -117,11 +117,11 @@ function clusterInChat() {
         <button
           v-if="allowChatBot && issueCount > 1"
           @click="clusterInChat"
-          :title="t('Cluster {n} issues with AI', { n: issueCount })"
-          class="text-xs px-2.5 py-1.5 rounded-lg bg-surface-soft border border-border text-muted hover:bg-primary/10 hover:text-primary transition-colors shrink-0 flex items-center gap-1.5"
+          :title="t('Analyze all {n} issues in chat', { n: issueCount })"
+          class="text-xs h-7 px-2 rounded-lg bg-surface-soft border border-border text-muted hover:bg-primary/10 hover:text-primary transition-colors shrink-0 flex items-center gap-1"
         >
-          <Icon name="mdiRobot" :size="12" />
-          {{ t('Cluster ({n})', { n: issueCount }) }}
+          <Icon name="mdiRobot" :size="13" />
+          <span class="font-medium tabular-nums">{{ issueCount }}</span>
         </button>
         <button
           v-if="canRecheck"

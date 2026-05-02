@@ -2,6 +2,9 @@
 import { ref, computed, inject } from 'vue'
 import { useRunHistory } from '@/services/web-checker/composables/useRunHistory.js'
 import { useCheckStore } from '@/services/web-checker/composables/useCheckStore.js'
+import { useI18n }       from '@/composables/i18n/useI18n.js'
+
+const { t } = useI18n()
 
 const props = defineProps({
   result:   { type: Object,  required: true  },
@@ -47,12 +50,12 @@ const warningDelta = computed(() => deltaFor('warningCount', props.result.warnin
     <div class="grid gap-2" style="grid-template-columns: repeat(auto-fit, minmax(72px, 1fr))">
 
       <div v-if="total" class="bg-surface-soft border border-border rounded-xl p-3 text-center">
-        <p class="text-xs text-muted">Gesamt</p>
+        <p class="text-xs text-muted">{{ t('Total') }}</p>
         <p class="text-lg font-bold mt-0.5">{{ result.items?.length ?? 0 }}</p>
       </div>
 
       <div v-if="errors" class="bg-error-soft border border-error/30 rounded-xl p-3 text-center">
-        <p class="text-xs text-muted">Fehler</p>
+        <p class="text-xs text-muted">{{ t('Errors') }}</p>
         <p class="text-lg font-bold mt-0.5">
           {{ result.errorCount ?? 0 }}
           <span v-if="errorDelta !== null && errorDelta !== 0"
@@ -64,7 +67,7 @@ const warningDelta = computed(() => deltaFor('warningCount', props.result.warnin
       </div>
 
       <div v-if="warnings" class="bg-alert-soft border border-alert/20 rounded-xl p-3 text-center">
-        <p class="text-xs text-muted">Warnungen</p>
+        <p class="text-xs text-muted">{{ t('Warnings') }}</p>
         <p class="text-lg font-bold mt-0.5">
           {{ result.warningCount ?? 0 }}
           <span v-if="warningDelta !== null && warningDelta !== 0"
@@ -92,7 +95,7 @@ const warningDelta = computed(() => deltaFor('warningCount', props.result.warnin
           :class="open ? 'rotate-180' : ''"
         />
         <span class="flex-1 text-xs font-medium text-muted">
-          {{ open ? 'Hinweise ausblenden' : 'Hinweise anzeigen' }}
+          {{ open ? t('Hide hints') : t('Show hints') }}
         </span>
         <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
           :class="(result.errorCount ?? 0) > 0 ? 'bg-error/10 text-error' : 'bg-alert/10 text-alert'"

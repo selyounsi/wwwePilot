@@ -5,7 +5,10 @@ import { highlightElement } from '@/composables/highlight/index.js'
 import { useChat } from '@/services/chatbot/composables/useChat.js'
 import { useCheckStore } from '@/services/web-checker/composables/useCheckStore.js'
 import { useIgnoreList } from '@/services/web-checker/composables/useIgnoreList.js'
+import { useI18n } from '@/composables/i18n/useI18n.js'
 import { APP_NAME_LOWER } from '@/config/app.js'
+
+const { t } = useI18n()
 
 const props = defineProps({
   item:    { type: Object, required: true },
@@ -169,7 +172,7 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
             v-if="allowChatBot && item.issues?.some(i => i.type === 'error' || i.type === 'warning')"
             @click.stop="openInChat"
             class="transition-all text-muted/40 hover:text-primary hover:bg-primary/10 rounded p-0.5 hover:scale-110"
-            title="Im Chat analysieren"
+            :title="t('Analyze in chat')"
           >
             <Icon name="mdiRobot" :size="13" />
           </button>
@@ -177,7 +180,7 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
             v-if="moduleId && item.issues?.some(i => i.type === 'error' || i.type === 'warning')"
             @click.stop="ignoreItem"
             class="transition-all text-muted/40 hover:text-error hover:bg-error/10 rounded p-0.5 hover:scale-110"
-            title="Hinweis ignorieren"
+            :title="t('Ignore hint')"
           >
             <Icon name="mdiEyeOffOutline" :size="13" />
           </button>
@@ -203,7 +206,7 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
         :class="open ? 'rotate-180' : ''"
       />
       <span class="text-[11px] font-medium tracking-wide">
-        {{ open ? 'Details ausblenden' : 'Weitere Details ansehen' }}
+        {{ open ? t('Hide details') : t('Show more details') }}
       </span>
     </button>
 
