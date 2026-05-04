@@ -5,6 +5,7 @@ import { highlightElement } from '@/composables/highlight/index.js'
 import { useChat } from '@/services/chatbot/composables/useChat.js'
 import { useCheckStore } from '@/services/web-checker/composables/useCheckStore.js'
 import { useIgnoreList } from '@/services/web-checker/composables/useIgnoreList.js'
+import { useLiveEditorBridge } from '@/composables/liveEditor/useLiveEditorBridge.js'
 import { useI18n } from '@/composables/i18n/useI18n.js'
 import { APP_NAME_LOWER } from '@/config/app.js'
 
@@ -25,6 +26,22 @@ const open         = ref(false)
 const { labelFn = () => '', allowChatBot = false, moduleId = null } = inject('moduleOverlay', {})
 
 const { add: addIgnore, remove: removeIgnore } = useIgnoreList()
+const {
+  editorTab,
+  focusItem:        focusInLiveEditor,
+  requestEditable:  requestLiveEditable,
+  getEditable:      getLiveEditable,
+} = useLiveEditorBridge()
+
+const isLiveEditable = computed(() => {
+  if (!editorTab.value) return false
+  requestLiveEditable(props.item)
+  return getLiveEditable(props.item) === true
+})
+
+async function showInLiveEditor() {
+  await focusInLiveEditor(props.item)
+}
 const origin = computed(() => {
   try { return new URL(checkStore.state.checkedUrl ?? '').origin } catch { return null }
 })
@@ -176,6 +193,14 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
         <span class="w-1.5 h-1.5 rounded-full" :class="dotColor[status]" />
         <div class="flex items-center gap-1">
           <Icon v-if="!item.visible" name="mdiEyeOff" :size="12" class="text-muted/40" title="Element nicht sichtbar" />
+          <button
+            v-if="isLiveEditable"
+            @click.stop="showInLiveEditor"
+            class="transition-all text-muted/40 hover:text-primary hover:bg-primary/10 rounded p-0.5 hover:scale-110"
+            :title="t('Show in Live Editor')"
+          >
+            <Icon name="mdiPencilOutline" :size="13" />
+          </button>
           <button
             v-if="allowChatBot && item.issues?.some(i => i.type === 'error' || i.type === 'warning')"
             @click.stop="openInChat"
