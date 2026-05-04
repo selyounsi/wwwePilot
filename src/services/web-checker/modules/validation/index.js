@@ -31,9 +31,34 @@ export default async function check() {
   const messages = (reply?.messages ?? []).filter(m => !IGNORE_RULES.includes(m.ruleId))
   if (messages.length === 0) return finish()
 
-  const target = document.documentElement
+  const html2 = document.documentElement
+  // For some rules the offending fragment can be mapped to a real DOM
+  // element so the user can click the audit item and jump to it. We track
+  // ruleId-keyed counters because the same value may appear several times in
+  // the page; we walk through matching candidates in document order.
+  const occurrenceIdx = new Map()
+
+  function findElementForRule(m) {
+    if (m.ruleId === 'inline-style-disabled') {
+      const match = (m.message ?? '').match(/style="([^"]*)"/)
+      if (!match) return null
+      const styleValue = match[1]
+      const candidates = Array.from(document.querySelectorAll('[style]'))
+        .filter(el => el.getAttribute('style') === styleValue)
+      if (!candidates.length) return null
+      const key = `${m.ruleId}::${styleValue}`
+      const i = occurrenceIdx.get(key) ?? 0
+      occurrenceIdx.set(key, i + 1)
+      return candidates[Math.min(i, candidates.length - 1)] ?? null
+    }
+    return null
+  }
+
   for (const m of messages) {
-    addItem(target, [{
+    const el     = findElementForRule(m) ?? html2
+    const tag    = el.tagName
+    const tagIdx = Array.from(document.querySelectorAll(tag)).indexOf(el)
+    addItem(el, [{
       when:        true,
       type:        m.type,
       title:       m.message || t('(unknown)'),
@@ -44,7 +69,7 @@ export default async function check() {
       line:     m.line,
       column:   m.column,
       snippet:  m.snippet,
-      _meta:    { selector: 'html' },
+      _meta:    el === html2 ? { selector: 'html' } : { tag, idx: tagIdx },
     })
   }
 

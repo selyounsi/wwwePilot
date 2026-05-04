@@ -9,8 +9,8 @@
     "Linked but not in sitemap": "Verlinkt aber nicht im sitemap.xml",
     "Page is reachable from this site but missing from the sitemap — search engines may not index it": "Seite ist von dieser Domain verlinkt aber fehlt im sitemap.xml – Suchmaschinen indexieren sie evtl. nicht",
 
-    "Orphan in sitemap": "Verwaiste URL im sitemap.xml",
-    "Listed in sitemap but no internal link found — content is unreachable from navigation": "Im sitemap.xml gelistet aber keine interne Verlinkung – Inhalt ist über die Navigation nicht erreichbar",
+    "Not linked from this page": "Auf dieser Seite nicht verlinkt",
+    "Listed in sitemap but no link to it on the current page — may be reachable from other pages": "Im sitemap.xml gelistet, aber von dieser Seite aus nicht verlinkt — kann von anderen Seiten aus erreichbar sein",
 
     "URL OK": "URL OK",
     "Both linked and in sitemap": "Sowohl verlinkt als auch im sitemap.xml",

@@ -44,23 +44,26 @@ export default async function check() {
         description: t('Page is reachable from this site but missing from the sitemap — search engines may not index it'),
       },
     ], {
-      url, name: url, details: t('Linked but not in sitemap'),
+      url, name: url,
       kind: 'linked-only',
       visible: true,
       _meta: { tag: 'A', idx: 0, text: url.split('/').slice(-2).join('/') },
     })
   })
 
+  // "Orphan" can only be determined site-wide; on a single-page audit we just
+  // know it's not linked from *this* page. Surface as a soft warning, not an
+  // error — the URL may still be reachable from other pages.
   sitemapNotLinked.forEach((url, idx) => {
     addItem(head, [
       {
         when:        true,
-        type:        'error',
-        title:       t('Orphan in sitemap'),
-        description: t('Listed in sitemap but no internal link found — content is unreachable from navigation'),
+        type:        'warning',
+        title:       t('Not linked from this page'),
+        description: t('Listed in sitemap but no link to it on the current page — may be reachable from other pages'),
       },
     ], {
-      url, name: url, details: t('Orphan in sitemap'),
+      url, name: url,
       kind: 'orphan',
       visible: true,
       _meta: { idx: 'orphan-' + idx },
@@ -76,7 +79,7 @@ export default async function check() {
         description: t('Both linked and in sitemap'),
       },
     ], {
-      url, name: url, details: url,
+      url, name: url,
       kind: 'both',
       visible: true,
       _meta: { idx: 'both-' + idx },
