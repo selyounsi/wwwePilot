@@ -61,7 +61,7 @@ const warningDelta = computed(() => deltaFor('warningCount', props.result.warnin
           <span v-if="errorDelta !== null && errorDelta !== 0"
             class="text-[10px] font-medium ml-1 tabular-nums"
             :class="errorDelta < 0 ? 'text-success' : 'text-error/80'"
-            :title="`Vorheriger Audit: ${(history[history.length - 2].errorCount ?? 0)}`"
+            :title="t('Previous audit: {n}', { n: history[history.length - 2].errorCount ?? 0 })"
           >{{ errorDelta < 0 ? '▼' : '▲' }}{{ Math.abs(errorDelta) }}</span>
         </p>
       </div>
@@ -73,7 +73,7 @@ const warningDelta = computed(() => deltaFor('warningCount', props.result.warnin
           <span v-if="warningDelta !== null && warningDelta !== 0"
             class="text-[10px] font-medium ml-1 tabular-nums"
             :class="warningDelta < 0 ? 'text-success' : 'text-alert/80'"
-            :title="`Vorheriger Audit: ${(history[history.length - 2].warningCount ?? 0)}`"
+            :title="t('Previous audit: {n}', { n: history[history.length - 2].warningCount ?? 0 })"
           >{{ warningDelta < 0 ? '▼' : '▲' }}{{ Math.abs(warningDelta) }}</span>
         </p>
       </div>

@@ -8,6 +8,7 @@ const state = reactive({
   customSelectors:  [],
   disabledBuiltins: [],
   defaultFilter:    null,
+  showSearch:       false,
 })
 
 const effectiveIgnoreSelectors = computed(() => [
@@ -24,12 +25,14 @@ const { hydrationPromise } = createSettingsStore(STORAGE_KEY, {
     if (Array.isArray(stored.customSelectors))  state.customSelectors  = stored.customSelectors
     if (Array.isArray(stored.disabledBuiltins)) state.disabledBuiltins = stored.disabledBuiltins
     if (stored.defaultFilter !== undefined)     state.defaultFilter    = stored.defaultFilter
+    if (typeof stored.showSearch === 'boolean') state.showSearch       = stored.showSearch
   },
   onSerialize(state) {
     return {
       customSelectors:  state.customSelectors,
       disabledBuiltins: state.disabledBuiltins,
       defaultFilter:    state.defaultFilter,
+      showSearch:       state.showSearch,
     }
   },
 })
@@ -91,6 +94,10 @@ export function useWebCheckerSettings() {
     state.defaultFilter = filter
   }
 
+  function setShowSearch(value) {
+    state.showSearch = !!value
+  }
+
   return {
     state,
     builtins: BUILT_IN_IGNORE_SELECTORS,
@@ -98,5 +105,6 @@ export function useWebCheckerSettings() {
     addCustomSelector, removeCustomSelector,
     isBuiltinEnabled, toggleBuiltin,
     setDefaultFilter,
+    setShowSearch,
   }
 }

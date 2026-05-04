@@ -1,4 +1,8 @@
 <script setup>
+import { useI18n } from '@/composables/i18n/useI18n.js'
+
+const { t } = useI18n()
+
 defineProps({
   count:        { type: Number, default: null },
   warningCount: { type: Number, default: null },
@@ -15,6 +19,10 @@ defineProps({
           ? 'bg-alert-soft'
           : 'bg-success-soft',
     ]">
-    {{ count > 0 ? `${count} Fehler` : warningCount > 0 ? `${warningCount} Warnungen` : '✓ OK' }}
+    {{ count > 0
+      ? t('{n} errors',   { n: count })
+      : warningCount > 0
+        ? t('{n} warnings', { n: warningCount })
+        : '✓ OK' }}
   </span>
 </template>

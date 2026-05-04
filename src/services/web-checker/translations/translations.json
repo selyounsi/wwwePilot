@@ -68,11 +68,28 @@
     "Total":      "Gesamt",
     "Errors":     "Fehler",
     "Warnings":   "Warnungen",
+    "{n} errors":   "{n} Fehler",
+    "{n} warnings": "{n} Warnungen",
+    "Previous audit: {n}": "Vorheriger Audit: {n}",
+
+    "This tab":                       "Dieser Tab",
+    "Live Editor – this page":        "Live Editor – diese Seite",
+    "Live Editor – different page":   "Live Editor – andere Seite",
+    "Live Editor – different domain": "Live Editor – andere Domain",
+    "URL changed":                    "URL geändert",
+    "Page reloaded":                  "Seite neu geladen",
+    "Not checked":                    "Nicht geprüft",
+    "Checked:":                       "Geprüft:",
+
+    "Show search bar":                          "Suchleiste anzeigen",
+    "Adds a search input above the items list of every module.": "Blendet ein Suchfeld über jeder Modul-Itemliste ein.",
+
     "Show hints": "Hinweise anzeigen",
     "Hide hints": "Hinweise ausblenden",
     "Show more details": "Weitere Details ansehen",
     "Hide details":      "Details ausblenden",
     "Analyze in chat":   "Im Chat analysieren",
+    "Show in Live Editor": "Im Live-Editor zeigen",
     "Ignore hint":       "Hinweis ignorieren",
     "Restore hint":      "Hinweis wiederherstellen",
     "Ignored ({n})":     "Ignoriert ({n})",
@@ -85,6 +102,7 @@
     "Recheck the page": "Recheck this page",
     "+{count} warning": "+{count} warning",
     "+{count} warnings": "+{count} warnings",
+    "Show in Live Editor": "Show in Live Editor",
     "Err": "E",
     "Warn": "W"
   }

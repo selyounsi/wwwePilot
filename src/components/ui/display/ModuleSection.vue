@@ -7,6 +7,7 @@ import { useModuleLoader }  from '@/composables/loaders/useModuleLoader.js'
 import { useCheckStore }    from '@/services/web-checker/composables/useCheckStore.js'
 import { useChat }          from '@/services/chatbot/composables/useChat.js'
 import { useI18n }          from '@/composables/i18n/useI18n.js'
+import { useWebCheckerSettings } from '@/services/web-checker/composables/useWebCheckerSettings.js'
 
 const props = defineProps({
   label:         { type: String, required: true },
@@ -16,6 +17,7 @@ const props = defineProps({
 
 const { modules } = useModuleLoader('web-checker')
 const { t }       = useI18n()
+const { state: webCheckerSettings } = useWebCheckerSettings()
 const moduleConfig = props.moduleId ? modules.find(m => m.id === props.moduleId) : null
 
 const setup = moduleConfig
@@ -127,18 +129,19 @@ function clusterInChat() {
         <button
           v-if="canRecheck"
           @click="recheck"
-          class="text-xs px-2.5 py-1.5 rounded-lg bg-surface-soft border border-border text-muted hover:bg-surface-soft-hover transition-colors shrink-0 flex items-center gap-1.5"
+          :title="recheckLabel"
+          class="h-7 w-7 rounded-lg bg-surface-soft border border-border text-muted hover:bg-surface-soft-hover transition-colors shrink-0 flex items-center justify-center"
         >
-          <Icon name="mdiRefresh" :size="12" />
-          {{ recheckLabel }}
+          <Icon name="mdiRefresh" :size="14" />
         </button>
         <button
           v-if="hasOverlay"
           @click="toggle"
-          class="text-xs px-2.5 py-1.5 rounded-lg transition-colors shrink-0"
-          :class="overlayActive ? 'bg-primary text-black/70 font-semibold' : 'bg-surface-soft border border-border text-muted hover:bg-surface-soft-hover'"
+          :title="overlayActive ? onText : offText"
+          class="h-7 w-7 rounded-lg transition-colors shrink-0 flex items-center justify-center"
+          :class="overlayActive ? 'bg-primary text-black/70' : 'bg-surface-soft border border-border text-muted hover:bg-surface-soft-hover'"
         >
-          {{ overlayActive ? onText : offText }}
+          <Icon :name="overlayActive ? 'mdiEye' : 'mdiEyeOffOutline'" :size="14" />
         </button>
       </div>
     </div>
@@ -156,7 +159,7 @@ function clusterInChat() {
       </select>
     </div>
 
-    <div v-if="(rawResult?.items?.length ?? 0) > 5" class="mb-3 flex items-center gap-2">
+    <div v-if="webCheckerSettings.showSearch && (rawResult?.items?.length ?? 0) > 5" class="mb-3 flex items-center gap-2">
       <input
         v-model="search"
         type="text"

@@ -8,7 +8,7 @@ const {
   state, builtins,
   addCustomSelector, removeCustomSelector,
   isBuiltinEnabled, toggleBuiltin,
-  setDefaultFilter,
+  setDefaultFilter, setShowSearch,
 } = useWebCheckerSettings()
 
 const newSelector = ref('')
@@ -41,6 +41,28 @@ function submitSelector() {
           <option value="all">{{ t('Show all') }}</option>
         </select>
       </div>
+    </section>
+
+    <section class="flex flex-col gap-2">
+      <SectionLabel>{{ t('Show search bar') }}</SectionLabel>
+
+      <button
+        @click="setShowSearch(!state.showSearch)"
+        class="bg-surface-soft border border-border rounded-xl px-3 py-3 flex items-start gap-3 text-left transition-colors hover:border-primary/40"
+      >
+        <div class="flex-1 flex flex-col gap-1">
+          <span class="text-xs font-medium text-light">{{ t('Show search bar') }}</span>
+          <span class="text-[11px] text-muted leading-snug">
+            {{ t('Adds a search input above the items list of every module.') }}
+          </span>
+        </div>
+        <Icon
+          :name="state.showSearch ? 'mdiToggleSwitch' : 'mdiToggleSwitchOffOutline'"
+          :size="22"
+          class="shrink-0 mt-0.5"
+          :class="state.showSearch ? 'text-primary' : 'text-muted/40'"
+        />
+      </button>
     </section>
 
     <section class="flex flex-col gap-2">

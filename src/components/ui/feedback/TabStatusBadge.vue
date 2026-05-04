@@ -1,4 +1,8 @@
 <script setup>
+import { useI18n } from '@/composables/i18n/useI18n.js'
+
+const { t } = useI18n()
+
 defineProps({
   status:      { type: String, default: 'unchecked' },
   checkedName: { type: String, default: '' },
@@ -6,14 +10,14 @@ defineProps({
 defineEmits(['switch-tab'])
 
 const config = {
-  'current':               { label: 'Dieser Tab',                  dot: 'bg-success', text: 'text-success' },
-  'editor-match':          { label: 'Live Editor – diese Seite',   dot: 'bg-success', text: 'text-success' },
-  'editor-page-mismatch':  { label: 'Live Editor – andere Seite',  dot: 'bg-alert',   text: 'text-alert'   },
-  'editor-domain-mismatch':{ label: 'Live Editor – andere Domain', dot: 'bg-error',   text: 'text-error'   },
-  'url-changed':           { label: 'URL geändert',                dot: 'bg-alert',   text: 'text-alert'   },
-  'reloaded':              { label: 'Seite neu geladen',           dot: 'bg-alert',   text: 'text-alert'   },
-  'different-tab':         { label: '',                            dot: 'bg-error',   text: 'text-error'   },
-  'unchecked':             { label: 'Nicht geprüft',               dot: 'bg-muted',   text: 'text-muted'   },
+  'current':               { key: 'This tab',                       dot: 'bg-success', text: 'text-success' },
+  'editor-match':          { key: 'Live Editor – this page',        dot: 'bg-success', text: 'text-success' },
+  'editor-page-mismatch':  { key: 'Live Editor – different page',   dot: 'bg-alert',   text: 'text-alert'   },
+  'editor-domain-mismatch':{ key: 'Live Editor – different domain', dot: 'bg-error',   text: 'text-error'   },
+  'url-changed':           { key: 'URL changed',                    dot: 'bg-alert',   text: 'text-alert'   },
+  'reloaded':              { key: 'Page reloaded',                  dot: 'bg-alert',   text: 'text-alert'   },
+  'different-tab':         { key: '',                               dot: 'bg-error',   text: 'text-error'   },
+  'unchecked':             { key: 'Not checked',                    dot: 'bg-muted',   text: 'text-muted'   },
 }
 
 const clickable = ['editor-match', 'different-tab']
@@ -27,12 +31,12 @@ const clickable = ['editor-match', 'different-tab']
   >
     <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="config[status]?.dot" />
     <span v-if="status === 'different-tab'">
-      Geprüft: <span class="font-medium truncate max-w-[120px] inline-block align-bottom">{{ checkedName }}</span>
+      {{ t('Checked:') }} <span class="font-medium truncate max-w-[120px] inline-block align-bottom">{{ checkedName }}</span>
       <span class="ml-1 opacity-60">↗</span>
     </span>
     <span v-else-if="status === 'editor-match'">
-      {{ config[status]?.label }} <span class="ml-1 opacity-60">↗</span>
+      {{ t(config[status]?.key) }} <span class="ml-1 opacity-60">↗</span>
     </span>
-    <span v-else>{{ config[status]?.label }}</span>
+    <span v-else>{{ t(config[status]?.key) }}</span>
   </div>
 </template>
