@@ -3,10 +3,18 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n }          from '@/composables/i18n/useI18n.js'
 import { useServiceLoader } from '@/composables/loaders/useServiceLoader.js'
+import { useUiSettings }    from '@/composables/settings/useUiSettings.js'
 
 const router = useRouter()
 const { t, lang, setLang, supportedLangs } = useI18n()
 const { services } = useServiceLoader()
+const {
+  state: uiSettings,
+  min:   zoomMin,
+  max:   zoomMax,
+  default: zoomDefault,
+  incrementZoom, decrementZoom, resetZoom,
+} = useUiSettings()
 
 const subViewModules = import.meta.glob('@/services/*/views/*View.vue', { eager: true })
 const servicesWithSettings = computed(() => {
@@ -45,6 +53,43 @@ const servicesWithSettings = computed(() => {
             >
               {{ code.toUpperCase() }}
             </button>
+          </div>
+        </div>
+
+        <div class="bg-surface-soft border border-border rounded-xl overflow-hidden">
+          <div class="px-3 py-2.5 border-b border-border/60 flex items-center gap-2">
+            <Icon name="mdiMagnifyPlusOutline" :size="14" class="text-muted shrink-0" />
+            <span class="text-xs font-medium text-light">{{ t('Zoom level') }}</span>
+          </div>
+          <div class="px-3 py-3 flex flex-col gap-2">
+            <p class="text-[11px] text-muted leading-snug">
+              {{ t('Scales only the sidebar — independent of the browser zoom (Ctrl +/-).') }}
+            </p>
+            <div class="flex items-center gap-2">
+              <button
+                @click="decrementZoom"
+                :disabled="uiSettings.zoom <= zoomMin"
+                :title="t('Decrease zoom')"
+                class="h-9 w-9 rounded-lg bg-surface border border-border text-muted hover:bg-surface-soft-hover transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <Icon name="mdiMinus" :size="14" />
+              </button>
+              <button
+                @click="resetZoom"
+                :title="t('Reset zoom to {n}%', { n: zoomDefault })"
+                class="flex-1 h-9 rounded-lg bg-surface border border-border text-light text-xs font-semibold tabular-nums hover:bg-surface-soft-hover transition-colors"
+              >
+                {{ uiSettings.zoom }}%
+              </button>
+              <button
+                @click="incrementZoom"
+                :disabled="uiSettings.zoom >= zoomMax"
+                :title="t('Increase zoom')"
+                class="h-9 w-9 rounded-lg bg-surface border border-border text-muted hover:bg-surface-soft-hover transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <Icon name="mdiPlus" :size="14" />
+              </button>
+            </div>
           </div>
         </div>
       </section>

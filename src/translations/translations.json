@@ -23,7 +23,13 @@
 
     "Menu": "Menü",
     "General settings": "Allgemeine Einstellungen",
-    "Service settings": "Service-Einstellungen"
+    "Service settings": "Service-Einstellungen",
+
+    "Zoom level": "Zoom-Stufe",
+    "Scales only the sidebar — independent of the browser zoom (Ctrl +/-).": "Skaliert nur die Sidebar — unabhängig vom Browser-Zoom (Strg +/-).",
+    "Decrease zoom": "Zoom verkleinern",
+    "Increase zoom": "Zoom vergrößern",
+    "Reset zoom to {n}%": "Zoom auf {n}% zurücksetzen"
   },
   "en": {}
 }
