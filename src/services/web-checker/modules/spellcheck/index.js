@@ -209,7 +209,28 @@ export default async function check(config) {
       isSeo,
       _meta: isSeo
         ? { alt: m.fehler, src: '', name: '' }
-        : { selector: `[data-${prefix}-ref="spellcheck-${i}"]`, tag: el.tagName, idx: tagIdx },
+        : {
+            selector: `[data-${prefix}-ref="spellcheck-${i}"]`,
+            tag: el.tagName, idx: tagIdx,
+            // contextText + fehler together let the live-editor bridge find
+            // the same paragraph in the LE iframe (where our injected ref
+            // selector doesn't exist). The bridge tries contextText first
+            // for uniqueness, then falls back to fehler — useful for short
+            // errors at paragraph boundaries where the windowed context
+            // spans multiple blocks.
+            contextText: (() => {
+              const fehler = m.fehler ?? ''
+              if (fehler.length >= 12) return fehler
+              const ctx       = m.context?.text ?? ''
+              const ctxOffset = m.context?.offset ?? 0
+              const ctxLength = m.context?.length ?? fehler.length
+              const start     = Math.max(0, ctxOffset - 20)
+              const end       = Math.min(ctx.length, ctxOffset + ctxLength + 20)
+              const slice     = ctx.slice(start, end).trim()
+              return slice.length >= 8 ? slice : fehler
+            })(),
+            fehler: m.fehler,
+          },
     })
   })
 

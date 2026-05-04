@@ -85,6 +85,34 @@ function focusInEditor(meta, contentTypes, structuralTypes) {
       )
       if (found) return found
     }
+    // Substring-match for spellcheck-style items: the audit-side selector
+    // (`[data-${prefix}-ref="spellcheck-X"]`) doesn't exist in the LE iframe,
+    // and tag+idx falls back to <body>. Locate by a context snippet — the
+    // surrounding sentence around the misspelled word — with fehler as
+    // last-resort fallback if the windowed context spans block boundaries.
+    //
+    // Whitespace is normalized on both sides because audit text uses
+    // LanguageTool's collapsed single-spaces while the rendered DOM may have
+    // &nbsp;, line breaks, or multiple spaces in equivalent positions.
+    {
+      const norm    = (s) => s.replace(/\s+/g, ' ').trim().toLowerCase()
+      const needles = []
+      if (m.contextText && m.contextText.length >= 8) needles.push(norm(m.contextText))
+      if (m.fehler     && m.fehler.length     >= 3) needles.push(norm(m.fehler))
+      // Prefer leaf-ish text containers over outer wrappers — go by tag order
+      // so <p> wins over <section>. Apply each needle in turn — if the long
+      // context-snippet doesn't match a leaf, try the bare fehler word.
+      const tags = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'td', 'blockquote', 'article', 'section']
+      for (const needle of needles) {
+        for (const tag of tags) {
+          const blocks = doc.querySelectorAll(tag)
+          for (const el of blocks) {
+            const haystack = norm(el.innerText || el.textContent || '')
+            if (haystack.includes(needle)) return el
+          }
+        }
+      }
+    }
     if (m.isBackground && m.idx !== undefined) {
       const bgEls  = Array.from(doc.querySelectorAll('[style*="background-image"]')).filter(el => el.tagName !== 'IMG')
       const cmsEls = Array.from(doc.querySelectorAll('[data-cms-src]:not(img)'))
@@ -202,6 +230,34 @@ function batchResolveEditable(metas, contentTypes, structuralTypes) {
         (el.innerText || el.textContent || '').trim().toLowerCase().startsWith(needle)
       )
       if (found) return found
+    }
+    // Substring-match for spellcheck-style items: the audit-side selector
+    // (`[data-${prefix}-ref="spellcheck-X"]`) doesn't exist in the LE iframe,
+    // and tag+idx falls back to <body>. Locate by a context snippet — the
+    // surrounding sentence around the misspelled word — with fehler as
+    // last-resort fallback if the windowed context spans block boundaries.
+    //
+    // Whitespace is normalized on both sides because audit text uses
+    // LanguageTool's collapsed single-spaces while the rendered DOM may have
+    // &nbsp;, line breaks, or multiple spaces in equivalent positions.
+    {
+      const norm    = (s) => s.replace(/\s+/g, ' ').trim().toLowerCase()
+      const needles = []
+      if (m.contextText && m.contextText.length >= 8) needles.push(norm(m.contextText))
+      if (m.fehler     && m.fehler.length     >= 3) needles.push(norm(m.fehler))
+      // Prefer leaf-ish text containers over outer wrappers — go by tag order
+      // so <p> wins over <section>. Apply each needle in turn — if the long
+      // context-snippet doesn't match a leaf, try the bare fehler word.
+      const tags = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'td', 'blockquote', 'article', 'section']
+      for (const needle of needles) {
+        for (const tag of tags) {
+          const blocks = doc.querySelectorAll(tag)
+          for (const el of blocks) {
+            const haystack = norm(el.innerText || el.textContent || '')
+            if (haystack.includes(needle)) return el
+          }
+        }
+      }
     }
     if (m.isBackground && m.idx !== undefined) {
       const bgEls  = Array.from(doc.querySelectorAll('[style*="background-image"]')).filter(el => el.tagName !== 'IMG')
