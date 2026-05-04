@@ -8,7 +8,7 @@ vereinfachen — Qualitätsprüfung, KI-Hilfe, mehrsprachig (EN/DE).
 
 | Service | Pfad | Was tut er? |
 |---|---|---|
-| **Web Checker** | [`src/services/web-checker/`](src/services/web-checker/README.md) | Prüft die offene Seite auf SEO, Bilder, Links, Kontrast, Headings, Performance, strukturierte Daten, Rechtschreibung, HTML-Validität, Barrierefreiheit. Single-Page und sitemap-basierter Site-Wide-Check. |
+| **Web Checker** | [`src/services/web-checker/`](src/services/web-checker/README.md) | Prüft die offene Seite auf SEO, Bilder, Links, Kontrast, Headings, Performance, strukturierte Daten, Rechtschreibung, HTML-Validität, Barrierefreiheit, Privacy/Cookie-Maskierung, Console/Network-Errors, Sitemap-Coverage. Single-Page und sitemap-basierter Site-Wide-Check. Brücke zum CMS4 Live-Editor: Klick auf Audit-Items springt direkt zum CMS-Element. |
 | **KI-Assistent** | [`src/services/chatbot/`](src/services/chatbot/README.md) | Chat-Interface mit zwei Providern: wwwe-Backend und Claude (eigener API-Key). Im Web-Checker via "Im Chat analysieren"-Button auf jedem Item ansprechbar. |
 
 Sobald du einen weiteren Service unter `src/services/<id>/` anlegst, taucht er
@@ -60,9 +60,10 @@ extension/
 │   ├── views/                            ← Globale Views (Dashboard, Settings)
 │   ├── router/                           ← Auto-Discovery Routing
 │   ├── composables/
-│   │   ├── i18n/, settings/              ← Globale Composables
+│   │   ├── i18n/, settings/              ← Sprache, UI-Settings (Zoom), Modul-Settings
 │   │   ├── loaders/                      ← Service- und Modul-Loader (auto via glob)
-│   │   └── overlay/                      ← Overlay-System für Seiten-Badges
+│   │   ├── overlay/, highlight/          ← Overlay-System für Seiten-Badges
+│   │   └── liveEditor/                   ← CMS4 Live-Editor Detection + Bridge
 │   ├── components/ui/                    ← Globale UI-Komponenten (auto-registriert)
 │   ├── translations/translations.json    ← Globale Übersetzungen
 │   ├── config/                           ← Statische Konfiguration (API-URLs, Default-Ignore-Selektoren)
@@ -73,6 +74,14 @@ extension/
 ├── docs/                                 ← Doku (siehe unten)
 └── manifest.json
 ```
+
+## Globale Einstellungen
+
+`/settings` (Burger-Menü):
+
+- **Sprache** — EN / DE, Live-Wechsel ohne Reload
+- **Zoom-Stufe** — 50–200% per −/+/100%-Knopf, oder via `Strg/Cmd` + `+` / `-` /
+  `0`. Skaliert nur die Sidebar (CSS `zoom`-Property), nicht den Browser-Inhalt
 
 ## Doku
 

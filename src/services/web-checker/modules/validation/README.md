@@ -51,9 +51,15 @@ funktioniert in Manifest-V3-Service-Workern.
 ## Element-Lookup
 
 HTMLHint liefert **Zeile + Spalte** im HTML-Quelltext und das fehlerhafte
-Snippet (`evidence`) — keine CSS-Selektoren. Items zielen pauschal auf
-`document.documentElement`. User sieht Position + Snippet im Detail-Expand
-und kann das im Editor finden.
+Snippet (`evidence`) — keine CSS-Selektoren. Per default zielen Items auf
+`document.documentElement` (Klick scrollt nur an den Seitenanfang).
+
+**Sonderfall `inline-style-disabled`**: das Modul parst den `style="..."`-
+Wert aus der Fehlermeldung und sucht im DOM nach Elementen mit exakt diesem
+Inline-Style. Ist das eindeutig (oder via `idx` an die n-te Übereinstimmung
+gebunden), bekommt das Item das echte Element als Anker — Klick auf das Item
+scrollt zur Stelle und zeigt das Overlay-Badge. Andere Regeln zeigen weiterhin
+nur Position + Snippet.
 
 ## Item-Anzeige
 
@@ -83,8 +89,10 @@ in den ersten Validation-Commits).
 - HTMLHint sieht den **gerenderten DOM** (`outerHTML`), nicht den
   Server-HTML. Browser-Korrekturen (auto-close, normalisierte Attribute)
   sind dadurch schon angewendet.
-- Element-Lookup ist Zeile/Spalte statt Selektor — keine Overlay-Badges
-  möglich, deshalb `overlay = null`.
+- Element-Lookup pro Befund ist nur für `inline-style-disabled`
+  implementiert (Stylesheet-Wert lässt sich aus der Meldung parsen). Andere
+  Regeln zeigen weiterhin nur Zeile/Spalte und scrollen Klick → an den
+  Seitenanfang. Modul-Overlay ist deaktiviert (`overlay = null`).
 - Ruleset ist hart-codiert in `background.js`. Anpassungen brauchen
   Code-Änderungen.
 - Bei sehr großen Pages (1000+ Findings) wird die Liste lang. Default-

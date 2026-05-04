@@ -43,6 +43,19 @@ via `new URL(rawSrc, document.baseURI).href` zur absoluten URL aufgelöst,
 sodass `<img>`-Rendering funktioniert (relative `/upload/...`-Pfade würden
 gegen den `chrome-extension://`-Origin der Sidebar 404en).
 
+## Live-Editor-Sprung
+
+Wenn ein zugehöriger CMS4 LE-Tab offen ist, zeigt jedes editierbare Item
+einen Stift-Button. Funktioniert für:
+- Echte `<img>`-Items, deren `<figure data-element-type="picture">`-Wrapper
+  im LE editierbar ist
+- Hintergrund-Image-Container (`<div data-element-type="container">` mit
+  `style="background-image: url(...)"`) — das Container-Wrapper-Element IST
+  selbst der `data-le-eid`-Wrapper, daher gilt es laut Bridge-Regel als
+  editierbar (im Gegensatz zu Kindern eines Containers)
+
+Details: [docs/composables.md → useLiveEditorBridge](../../../../../docs/composables.md#liveeditoruseliveeditorbridgejs).
+
 ## Einschränkungen
 
 - Lightbox-Erkennung ist auf die `.cms-image` / `.lightbox-zoom-image`-

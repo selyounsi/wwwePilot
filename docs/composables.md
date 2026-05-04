@@ -71,6 +71,34 @@ korrupte Werte (z.B. Object wo Array erwartet wird) auf den Default zurück.
 - Page-Kontext: Snapshot via `getAllModuleSettings()` → `window.__moduleSettings`
 - Storage-Key: `wp-module-settings`
 
+### `settings/useUiSettings.js`
+
+Globale UI-Einstellungen — aktuell nur Zoom-Stufe (50–200% in 10%-Schritten).
+Persistiert unter `wp-ui-settings` via `createSettingsStore` mit Schema-
+Migration v1→v2 (alte Stufen-Namen `'sm'|'md'|'lg'|'xl'` werden zu Prozent-
+Zahlen umgewandelt).
+
+Skaliert die Sidebar via `document.documentElement.style.zoom` — die
+non-standard CSS-`zoom`-Property in Chromium skaliert wirklich alles
+(`text-[11px]`, `rem`, `em`, Bilder, Borders, Padding) uniform. Kein
+Browser-Zoom (`Strg +/-`) wird beeinflusst — die Sidebar lebt damit unabhängig
+von der Zoom-Stufe der gerade geprüften Tab.
+
+**Tastatur-Shortcuts** (registriert beim Modul-Load auf `window`, capture-Phase
++ `preventDefault` damit Chrome nicht den nativen Browser-Zoom zusätzlich
+auslöst):
+
+| Shortcut | Wirkung |
+|---|---|
+| `Strg/Cmd` + `+` / `=` | Zoom +10% |
+| `Strg/Cmd` + `-` | Zoom −10% |
+| `Strg/Cmd` + `0` | Zurück auf 100% |
+
+API: `useUiSettings()` → `{ state, min, max, step, default, setZoom,
+incrementZoom, decrementZoom, resetZoom }`. Plus `whenUiSettingsHydrated()` für
+`main.js`-await. Verwendet von: globaler `views/SettingsView.vue` (`−` / `100%` /
+`+` Control-Block unter "Allgemeine Einstellungen").
+
 ### `overlay/usePageOverlay.js`
 
 Rendert Issue-Badges direkt auf der geprüften Seite. Wird via
@@ -108,6 +136,43 @@ zur ursprünglich geprüften URL gehört. Sucht im DOM nach `leConfig.website.do
   `'editor-match'`
 - Verwendet von: SiteCheck (entscheidet, ob ein Refresh des Live-Editor-Tabs den
   bestehenden Check-Cache hydrieren darf)
+
+### `liveEditor/useLiveEditorBridge.js`
+
+Brücke zwischen Audit-Items und einem **separat geöffneten** CMS4 Live-Editor-Tab
+(`le-cms4.*`). Stellt den "Im Live-Editor zeigen"-Stift-Button auf jedem
+Modul-Item bereit.
+
+Mechanik:
+
+- **Reaktive LE-Tab-Erkennung** — singleton `editorTab` ref, scannt alle Tabs auf
+  `le-cms4.*` und matcht via `leConfig.website.domain` (auf Page-Main-World
+  gelesen) gegen `state.checkedUrl`. Reagiert auf `chrome.tabs.onUpdated/onCreated/onRemoved`.
+- **Editierbarkeits-Allowlist (zwei Klassen)** — pro Audit-Item wird im LE-Iframe
+  geprüft, ob der nächste `[data-le-eid]`-Vorfahre einen content-Typ hat:
+  - `CONTENT_TYPES` (article, title, picture, button, file, …) → editierbar wenn
+    irgendein Vorfahre diesen Typ hat
+  - `STRUCTURAL_TYPES` (container, grid, column, navigation, …) → editierbar
+    **nur wenn das Audit-Element selbst der Wrapper ist** (ein Background-Image-
+    Container bleibt klickbar, ein `<a>` innerhalb einer `<navigation>` nicht)
+- **Batch-Resolve** — `requestEditable(item)` queued in pendingItems, ein
+  einziger `executeScript` pro 50-ms-Welle resolved alle ausstehenden Items. Das
+  Ergebnis landet in `editableMap` (ref<Map>), der Button rendert reaktiv via
+  `getEditable(item)`.
+- **`focusItem(item)`** — bringt LE-Tab in den Vordergrund, scrollt das Iframe
+  zum Element. Forciert dafür instant scroll (überschreibt das LE-eigene
+  `scroll-behavior: smooth` temporär), sonst gibt es Scroll-Race-Conditions mit
+  React-Reconciliation. Pulst dann eine 2,2 s lange Outline (orange wenn
+  editierbar, grau-gestrichelt wenn nur sichtbar aber strukturell außerhalb des
+  Edit-Scopes).
+
+Warum keine Sidebar-Auto-Öffnung? Der LE filtert Mausevents per
+`event.isTrusted` — synthetische Klicks aus `chrome.scripting.executeScript`
+werden ignoriert. Ein "Klick öffnet die Properties-Sidebar" wäre nur via
+`chrome.debugger`-Permission machbar (zu invasiv).
+
+API: `useLiveEditorBridge()` → `{ editorTab, focusItem, requestEditable, getEditable, refresh }`.
+Verwendet von: `ModuleItem.vue` (Stift-Button + reaktive Sichtbarkeit).
 
 ### `highlight/index.js`
 
@@ -235,13 +300,51 @@ permanenten DOM-Traffic. Beachtet auch Live-Editor-iframes.
 ### `useWebCheckerSettings.js`
 
 Web-Checker-spezifischer Settings-Store: `customSelectors`, `disabledBuiltins`
-(Subset der Built-in-Ignore-Selektoren), `defaultFilter`-Override. Persistiert
-unter `wp-web-checker-settings` via `createSettingsStore`. Computed
+(Subset der Built-in-Ignore-Selektoren), `defaultFilter`-Override, `showSearch`-
+Toggle (steuert ob die Such-/Group-By-Leiste über Item-Listen erscheint —
+Default `false`, da die meisten Module sowieso schon übersichtlich sind).
+Persistiert unter `wp-web-checker-settings` via `createSettingsStore`. Computed
 `effectiveIgnoreSelectors` mergt aktive Built-ins + Custom für den Page-Kontext.
 
 API: `useWebCheckerSettings()` → `{ state, builtins, effectiveIgnoreSelectors,
 addCustomSelector, removeCustomSelector, isBuiltinEnabled, toggleBuiltin,
-setDefaultFilter }`. Plus `whenWebCheckerSettingsHydrated()` für `main.js`-await.
+setDefaultFilter, setShowSearch }`. Plus `whenWebCheckerSettingsHydrated()` für
+`main.js`-await.
+
+### `useIgnoreList.js`
+
+Per-Origin-Ignore-Liste für einzelne Item-Hinweise. Erlaubt dem User, falsch
+positive Items dauerhaft auszublenden (z.B. ein bewusst leeres `alt` auf einem
+Dekobild). Gespeichert als `Map<origin, Map<moduleId, Set<message>>>` in
+`chrome.storage.local` (`wp-web-checker-ignore-list`).
+
+Mechanik:
+- Origin = `new URL(checkedUrl).origin` — pro Domain getrennt (eine Site darf
+  nicht für eine andere ignorieren)
+- ModuleId + exakte Issue-Message als Schlüssel — gleicher Hinweis auf einer
+  anderen Page wird auch unterdrückt (ist dasselbe semantische Problem)
+- `useModuleFilter` filtert die ignorierten Items raus und exposed sie unter
+  einem separaten `'ignored'`-Filter, damit der User sie wieder reaktivieren
+  kann
+
+API: `useIgnoreList()` → `{ state, listFor, isIgnored, add, remove, clearOrigin }`.
+Verwendet von: `ModuleItem.vue` (`Hinweis ignorieren`/`Hinweis wiederherstellen`-
+Buttons), `useModuleFilter`.
+
+### `useRunHistory.js`
+
+Audit-History pro `(origin, moduleId)`-Kombination. Speichert nach jedem
+Modul-Run nur die Counts (errorCount, warningCount, ignoredCount, timestamp) —
+kein Item-Detail. Persistiert in `chrome.storage.local`
+(`wp-web-checker-run-history`), max. 30 Einträge pro Modul (FIFO).
+
+Wird von `ModuleStats.vue` für die Trend-Pfeile genutzt: ▲ wenn der Counter
+gegenüber dem letzten Audit gestiegen ist, ▼ wenn gefallen, sonst nichts. Macht
+sichtbar ob Änderungen die SEO/Quality-Lage tatsächlich verbessern.
+
+API: `useRunHistory()` → `{ state, get(origin, moduleId), record(origin,
+moduleId, counts), clearOrigin }`. Recording erfolgt zentral in
+`useCheckRunner.runChecker` nach jedem erfolgreichen Run.
 
 ---
 
@@ -269,8 +372,12 @@ Storage: `localStorage` (`${APP_NAME_LOWER}-chats-v2`), nicht `chrome.storage`.
 | Store / State | Composable | Persistenz |
 |---|---|---|
 | Sprache | `useI18n` | `chrome.storage.local: wp-lang` |
+| Sidebar-Zoom | `useUiSettings` | `chrome.storage.local: wp-ui-settings` |
 | Modul-Settings (alle Module) | `useModuleSettings` | `chrome.storage.local: wp-module-settings` |
 | Web-Checker-Settings | `useWebCheckerSettings` | `chrome.storage.local: wp-web-checker-settings` |
+| Ignore-Liste pro Origin | `useIgnoreList` | `chrome.storage.local: wp-web-checker-ignore-list` |
+| Audit-Run-History | `useRunHistory` | `chrome.storage.local: wp-web-checker-run-history` |
+| LE-Tab-Detection + Editierbarkeits-Cache | `useLiveEditorBridge` | nur in-Memory (reactive) |
 | Single-Page-Check-Resultate | `useCheckStore` | nur in-Memory (reactive) |
 | Site-Check-Cache | `useSiteCheckStore` | nur in-Memory (reactive) |
 | Chat-Verläufe | `useChat` | `localStorage: wwwebar-chats-v2` |

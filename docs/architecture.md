@@ -114,9 +114,10 @@ Drei Ebenen, jede mit eigener Persistenz in `chrome.storage.local`:
 
 | Ebene | Storage-Key | Beispiel |
 |---|---|---|
-| Global | `wp-lang` | Sprache (en/de) |
-| Service | service-spezifisch (z.B. `wp-web-checker-settings`) | Filter-Override, Ignore-Selektoren |
+| Global | `wp-lang`, `wp-ui-settings` | Sprache (en/de), Sidebar-Zoom (50–200%) |
+| Service | service-spezifisch (z.B. `wp-web-checker-settings`) | Filter-Override, Ignore-Selektoren, Such-Toggle |
 | Modul | `wp-module-settings` (Map über alle Module) | Spellcheck-Ignore-Wörter |
+| Origin-spezifisch | `wp-web-checker-ignore-list`, `wp-web-checker-run-history` | Per-Domain ignorierte Hinweise, Audit-Trend-Verlauf |
 
 UI-Aggregation:
 - Globale Settings-Page (`/settings`) listet automatisch alle Services mit
@@ -203,6 +204,31 @@ HomeView Input → useChat.send(text)
                     └→ modules/claude/background.js → fetch Anthropic API → { reply } | { error }
   └→ useChat.push('assistant', reply)
 ```
+
+## Live-Editor-Brücke
+
+Wenn der wwwe CMS4 Live-Editor (`le-cms4.*`) für die geprüfte Domain in einem
+zweiten Tab offen ist, taucht auf jedem editierbaren Audit-Item ein Stift-Icon
+auf. Klick → LE-Tab kommt nach vorn, das LE-Iframe scrollt zum Element, das
+CMS4-Wrapper-Element wird kurz orange umrandet (gestrichelt grau für rein
+sichtbare aber strukturell-nicht-editierbare Elemente).
+
+Detection läuft über:
+1. `chrome.tabs.query({})` filtert auf `le-cms4.*`-Hosts
+2. Pro Kandidat liest `chrome.scripting.executeScript({ world: 'MAIN' })` den
+   `window.leConfig.website.domain` und matcht gegen `state.checkedUrl.host`
+3. Editierbarkeits-Resolution gegen das Iframe-DOM des LE per Allowlist:
+   - **CONTENT_TYPES** (article, title, picture, button, file, …) → editierbar
+     wenn irgendein Vorfahre diesen `data-element-type` hat
+   - **STRUCTURAL_TYPES** (container, grid, column, navigation, …) → editierbar
+     **nur wenn das Audit-Element selbst der Wrapper ist** — verhindert dass
+     Links innerhalb einer Navigation oder Texte innerhalb eines Containers
+     fälschlich als editierbar erscheinen, behält aber Container mit CSS-
+     Background-Image als editierbar (deren Wrapper-`<div>` IST das gefundene
+     Element)
+
+Komplett in `composables/liveEditor/useLiveEditorBridge.js` (singleton,
+batch-resolve, reaktive Cache-Invalidierung bei Tab-Wechsel).
 
 ## Element-Identifikation (Web-Checker)
 

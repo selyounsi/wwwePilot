@@ -19,7 +19,7 @@ geladenen Tab auf, damit Click-to-Highlight korrekt funktioniert.
 
 ## Module
 
-10 Module, alle auto-discovered. Reihenfolge im Dashboard via `module.json`-`order`.
+13 Module, alle auto-discovered. Reihenfolge im Dashboard via `module.json`-`order`.
 
 | Modul | Was wird geprüft |
 |---|---|
@@ -32,7 +32,10 @@ geladenen Tab auf, damit Click-to-Highlight korrekt funktioniert.
 | `performance` | PageSpeed Mobile/Desktop (Backend), Ressourcen-Anzahl, Transfer-Größe, Scripts/Stylesheets/Bilder |
 | `spellcheck` | Rechtschreibung & Grammatik via LanguageTool-Backend, mit modul-eigener Ignore-Wort-Liste |
 | `accessibility` | WCAG-Audit via axe-core (im Service-Worker geladen) |
-| `validation` | HTML5-Validität via HTMLHint |
+| `validation` | HTML5-Validität via HTMLHint, mit Click-zur-Stelle für Inline-Style-Verstöße |
+| `console` | JS-Errors, Warnings, Network-Errors per Content-Script + `webRequest.onErrorOccurred` |
+| `privacy` | Cookie- & Tracking-Maskierung via privacyControl (entdeckt unmaskierte Drittanbieter-Embeds) |
+| `sitemap` | sitemap.xml vs. von dieser Page verlinkte URLs (Coverage-Vergleich) |
 
 Pro Modul liegt eine `README.md` mit Details, Edge-Cases und bekannten
 Limitierungen unter `modules/<id>/README.md`.
@@ -43,6 +46,9 @@ Limitierungen unter `modules/<id>/README.md`.
 
 - **Standard-Filter** — überschreibt den modul-spezifischen `defaultFilter` aus
   `module.json`. Greift beim Rendern jeder Modul-Page.
+- **Suchleiste anzeigen** — Toggle (Default `false`). Wenn aktiviert, blendet
+  jede Modul-Page mit >5 Items eine Suchleiste plus Group-By-Rule-Button über
+  der Item-Liste ein.
 - **Ignorierte Selektoren** — globale Liste, die `links` und `validation`
   zusätzlich zu ihren eigenen Filtern anwenden:
   - **Standard** (aus `src/config/ignoreSelectors.js`): per Toggle (de)aktivierbar
@@ -50,6 +56,20 @@ Limitierungen unter `modules/<id>/README.md`.
 
 Persistiert via `useWebCheckerSettings` in `chrome.storage.local`
 (`wp-web-checker-settings`).
+
+## Item-Aktionen (pro Modul-Item)
+
+Jedes Item in einer Modul-Liste hat rechts oben eine Action-Reihe:
+
+| Aktion | Voraussetzung | Wirkung |
+|---|---|---|
+| **Stift** ("Im Live-Editor zeigen") | CMS4 LE-Tab für die Domain offen + Item ist auf einem CMS4-editierbaren Element | LE-Tab kommt nach vorn, scrollt zum Element, kurze orange Outline |
+| **Robot** ("Im Chat analysieren") | Modul hat `allowChatBot: true` | Chat-Prompt mit Element-Kontext + HTML-Snippet, springt zum Chatbot |
+| **Auge-aus** ("Hinweis ignorieren") | Item hat reale Issues | Origin+ModulId+Message landen in `useIgnoreList`, Item verschwindet aus dem normalen Filter |
+| **Auge-ein** ("Hinweis wiederherstellen") | Item ist aktuell ignoriert (`'Ignored'`-Filter aktiv) | Macht das Ignore rückgängig |
+
+Klick auf den Item-Body (Titel/Bild) löst `highlightElement` aus — Overlay-Badge
+auf der geprüften Seite, scrollt das Element ins Viewport.
 
 ## Modul-Settings
 
@@ -93,7 +113,9 @@ Voller API-Vertrag siehe [docs/module-api.md](../../../docs/module-api.md).
 | `composables/useSiteCheckStore.js` | Site-Check-Store mit URL-Selection, Progress, Cache |
 | `composables/useTabWatcher.js` | Auto-Recheck bei Tab-Reload (für `checkOnReload`-Module) |
 | `composables/useUrlFilter.js` | `moduleAppliesTo()` — `singlePage`/`fullSite` Pfad-Filter |
-| `composables/useWebCheckerSettings.js` | Filter-Override + Ignore-Selektoren |
+| `composables/useWebCheckerSettings.js` | Filter-Override, Such-Toggle, Ignore-Selektoren |
+| `composables/useIgnoreList.js` | Per-Origin Ignore-Liste für einzelne Item-Hinweise |
+| `composables/useRunHistory.js` | Audit-Counts-Verlauf pro `(origin, moduleId)` für Trend-Pfeile |
 | `composables/useCheckRunner.js` | `injectHelper` für Page-Kontext-Globals |
 | `composables/useModuleSetup.js` | Setup-Bundle je Modul-Page (Overlay, Filter, Watcher, Attributes) |
 | `composables/useModuleAttributes.js` | Schreibt `data-${prefix}-*` auf gefundene Elemente, mit Meta-Lookup-Heuristiken |

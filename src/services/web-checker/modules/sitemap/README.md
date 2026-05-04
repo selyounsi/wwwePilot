@@ -6,7 +6,7 @@ URLs. Findet zwei häufige SEO-Bugs:
 | Befund | Severity | Bedeutung |
 |---|---|---|
 | **Linked but not in sitemap** | warning | Page wird von der Site verlinkt, fehlt aber im sitemap.xml — Suchmaschinen haben keinen direkten Hinweis sie zu indexieren |
-| **Orphan in sitemap** | error | URL ist im sitemap.xml gelistet, aber von keiner Page der Site verlinkt — User finden den Inhalt nicht über die Navigation, Crawl-Tiefe wird verschwendet |
+| **Not linked from this page** | warning | URL ist im sitemap.xml gelistet, aber auf der gerade geprüften Page gibt es keinen Link dahin — kann von einer anderen Page erreichbar sein, kann aber auch tatsächlich verwaist sein |
 
 Erfolgreich-gematcht (linked **AND** in sitemap) wird als success-item
 gelistet.
@@ -25,10 +25,14 @@ Sitemap-Fetch nutzt den existierenden `FETCH_SITEMAP`-Handler im
 [services/web-checker/background.js](../../background.js) (war ursprünglich
 für den Site-Wide-Check da). Recursive sitemap-index-resolution inkludiert.
 
-## Caveat
+## Caveat: Single-Page vs. Site-Wide
 
-Audit prüft nur die **aktuelle Seite** als "Source der verlinkten URLs".
-Wenn die Site einen tiefen Link-Baum hat (z.B. nur über Produktdetail-Pages
-verlinkte URLs), erscheinen die als Orphans obwohl sie über Tiefe-2 erreichbar
-wären. Pragmatischer Workaround: Site-Wide-Check + manuelle Aggregation
-über alle audited pages — dann hat man sample-coverage über N pages.
+Im Single-Page-Modus prüft das Modul nur die **aktuelle Seite** als "Source
+der verlinkten URLs". Eine sitemap-URL, die nicht von dieser einen Seite aus
+verlinkt ist, könnte trotzdem von einer anderen Seite aus erreichbar sein —
+deshalb ist der Befund eine **Warnung, kein Fehler**, und heißt explizit
+"Auf dieser Seite nicht verlinkt".
+
+Echte Orphan-Detection (URL nirgendwo verlinkt) erfordert eine site-weite
+Aggregation über alle gecrawlten Seiten. Pragmatischer Workaround: den
+Site-Wide-Check fahren und die Befunde manuell quertesten.
