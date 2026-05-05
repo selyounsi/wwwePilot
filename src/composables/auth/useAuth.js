@@ -10,7 +10,7 @@ const state = reactive({
   user:         null,
 })
 
-const { hydrationPromise } = createSettingsStore(STORAGE_KEY, {
+const { hydrationPromise: rawHydrationPromise } = createSettingsStore(STORAGE_KEY, {
   state,
   version: 1,
   onHydrate(stored, state) {
@@ -26,6 +26,34 @@ const { hydrationPromise } = createSettingsStore(STORAGE_KEY, {
       user:         state.user,
     }
   },
+})
+
+function decodeJwtExp(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    return typeof payload.exp === 'number' ? payload.exp * 1000 : 0
+  } catch {
+    return 0
+  }
+}
+
+function isExpired(token, skewMs = 5_000) {
+  if (!token) return true
+  const exp = decodeJwtExp(token)
+  return exp === 0 || Date.now() + skewMs >= exp
+}
+
+// After persisted tokens are restored, drop or refresh anything that's
+// already past its expiry — prevents the first apiFetch from racing into
+// a 401 just to do the same thing.
+const hydrationPromise = rawHydrationPromise.then(async () => {
+  if (!state.accessToken) return
+  if (!isExpired(state.accessToken)) return
+  if (state.refreshToken && !isExpired(state.refreshToken)) {
+    await refresh()
+  } else {
+    clear()
+  }
 })
 
 let refreshInFlight = null

@@ -1,5 +1,5 @@
 <script setup>
-import * as mdi from '@mdi/js'
+import { ICONS } from './icons.js'
 
 const props = defineProps({
   name:  { type: String, required: true },
@@ -7,7 +7,10 @@ const props = defineProps({
   color: { type: String, default: 'currentColor' },
 })
 
-const path = mdi[props.name] ?? null
+const path = ICONS[props.name] ?? null
+if (path === null && import.meta.env.DEV) {
+  console.warn(`[Icon] "${props.name}" missing from icons.js whitelist`)
+}
 </script>
 
 <!-- icon catalogue: https://pictogrammers.com/library/mdi/ -->

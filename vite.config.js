@@ -61,5 +61,18 @@ export default defineConfig(({ mode }) => {
     strictPort: true,
     hmr: { clientPort: 5173 },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/htmlhint')) return 'vendor-htmlhint'
+          if (id.includes('node_modules/@mdi'))     return 'vendor-mdi'
+          if (id.includes('node_modules/vue') ||
+              id.includes('node_modules/@vue'))     return 'vendor-vue'
+          if (id.includes('node_modules'))          return 'vendor'
+        },
+      },
+    },
+  },
   }
 })
