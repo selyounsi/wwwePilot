@@ -6,6 +6,53 @@ import { resolve } from 'path'
 import fs from 'fs'
 import manifest from './manifest.json' with { type: 'json' }
 
+// Generates a virtual module with only the MDI icons referenced anywhere in
+// the source. Avoids the 2.8 MB cost of `import * as mdi from '@mdi/js'`
+// without forcing developers to maintain an allowlist by hand.
+function autoMdiIcons() {
+  const VIRTUAL_ID = 'virtual:icons'
+  const RESOLVED   = '\0' + VIRTUAL_ID
+
+  function collectIcons() {
+    const re = /mdi[A-Z][a-zA-Z0-9]*/g
+    const icons = new Set()
+    function walk(dir) {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const p = `${dir}/${entry.name}`
+        if (entry.isDirectory()) {
+          if (entry.name === 'node_modules' || entry.name === 'dist' || entry.name.startsWith('.')) continue
+          walk(p)
+        } else if (/\.(vue|js|json)$/.test(entry.name)) {
+          const text = fs.readFileSync(p, 'utf-8')
+          const matches = text.match(re)
+          if (matches) for (const m of matches) icons.add(m)
+        }
+      }
+    }
+    walk('src')
+    return [...icons].sort()
+  }
+
+  return {
+    name: 'auto-mdi-icons',
+    resolveId(id) {
+      if (id === VIRTUAL_ID) return RESOLVED
+    },
+    load(id) {
+      if (id !== RESOLVED) return null
+      const names = collectIcons()
+      if (!names.length) return 'export const ICONS = {}'
+      const list = names.join(', ')
+      return `import { ${list} } from '@mdi/js'\nexport const ICONS = { ${list} }`
+    },
+    handleHotUpdate({ file, server }) {
+      if (!/\.(vue|js|json)$/.test(file)) return
+      const mod = server.moduleGraph.getModuleById(RESOLVED)
+      if (mod) server.moduleGraph.invalidateModule(mod)
+    },
+  }
+}
+
 function copyAxe() {
   const src       = 'node_modules/axe-core/axe.min.js'
   const localeSrc = 'node_modules/axe-core/locales/de.json'
@@ -35,6 +82,7 @@ export default defineConfig(({ mode }) => {
     },
   },
   plugins: [
+    autoMdiIcons(),
     tailwindcss(),
     vue(),
     crx({ manifest: { ...manifest, name: appName } }),

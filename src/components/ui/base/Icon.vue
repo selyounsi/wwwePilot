@@ -1,5 +1,5 @@
 <script setup>
-import { ICONS } from './icons.js'
+import { ICONS } from 'virtual:icons'
 
 const props = defineProps({
   name:  { type: String, required: true },
@@ -8,9 +8,6 @@ const props = defineProps({
 })
 
 const path = ICONS[props.name] ?? null
-if (path === null && import.meta.env.DEV) {
-  console.warn(`[Icon] "${props.name}" missing from icons.js whitelist`)
-}
 </script>
 
 <!-- icon catalogue: https://pictogrammers.com/library/mdi/ -->
