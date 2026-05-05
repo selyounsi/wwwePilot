@@ -1,4 +1,5 @@
 import { API } from '@/config/api.js'
+import { apiFetch } from '@/composables/auth/apiClient.js'
 
 export const types = [
   'CHECK_SPELLING',
@@ -9,14 +10,13 @@ export const types = [
 
 export async function handle(msg, sendResponse) {
   const base = API.spellcheck.url
-  const hdr  = () => ({ 'Content-Type': 'application/json' })
 
   try {
     let res
 
     if (msg.type === 'CHECK_SPELLING') {
-      res = await fetch(`${base}/check`, {
-        method: 'POST', headers: hdr(),
+      res = await apiFetch(`${base}/check`, {
+        method: 'POST',
         body: JSON.stringify({
           text:     msg.text,
           language: msg.language ?? 'de-DE',
@@ -25,17 +25,17 @@ export async function handle(msg, sendResponse) {
         }),
       })
     } else if (msg.type === 'SPELL_DICT_ADD') {
-      res = await fetch(`${base}/dictionary`, {
-        method: 'POST', headers: hdr(),
+      res = await apiFetch(`${base}/dictionary`, {
+        method: 'POST',
         body: JSON.stringify({ domain: msg.domain, word: msg.word }),
       })
     } else if (msg.type === 'SPELL_DICT_DELETE') {
-      res = await fetch(`${base}/dictionary/${msg.id}`, {
-        method: 'DELETE', headers: hdr(),
+      res = await apiFetch(`${base}/dictionary/${msg.id}`, {
+        method: 'DELETE',
       })
     } else if (msg.type === 'SPELL_IGNORE_ADD') {
-      res = await fetch(`${base}/ignored`, {
-        method: 'POST', headers: hdr(),
+      res = await apiFetch(`${base}/ignored`, {
+        method: 'POST',
         body: JSON.stringify({ domain: msg.domain, error_text: msg.error_text }),
       })
     }

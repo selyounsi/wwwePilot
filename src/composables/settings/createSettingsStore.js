@@ -1,10 +1,7 @@
 import { effectScope, watch } from 'vue'
+import { useAuth, whenAuthHydrated } from '../auth/useAuth.js'
 
-/**
- * Recovery-Heuristik für korrupte Storage-Inhalte: chrome.storage hat manche
- * reactive Arrays als `{0:'a',1:'b'}` Objects geschrieben. Erkennt sequentielle
- * numerische String-Keys ab "0" und wandelt zurück in echte Arrays um.
- */
+/** Converts corrupt `{0:'a',1:'b'}` objects from chrome.storage back into arrays. */
 export function reviveArrays(v) {
   if (v === null || typeof v !== 'object') return v
   if (Array.isArray(v)) return v.map(reviveArrays)
@@ -17,40 +14,46 @@ export function reviveArrays(v) {
   return out
 }
 
-/**
- * Plain-JSON Deep-Clone — entfernt Vue-Reactive-Proxies, damit
- * chrome.storage echte Arrays statt `{0,1,2…}`-Objects schreibt.
- */
+/** Deep clone via JSON — strips Vue reactive proxies before persisting. */
 export function toPlain(v) {
   return JSON.parse(JSON.stringify(v))
 }
 
 /**
- * Erstellt einen persistenten Settings-Store gegen `chrome.storage.local`.
- * Übernimmt Hydrate-on-Module-Load, Watch-with-Save in detached scope,
- * Multi-Tab-Sync via `chrome.storage.onChanged`, Schema-Versionierung mit
- * Migrations und Dev-Warnings bei Storage-Errors.
+ * Persisted, reactive settings store backed by `chrome.storage.local`. With
+ * `userScoped: true` the key is suffixed per user (`<key>:<userId>`) and
+ * `resetToDefaults()` re-hydrates on user switch.
  *
- * @param {string} storageKey Eindeutiger Storage-Key
+ * @param {string} storageKey
  * @param {{
  *   state: object,
  *   version?: number,
  *   migrations?: Record<number, (data: any) => any>,
  *   onHydrate: (stored: any, state: object) => void,
  *   onSerialize: (state: object) => any,
+ *   userScoped?: boolean,
+ *   resetToDefaults?: () => void,
  * }} opts
  * @returns {{ hydrationPromise: Promise<void> }}
  */
 export function createSettingsStore(storageKey, opts) {
   const {
     state,
-    version     = 1,
-    migrations  = {},
+    version          = 1,
+    migrations       = {},
     onHydrate,
     onSerialize,
+    userScoped       = false,
+    resetToDefaults  = null,
   } = opts
 
   let writingFromWatcher = false
+  let currentKey         = userScoped ? null : storageKey
+
+  function resolveKey(userId) {
+    if (!userScoped) return storageKey
+    return userId ? `${storageKey}:${userId}` : `${storageKey}:guest`
+  }
 
   function applyStored(rawStored) {
     if (rawStored === undefined || rawStored === null) return
@@ -79,13 +82,39 @@ export function createSettingsStore(storageKey, opts) {
     catch (e) { console.warn(`[settings:${storageKey}] hydrate failed`, e) }
   }
 
-  const hydrationPromise = (async () => {
+  async function hydrateFor(key) {
+    currentKey = key
     try {
-      const r = await chrome.storage?.local?.get(storageKey)
-      applyStored(r?.[storageKey])
+      const r = await chrome.storage?.local?.get(key)
+      writingFromWatcher = true
+      try { applyStored(r?.[key]) }
+      finally { queueMicrotask(() => { writingFromWatcher = false }) }
     } catch (e) {
-      console.warn(`[settings:${storageKey}] read failed`, e)
+      console.warn(`[settings:${key}] read failed`, e)
     }
+  }
+
+  const hydrationPromise = (async () => {
+    if (!userScoped) {
+      await hydrateFor(storageKey)
+      return
+    }
+    await whenAuthHydrated()
+    const auth = useAuth()
+    await hydrateFor(resolveKey(auth.state.user?.id))
+
+    const switchScope = effectScope(true)
+    switchScope.run(() => {
+      watch(() => auth.state.user?.id, async (newId, oldId) => {
+        if (newId === oldId) return
+        if (resetToDefaults) {
+          writingFromWatcher = true
+          try { resetToDefaults() }
+          finally { queueMicrotask(() => { writingFromWatcher = false }) }
+        }
+        await hydrateFor(resolveKey(newId))
+      })
+    })
   })()
 
   const scope = effectScope(true)
@@ -94,11 +123,12 @@ export function createSettingsStore(storageKey, opts) {
       state,
       () => {
         if (writingFromWatcher) return
+        if (!currentKey) return
         try {
           const data = toPlain(onSerialize(state))
-          chrome.storage?.local?.set({ [storageKey]: { __v: version, data } })
+          chrome.storage?.local?.set({ [currentKey]: { __v: version, data } })
         } catch (e) {
-          console.warn(`[settings:${storageKey}] save failed`, e)
+          console.warn(`[settings:${currentKey}] save failed`, e)
         }
       },
       { deep: true },
@@ -107,8 +137,9 @@ export function createSettingsStore(storageKey, opts) {
 
   if (chrome.storage?.onChanged?.addListener) {
     chrome.storage.onChanged.addListener((changes, area) => {
-      if (area !== 'local' || !(storageKey in changes)) return
-      const next = changes[storageKey].newValue
+      if (area !== 'local' || !currentKey) return
+      if (!(currentKey in changes)) return
+      const next = changes[currentKey].newValue
       writingFromWatcher = true
       try { applyStored(next) }
       finally {

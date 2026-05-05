@@ -35,7 +35,7 @@ chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
       world:     'MAIN',
       allFrames: false,
     }
-    if (cur.length) await chrome.scripting.updateRegisteredContentScripts([def])
+    if (cur.length) await chrome.scripting.updateContentScripts([def])
     else            await chrome.scripting.registerContentScripts([def])
   } catch (e) {
     console.error('[background] failed to register console-capture:', e)

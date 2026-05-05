@@ -10,6 +10,9 @@ if (!BACKEND) {
 }
 
 export const API = {
+  auth: {
+    url: `${BACKEND}/api/auth`,
+  },
   chatbot: {
     url: `${BACKEND}/api/chatbot`,
   },

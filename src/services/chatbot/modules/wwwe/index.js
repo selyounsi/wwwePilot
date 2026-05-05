@@ -1,4 +1,5 @@
 import { API } from '@/config/api.js'
+import { apiFetch } from '@/composables/auth/apiClient.js'
 
 export const accentColor = 'var(--color-primary)'
 
@@ -12,9 +13,8 @@ export const suggestions = [
 
 export default async function send({ text, history, chatId }) {
   try {
-    const res = await fetch(API.chatbot.url, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await apiFetch(API.chatbot.url, {
+      method: 'POST',
       body: JSON.stringify({
         systemPrompt:   '',
         messages:       history,

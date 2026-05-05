@@ -80,4 +80,5 @@ Erst lesen, dann fragen:
 - Datei tut was? → [docs/composables.md](docs/composables.md)
 - Modul-API (Page-Kontext-Helper) → [docs/module-api.md](docs/module-api.md)
 - Übersetzungssystem → [docs/i18n.md](docs/i18n.md)
+- Login / OIDC → [docs/auth.md](docs/auth.md)
 - Was prüft Modul X im Detail → `services/web-checker/modules/<x>/README.md`

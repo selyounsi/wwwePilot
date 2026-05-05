@@ -15,7 +15,7 @@
   "side_panel": {
     "default_path": "index.html"
   },
-  "permissions": ["sidePanel", "scripting", "tabs", "activeTab", "storage", "webRequest"],
+  "permissions": ["sidePanel", "scripting", "tabs", "activeTab", "storage", "webRequest", "identity", "cookies"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "src/background.js"

@@ -1,8 +1,10 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { useServiceLoader } from '@/composables/loaders/useServiceLoader.js'
 import { useModuleLoader } from '@/composables/loaders/useModuleLoader.js'
+import { useAuth } from '@/composables/auth/useAuth.js'
 import DashboardView from '../views/DashboardView.vue'
 import SettingsView  from '../views/SettingsView.vue'
+import LoginView     from '../views/LoginView.vue'
 
 const { services } = useServiceLoader()
 
@@ -103,10 +105,23 @@ const serviceRoutes = services.flatMap(service => {
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
+    { path: '/login',    name: 'login',     component: LoginView,     meta: { public: true } },
     { path: '/',         name: 'dashboard', component: DashboardView },
-    { path: '/settings', name: 'settings',  component: SettingsView, meta: { settingsRoot: true } },
+    { path: '/settings', name: 'settings',  component: SettingsView,  meta: { settingsRoot: true } },
     ...serviceRoutes,
   ],
+})
+
+router.beforeEach((to) => {
+  const { isAuthenticated } = useAuth()
+  if (to.meta.public) {
+    if (isAuthenticated.value && to.name === 'login') return { path: '/' }
+    return true
+  }
+  if (!isAuthenticated.value) {
+    return { name: 'login', query: to.fullPath !== '/' ? { redirect: to.fullPath } : undefined }
+  }
+  return true
 })
 
 export default router
