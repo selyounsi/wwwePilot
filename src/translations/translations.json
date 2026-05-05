@@ -59,6 +59,18 @@
     "Expand all": "Alle aufklappen",
     "Collapse all": "Alle einklappen",
 
+    "Open in new tab": "In neuem Tab öffnen",
+    "Remove from history": "Aus dem Verlauf entfernen",
+    "Check history": "Prüfungs-Verlauf",
+    "No history for this site.": "Kein Verlauf für diese Seite.",
+    "Runs": "Prüfungen",
+    "Last run": "Letzte Prüfung",
+    "{n} runs": "{n} Prüfungen",
+    "{n} errors": "{n} Fehler",
+    "{n} warnings": "{n} Warnungen",
+    "Open and recheck": "Öffnen und neu prüfen",
+    "Clear history for this site": "Verlauf für diese Seite löschen",
+
     "Sitemap URL": "Sitemap-URL",
     "If your sitemap lives at a different URL, enter it here.": "Wenn deine Sitemap unter einer anderen URL liegt, gib sie hier ein.",
     "No sitemap found at {url}.": "Keine Sitemap unter {url} gefunden.",

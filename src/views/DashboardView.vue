@@ -90,8 +90,18 @@ function shortOrigin(origin) {
   try { return new URL(origin).host } catch { return origin }
 }
 
-function openSite(origin) {
+function openSiteDetail(origin) {
+  router.push({ path: '/service/web-checker/site-detail', query: { origin } })
+}
+
+function openSite(origin, ev) {
+  ev?.stopPropagation()
   chrome.tabs.create({ url: origin, active: true })
+}
+
+function removeSite(origin, ev) {
+  ev?.stopPropagation()
+  runHistory.clear(origin)
 }
 </script>
 
@@ -122,7 +132,7 @@ function openSite(origin) {
         <SectionLabel>{{ t('Recently checked') }}</SectionLabel>
         <button
           v-for="site in recentSites" :key="site.origin"
-          @click="openSite(site.origin)"
+          @click="openSiteDetail(site.origin)"
           class="flex items-center justify-between w-full bg-surface-soft border border-border rounded-xl px-4 py-3 transition-all hover:bg-surface-soft-hover hover:border-primary/40 cursor-pointer group text-left"
         >
           <div class="flex items-center gap-3 min-w-0">
@@ -134,9 +144,22 @@ function openSite(origin) {
               <p class="text-xs text-muted">{{ relativeTime(site.lastSeen) }}</p>
             </div>
           </div>
-          <div class="flex items-center gap-2 shrink-0 ml-2">
+          <div class="flex items-center gap-1 shrink-0 ml-2">
             <StatusPill :count="site.errors || null" :warning-count="site.warnings || null" />
-            <Icon name="mdiOpenInNew" :size="14" class="text-muted/40 group-hover:text-primary transition-colors" />
+            <button
+              @click="openSite(site.origin, $event)"
+              class="p-1 rounded-md text-muted/40 hover:text-primary hover:bg-surface transition-colors"
+              :title="t('Open in new tab')"
+            >
+              <Icon name="mdiOpenInNew" :size="14" />
+            </button>
+            <button
+              @click="removeSite(site.origin, $event)"
+              class="p-1 rounded-md text-muted/40 hover:text-error hover:bg-error/10 transition-colors"
+              :title="t('Remove from history')"
+            >
+              <Icon name="mdiClose" :size="14" />
+            </button>
           </div>
         </button>
       </section>
