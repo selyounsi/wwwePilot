@@ -1,29 +1,27 @@
-import { ref } from 'vue'
 import { useModuleLoader }   from '@/composables/loaders/useModuleLoader.js'
 import { useCheckRunner }    from './useCheckRunner.js'
 import { moduleAppliesTo }   from './useUrlFilter.js'
 import { useSiteCheckStore } from './useSiteCheckStore.js'
 
 export function useSiteCheck() {
-  const { modules }      = useModuleLoader('web-checker')
+  const { modules }                  = useModuleLoader('web-checker')
   const { injectHelper, runChecker } = useCheckRunner()
-  const store            = useSiteCheckStore()
-  const cancelled        = ref(false)
-  const paused           = ref(false)
+  const store                        = useSiteCheckStore()
 
-  async function loadPreflight(origin) {
+  async function loadPreflight(origin, sitemapUrl) {
     store.startFetching(origin)
-    const reply = await sendMessage({ type: 'FETCH_SITEMAP', origin })
-    if (reply?.error) { store.setError(reply.error); return }
-    const urls = reply?.urls ?? []
-    if (urls.length === 0) { store.setError('Sitemap enthält keine URLs'); return }
-    store.setUrls(urls)
+    const reply = await sendMessage({ type: 'FETCH_SITEMAP', origin, sitemapUrl })
+    if (reply?.error) {
+      store.setError(reply.error, reply.code, reply.sitemapUrl)
+      return
+    }
+    store.setUrls(reply?.urls ?? [])
+    store.setSitemapUrl(reply?.sitemapUrl ?? null)
     store.enterPreflight()
   }
 
   async function start() {
-    cancelled.value = false
-    paused.value    = false
+    store.clearCancel()
 
     const allUrls       = store.state.urls
     const selectedUrls  = allUrls.filter(u => store.isUrlSelected(u))
@@ -57,20 +55,19 @@ export function useSiteCheck() {
 
     const onTabRemoved = (tabId) => {
       if (tabId !== checkTab.id) return
-      cancelled.value = true
-      paused.value    = false
+      store.requestCancel()
       store.setError('Der Prüfungs-Tab wurde geschlossen — die Prüfung wurde abgebrochen.')
     }
     chrome.tabs.onRemoved.addListener(onTabRemoved)
 
     try {
       for (let i = 0; i < selectedUrls.length; i++) {
-        if (cancelled.value) break
+        if (store.state.cancelled) break
 
-        while (paused.value && !cancelled.value) {
+        while (store.state.status === 'paused' && !store.state.cancelled) {
           await sleep(200)
         }
-        if (cancelled.value) break
+        if (store.state.cancelled) break
 
         const url = selectedUrls[i]
         store.setCurrent(url, i)
@@ -80,7 +77,7 @@ export function useSiteCheck() {
           const completion = waitForComplete(checkTab.id)
           await chrome.tabs.update(checkTab.id, { url })
           await completion
-          if (cancelled.value) break
+          if (store.state.cancelled) break
           await sleep(800)
 
           await injectHelper(checkTab.id)
@@ -128,9 +125,9 @@ export function useSiteCheck() {
     } catch {}
   }
 
-  function pause()  { if (store.state.status === 'running') { paused.value = true;  store.setPaused(true)  } }
-  function resume() { if (store.state.status === 'paused')  { paused.value = false; store.setPaused(false) } }
-  function cancel() { cancelled.value = true; paused.value = false }
+  function pause()  { if (store.state.status === 'running') store.setPaused(true)  }
+  function resume() { if (store.state.status === 'paused')  store.setPaused(false) }
+  function cancel() { store.requestCancel() }
 
   return { loadPreflight, start, pause, resume, cancel, highlightCheckTab, store }
 }

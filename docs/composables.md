@@ -206,8 +206,11 @@ gepinnten Hintergrund-Tab offen, iteriert URLs durch:
 - `injectHelper` + alle ausgewählten Module parallel
 - Ergebnisse in `useSiteCheckStore`
 
-Plus Pause/Resume-Gate (Promise-basiert) und `chrome.tabs.onRemoved`-Listener
-für saubere Cleanup, falls der User den Check-Tab manuell schließt.
+Cancel/Pause-Flags liegen im Store (`state.cancelled`, `state.status === 'paused'`),
+nicht im Composable — der Run-Loop überlebt damit einen View-Unmount, sodass der
+User aus der Site-Check-Liste in eine Single-Page navigieren kann ohne dass der
+Check abbricht. Cancel passiert nur explizit per Button oder wenn der Check-Tab
+manuell geschlossen wird (via `chrome.tabs.onRemoved`).
 
 ### `useCheckStore.js`
 
@@ -225,6 +228,12 @@ plus URL-Selection (welche URLs der User auswählt), Module-Selection,
 Progress-Counter und `syncFromSingleCheck()`-Helper, der Single-Page-Ergebnisse
 in den Site-Cache zurückspielt, wenn die geprüfte URL Teil eines laufenden Site-Checks
 ist.
+
+Cancel-Switch (`state.cancelled`) und Pause-Toggle (`state.status === 'paused'`)
+sind hier zentral, damit der Run-Loop von `useSiteCheck` unabhängig vom
+View-Lifecycle steuerbar ist. Plus `state.cascadeSelection` — wenn `true` (Default),
+schaltet das Häkchen eines URL-Knotens im SiteCheckView-Tree auch alle
+Sub-Pages mit, sonst greift das Häkchen nur auf die einzelne URL.
 
 ### `useTabWatcher.js`
 

@@ -5,6 +5,8 @@ import { reactive } from 'vue'
 const state = reactive({
   status:           'idle',
   error:            null,
+  errorCode:        null,
+  sitemapUrl:       null,
   origin:           null,
   urls:             [],
   results:          {},
@@ -16,13 +18,19 @@ const state = reactive({
   moduleSelection:  {},
   startedAt:        null,
   finishedAt:       null,
+  // Driven from anywhere (cancel button, route guard) so the run loop survives
+  // a view unmount without losing its kill-switch.
+  cancelled:        false,
 })
 
 export function useSiteCheckStore() {
-  // selections persist across reset so "Erneut prüfen" keeps the user's choices
+  // selections + cascade preference persist across reset so "Erneut prüfen"
+  // keeps the user's choices.
   function reset() {
     state.status = 'idle'
     state.error = null
+    state.errorCode = null
+    state.sitemapUrl = null
     state.origin = null
     state.urls = []
     state.results = {}
@@ -32,7 +40,11 @@ export function useSiteCheckStore() {
     state.checkTabId = null
     state.startedAt = null
     state.finishedAt = null
+    state.cancelled = false
   }
+
+  function requestCancel() { state.cancelled = true }
+  function clearCancel()   { state.cancelled = false }
 
   function startFetching(origin) {
     reset()
@@ -126,10 +138,14 @@ export function useSiteCheckStore() {
     }
   }
 
-  function setError(msg) {
-    state.status = 'error'
-    state.error = msg
+  function setError(msg, code = null, sitemapUrl = null) {
+    state.status     = 'error'
+    state.error      = msg
+    state.errorCode  = code
+    if (sitemapUrl)  state.sitemapUrl = sitemapUrl
   }
+
+  function setSitemapUrl(url) { state.sitemapUrl = url }
 
   function finish() {
     state.status = 'done'
@@ -139,11 +155,12 @@ export function useSiteCheckStore() {
   }
 
   return {
-    state, reset, startFetching, setUrls, enterPreflight, startRunning, setCurrent,
+    state, reset, startFetching, setUrls, setSitemapUrl, enterPreflight, startRunning, setCurrent,
     setPaused, setCheckTabId,
     setRunningModules, markModuleDone,
     setUrlResult, syncFromSingleCheck, setError, finish,
     isUrlSelected, isModuleSelected,
     setUrlSelected, setModuleSelected, setAllUrlsSelected, setAllModulesSelected,
+    requestCancel, clearCancel,
   }
 }

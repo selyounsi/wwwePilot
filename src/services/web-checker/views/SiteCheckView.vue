@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter }       from 'vue-router'
 import { useSiteCheck }    from '../composables/useSiteCheck.js'
 import { useCheckStore }   from '../composables/useCheckStore.js'
@@ -16,6 +16,56 @@ const { t }                                                                     
 
 function pathOf(url) {
   try { return new URL(url).pathname } catch { return url }
+}
+
+// Builds a flat list ordered by tree-traversal with `depth` and `descendants`
+// metadata. Root `/` is never a parent — top-level pages like `/blog/` and
+// `/about/` stay siblings of the home page rather than nested under it.
+// Trailing slashes are normalised so `/blog/` correctly parents `/blog/post-1`.
+function buildUrlTree(urls) {
+  function norm(u) {
+    const p = pathOf(u).replace(/\/+$/, '')
+    return p || '/'
+  }
+
+  const sorted = [...urls].sort((a, b) => norm(a).localeCompare(norm(b)))
+  const nodes  = sorted.map(url => ({
+    url, path: norm(url), depth: 0, parent: null, children: [], descendants: [],
+  }))
+  const byPath = new Map(nodes.map(n => [n.path, n]))
+
+  for (const node of nodes) {
+    if (node.path === '/') continue
+    const segments = node.path.split('/').filter(Boolean)
+    for (let i = segments.length - 1; i >= 1; i--) {
+      const candidate = '/' + segments.slice(0, i).join('/')
+      const parent = byPath.get(candidate)
+      if (parent && parent !== node) {
+        node.parent = parent
+        node.depth  = parent.depth + 1
+        parent.children.push(node)
+        break
+      }
+    }
+  }
+
+  for (const node of nodes) {
+    const stack = [...node.children]
+    while (stack.length) {
+      const c = stack.pop()
+      node.descendants.push(c)
+      stack.push(...c.children)
+    }
+  }
+
+  const roots  = nodes.filter(n => !n.parent)
+  const result = []
+  function visit(n) {
+    result.push(n)
+    n.children.sort((a, b) => a.path.localeCompare(b.path)).forEach(visit)
+  }
+  roots.sort((a, b) => a.path.localeCompare(b.path)).forEach(visit)
+  return result
 }
 
 const activeTabUrl = ref('')
@@ -50,6 +100,46 @@ const allModulesSelected  = computed(() => selectedModuleCount.value === modules
 
 function toggleAllUrls()    { store.setAllUrlsSelected(store.state.urls,        !allUrlsSelected.value) }
 function toggleAllModules() { store.setAllModulesSelected(modules.map(m => m.id), !allModulesSelected.value) }
+
+const urlTree = computed(() => buildUrlTree(store.state.urls))
+
+const collapsedPaths = reactive(new Set())
+
+function isExpanded(node) { return !collapsedPaths.has(node.path) }
+
+function toggleExpanded(node) {
+  if (collapsedPaths.has(node.path)) collapsedPaths.delete(node.path)
+  else                               collapsedPaths.add(node.path)
+}
+
+function expandAll()   { collapsedPaths.clear() }
+function collapseAll() {
+  collapsedPaths.clear()
+  for (const node of urlTree.value) {
+    if (node.children.length) collapsedPaths.add(node.path)
+  }
+}
+
+const anyCollapsed = computed(() => collapsedPaths.size > 0)
+
+// DFS-ordered tree filtered by collapse state — children of a collapsed node
+// (and their descendants) are hidden, regardless of their own state.
+const visibleUrlTree = computed(() => {
+  const hiddenAncestors = new Set()
+  return urlTree.value.filter(node => {
+    if (node.parent && hiddenAncestors.has(node.parent.path)) {
+      hiddenAncestors.add(node.path)
+      return false
+    }
+    if (!isExpanded(node)) hiddenAncestors.add(node.path)
+    return true
+  })
+})
+
+function onUrlChecked(node, checked) {
+  store.setUrlSelected(node.url, checked)
+  for (const d of node.descendants) store.setUrlSelected(d.url, checked)
+}
 
 const canStart = computed(() => isPreflight.value && selectedUrlCount.value > 0 && selectedModuleCount.value > 0)
 
@@ -122,7 +212,30 @@ async function reloadSitemap() {
   loadPreflight(activeOrigin.value)
 }
 
+const customSitemapUrl = ref('')
+
+async function retryWithCustomSitemap() {
+  const url = customSitemapUrl.value.trim()
+  if (!url) return
+  loadPreflight(activeOrigin.value, url)
+}
+
+const errorMessage = computed(() => {
+  const code = store.state.errorCode
+  if (code === 'NOT_FOUND')      return t('No sitemap found at {url}.', { url: store.state.sitemapUrl ?? sitemapUrl.value })
+  if (code === 'NETWORK_ERROR')  return t('Could not reach the sitemap (network error).')
+  if (code === 'TIMEOUT')        return t('Sitemap request timed out.')
+  if (code === 'EMPTY_SITEMAP')  return t('The sitemap does not contain any URLs.')
+  return store.state.error
+})
+
 async function startCheck() {
+  start()
+}
+
+// "Erneut prüfen" from the done view — keep the existing selection and skip
+// preflight, so the user stays on the results list while it refills.
+async function recheckSameSelection() {
   start()
 }
 
@@ -183,8 +296,6 @@ function waitForComplete(tabId, timeoutMs = 30_000) {
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
-
-onUnmounted(() => cancel())
 </script>
 
 <template>
@@ -271,17 +382,33 @@ onUnmounted(() => cancel())
           </template>
 
           <template v-else>
-            <div class="px-3 py-2 border-b border-border/60 flex items-center justify-between shrink-0">
-              <span class="text-[11px] text-muted">
+            <div class="px-3 py-2 border-b border-border/60 flex items-center justify-between shrink-0 gap-2">
+              <span class="text-[11px] text-muted truncate">
                 {{ isPreflight ? t('Choose the pages to check.') : t('Sitemap loading…') }}
               </span>
-              <button
-                v-if="isPreflight"
-                @click="toggleAllUrls"
-                class="text-[11px] text-primary hover:underline shrink-0"
-              >
-                {{ allUrlsSelected ? t('Deselect all') : t('Select all') }}
-              </button>
+              <div v-if="isPreflight" class="flex items-center gap-3 shrink-0">
+                <button
+                  @click="anyCollapsed ? expandAll() : collapseAll()"
+                  class="text-[11px] text-muted hover:text-light"
+                >
+                  {{ anyCollapsed ? t('Expand all') : t('Collapse all') }}
+                </button>
+                <button
+                  @click="toggleAllUrls"
+                  class="text-[11px] text-primary hover:underline"
+                >
+                  {{ allUrlsSelected ? t('Deselect all') : t('Select all') }}
+                </button>
+              </div>
+            </div>
+            <div
+              v-if="isPreflight"
+              class="px-3 py-2 border-b border-border/60 shrink-0 flex items-start gap-2"
+            >
+              <Icon name="mdiInformationOutline" :size="12" class="text-muted/70 shrink-0 mt-0.5" />
+              <span class="text-[11px] text-muted/70 flex-1 leading-snug">
+                {{ t('Toggling a parent also toggles its sub-pages.') }}
+              </span>
             </div>
             <div v-if="!isPreflight" class="flex-1 flex flex-col items-center justify-center gap-2 py-6">
               <LoadingSpinner size="sm" />
@@ -289,18 +416,34 @@ onUnmounted(() => cancel())
             </div>
             <div v-else class="flex-1 min-h-0 overflow-y-auto">
               <label
-                v-for="url in store.state.urls" :key="url"
+                v-for="node in visibleUrlTree" :key="node.url"
                 class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-surface-soft-hover border-b border-border/30 last:border-b-0"
+                :style="{ paddingLeft: (12 + node.depth * 16) + 'px' }"
               >
+                <button
+                  v-if="node.children.length"
+                  @click.stop.prevent="toggleExpanded(node)"
+                  class="w-4 h-4 flex items-center justify-center rounded hover:bg-surface text-muted/70 hover:text-light shrink-0 -ml-1"
+                  :title="isExpanded(node) ? t('Collapse') : t('Expand')"
+                >
+                  <Icon
+                    :name="isExpanded(node) ? 'mdiChevronDown' : 'mdiChevronRight'"
+                    :size="14"
+                  />
+                </button>
+                <span v-else class="w-4 shrink-0" aria-hidden="true" />
                 <input
                   type="checkbox"
-                  :checked="store.isUrlSelected(url)"
-                  @change="store.setUrlSelected(url, $event.target.checked)"
+                  :checked="store.isUrlSelected(node.url)"
+                  @change="onUrlChecked(node, $event.target.checked)"
                   class="w-3.5 h-3.5 accent-primary cursor-pointer shrink-0"
                 />
                 <div class="flex flex-col min-w-0 flex-1">
-                  <span class="text-xs text-light truncate">{{ pathOf(url) }}</span>
-                  <span class="text-[10px] text-muted/60 truncate">{{ url }}</span>
+                  <span class="text-xs text-light truncate">{{ pathOf(node.url) }}</span>
+                  <span
+                    v-if="node.children.length"
+                    class="text-[10px] text-muted/60 truncate"
+                  >{{ t('{n} sub-pages', { n: node.descendants.length }) }}</span>
                 </div>
               </label>
             </div>
@@ -309,7 +452,24 @@ onUnmounted(() => cancel())
       </template>
 
       <template v-else-if="store.state.status === 'error'">
-        <AlertItem type="error">{{ store.state.error }}</AlertItem>
+        <div class="flex flex-col gap-3">
+          <AlertItem type="error">{{ errorMessage }}</AlertItem>
+
+          <div class="bg-surface-soft border border-border rounded-xl p-3 flex flex-col gap-2">
+            <label class="text-[11px] font-medium text-light">{{ t('Sitemap URL') }}</label>
+            <input
+              v-model="customSitemapUrl"
+              type="url"
+              spellcheck="false"
+              :placeholder="store.state.sitemapUrl ?? sitemapUrl"
+              class="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs text-light font-mono outline-none focus:border-primary/50 placeholder:text-muted/40"
+              @keydown.enter="retryWithCustomSitemap"
+            />
+            <p class="text-[10px] text-muted/70 leading-snug">
+              {{ t('If your sitemap lives at a different URL, enter it here.') }}
+            </p>
+          </div>
+        </div>
       </template>
 
       <template v-else>
@@ -444,9 +604,14 @@ onUnmounted(() => cancel())
         </span>
       </BaseButton>
 
-      <BaseButton v-else-if="isDone" @click="reloadSitemap">
-        {{ t('Recheck') }}
-      </BaseButton>
+      <div v-else-if="isDone" class="flex flex-col gap-2">
+        <BaseButton @click="recheckSameSelection">
+          {{ t('Recheck') }}
+        </BaseButton>
+        <BaseButton variant="ghost" @click="reloadSitemap">
+          {{ t('Change selection') }}
+        </BaseButton>
+      </div>
 
       <BaseButton v-else-if="isFetching || isIdle" :loading="true">
         <template #loading>{{ t('Sitemap loading…') }}</template>
@@ -470,9 +635,14 @@ onUnmounted(() => cancel())
         </BaseButton>
       </div>
 
-      <BaseButton v-else-if="store.state.status === 'error'" @click="reloadSitemap">
-        {{ t('Try again') }}
-      </BaseButton>
+      <div v-else-if="store.state.status === 'error'" class="flex flex-col gap-2">
+        <BaseButton :disabled="!customSitemapUrl.trim()" @click="retryWithCustomSitemap">
+          {{ t('Load this sitemap') }}
+        </BaseButton>
+        <BaseButton variant="ghost" @click="reloadSitemap">
+          {{ t('Try default sitemap.xml again') }}
+        </BaseButton>
+      </div>
     </div>
   </div>
 </template>

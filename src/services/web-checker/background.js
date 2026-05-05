@@ -7,25 +7,48 @@ export async function handle(msg, sendResponse) {
 }
 
 async function fetchSitemap(msg, sendResponse) {
+  const origin       = msg.origin || ''
+  const overrideUrl  = (msg.sitemapUrl || '').trim()
+  const sitemapUrl   = overrideUrl || (origin ? `${origin}/sitemap.xml` : '')
+  if (!sitemapUrl) { sendResponse({ error: 'Origin fehlt', code: 'MISSING_ORIGIN' }); return }
+
   try {
-    const origin = msg.origin || ''
-    if (!origin) { sendResponse({ error: 'Origin fehlt' }); return }
-    const urls = await fetchSitemapUrls(`${origin}/sitemap.xml`)
-    sendResponse({ urls })
+    const urls = await fetchSitemapUrls(sitemapUrl)
+    if (urls.length === 0) {
+      sendResponse({ error: 'Die Sitemap enthält keine URLs', code: 'EMPTY_SITEMAP', sitemapUrl, urls: [] })
+      return
+    }
+    sendResponse({ urls, sitemapUrl })
   } catch (e) {
-    sendResponse({ error: e.message, urls: [] })
+    sendResponse({ error: e.message, code: e.code ?? 'FETCH_ERROR', sitemapUrl, urls: [] })
   }
 }
 
 // regex-parsed because MV3 service workers don't have DOMParser
 async function fetchSitemapUrls(sitemapUrl, depth = 0) {
   if (depth > 3) return []
-  const res = await fetch(sitemapUrl, {
-    cache:    'no-store',
-    redirect: 'follow',
-    signal:   AbortSignal.timeout(15_000),
-  })
-  if (!res.ok) throw new Error(`Sitemap nicht erreichbar (HTTP ${res.status})`)
+  let res
+  try {
+    res = await fetch(sitemapUrl, {
+      cache:    'no-store',
+      redirect: 'follow',
+      signal:   AbortSignal.timeout(15_000),
+    })
+  } catch (e) {
+    const err = new Error(`Keine Verbindung zur Sitemap (${sitemapUrl})`)
+    err.code = e.name === 'TimeoutError' ? 'TIMEOUT' : 'NETWORK_ERROR'
+    throw err
+  }
+  if (res.status === 404) {
+    const err = new Error(`Keine Sitemap unter ${sitemapUrl} gefunden`)
+    err.code  = 'NOT_FOUND'
+    throw err
+  }
+  if (!res.ok) {
+    const err = new Error(`Sitemap nicht erreichbar (HTTP ${res.status})`)
+    err.code  = 'HTTP_ERROR'
+    throw err
+  }
   const xml = await res.text()
 
   const sitemapBlocks = xml.match(/<sitemap\b[^>]*>[\s\S]*?<\/sitemap>/g) ?? []

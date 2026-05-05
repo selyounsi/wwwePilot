@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useWebChecker }     from '../composables/useWebChecker.js'
 import { useSiteCheckStore } from '../composables/useSiteCheckStore.js'
 import { useI18n }           from '@/composables/i18n/useI18n.js'
+import { useFavorites }      from '@/composables/useFavorites.js'
 
 const router = useRouter()
 const {
@@ -18,6 +19,7 @@ const {
 } = useWebChecker()
 const { t } = useI18n()
 
+const { isFavorite, toggle: toggleFavorite } = useFavorites()
 const siteCheck = useSiteCheckStore()
 const siteCheckCount = computed(() => siteCheck.state.urls.length)
 const hasSiteCheck   = computed(() => siteCheckCount.value > 0)
@@ -80,6 +82,17 @@ async function handleCheck() {
         :icon="mod.icon" :title="t(mod.name)" :description="t(mod.description)"
         @click="router.push(`/service/web-checker/module/${mod.id}`)"
       >
+        <button
+          @click.stop="toggleFavorite('web-checker', mod.id)"
+          class="p-1 rounded-md hover:bg-surface transition-colors"
+          :title="isFavorite('web-checker', mod.id) ? t('Remove from favorites') : t('Add to favorites')"
+        >
+          <Icon
+            :name="isFavorite('web-checker', mod.id) ? 'mdiStar' : 'mdiStarOutline'"
+            :size="14"
+            :class="isFavorite('web-checker', mod.id) ? 'text-primary' : 'text-muted/40 hover:text-muted'"
+          />
+        </button>
         <LoadingSpinner v-if="state.results[mod.id]?.status === 'running'" size="sm" />
         <span
           v-else-if="state.results[mod.id]?.status === 'skipped'"

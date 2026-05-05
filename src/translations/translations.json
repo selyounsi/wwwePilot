@@ -29,7 +29,44 @@
     "Scales only the sidebar — independent of the browser zoom (Ctrl +/-).": "Skaliert nur die Sidebar — unabhängig vom Browser-Zoom (Strg +/-).",
     "Decrease zoom": "Zoom verkleinern",
     "Increase zoom": "Zoom vergrößern",
-    "Reset zoom to {n}%": "Zoom auf {n}% zurücksetzen"
+    "Reset zoom to {n}%": "Zoom auf {n}% zurücksetzen",
+
+    "Sign in to continue": "Anmelden, um fortzufahren",
+    "Sign in with wwwe account": "Mit wwwe-Account anmelden",
+    "Opening sign-in…": "Anmeldung wird geöffnet…",
+    "You will be redirected to the wwwe sign-in page in a new window.": "Du wirst in einem neuen Fenster zur wwwe-Anmeldeseite weitergeleitet.",
+    "Sign out": "Abmelden",
+    "Login failed": "Anmeldung fehlgeschlagen",
+    "Account": "Konto",
+    "Hi, {name}!": "Hallo, {name}!",
+    "Roles": "Rollen",
+    "Groups": "Gruppen",
+
+    "My favorites": "Meine Favoriten",
+    "Add to favorites": "Zu Favoriten hinzufügen",
+    "Remove from favorites": "Aus Favoriten entfernen",
+    "Recently checked": "Zuletzt geprüft",
+    "just now": "gerade eben",
+    "{n} min ago": "vor {n} Min.",
+    "{n} h ago": "vor {n} Std.",
+    "{n} d ago": "vor {n} T.",
+
+    "Toggling a parent also toggles its sub-pages.": "Wenn du einen Hauptpunkt umschaltest, werden alle Unterseiten mit umgeschaltet.",
+    "{n} sub-pages": "{n} Unterseiten",
+    "Change selection": "Auswahl ändern",
+    "Expand": "Aufklappen",
+    "Collapse": "Einklappen",
+    "Expand all": "Alle aufklappen",
+    "Collapse all": "Alle einklappen",
+
+    "Sitemap URL": "Sitemap-URL",
+    "If your sitemap lives at a different URL, enter it here.": "Wenn deine Sitemap unter einer anderen URL liegt, gib sie hier ein.",
+    "No sitemap found at {url}.": "Keine Sitemap unter {url} gefunden.",
+    "Could not reach the sitemap (network error).": "Sitemap nicht erreichbar (Netzwerkfehler).",
+    "Sitemap request timed out.": "Sitemap-Anfrage hat das Zeitlimit überschritten.",
+    "The sitemap does not contain any URLs.": "Die Sitemap enthält keine URLs.",
+    "Load this sitemap": "Diese Sitemap laden",
+    "Try default sitemap.xml again": "Erneut mit /sitemap.xml versuchen"
   },
   "en": {}
 }
