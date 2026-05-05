@@ -1,12 +1,14 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useServiceLoader } from '@/composables/loaders/useServiceLoader.js'
 import { useI18n }          from '@/composables/i18n/useI18n.js'
+import { useAuth }          from '@/composables/auth/useAuth.js'
 
 const router = useRouter()
 const { services } = useServiceLoader()
 const { t, lang }  = useI18n()
+const { state: authState, logout } = useAuth()
 
 const open = ref(false)
 function close()  { open.value = false }
@@ -16,11 +18,33 @@ function go(path) {
   close()
   router.push(path)
 }
+
+async function onLogout() {
+  close()
+  await logout()
+  router.replace({ name: 'login' })
+}
+
+const displayName = computed(() => {
+  const u = authState.user
+  if (!u) return ''
+  if (u.firstName && u.lastName) return `${u.firstName} ${u.lastName}`
+  return u.name || u.username || u.email || ''
+})
 </script>
 
 <template>
   <div class="shrink-0">
     <button
+      v-if="authState.user"
+      @click="toggle"
+      class="rounded-full ring-2 ring-black/10 hover:ring-black/30 transition-all"
+      :title="displayName || t('Menu')"
+    >
+      <UserAvatar :user="authState.user" :size="32" />
+    </button>
+    <button
+      v-else
       @click="toggle"
       class="w-8 h-8 flex items-center justify-center rounded-lg bg-black/10 hover:bg-black/20 transition-colors text-black/70"
       :title="t('Menu')"
@@ -42,11 +66,16 @@ function go(path) {
           v-if="open"
           class="fixed top-0 right-0 bottom-0 w-72 bg-background border-l border-border z-50 flex flex-col shadow-2xl"
         >
-          <div class="px-4 py-3 border-b border-border flex items-center justify-between bg-surface">
-            <span class="text-sm font-semibold text-light">{{ t('Menu') }}</span>
+          <div class="px-4 py-3 border-b border-border flex items-center gap-3 bg-surface">
+            <UserAvatar v-if="authState.user" :user="authState.user" :size="36" />
+            <div class="flex-1 min-w-0">
+              <div v-if="authState.user" class="text-sm font-semibold text-light truncate">{{ displayName }}</div>
+              <div v-if="authState.user?.email" class="text-[11px] text-muted truncate">{{ authState.user.email }}</div>
+              <span v-else class="text-sm font-semibold text-light">{{ t('Menu') }}</span>
+            </div>
             <button
               @click="close"
-              class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-surface-soft-hover transition-colors text-muted"
+              class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-surface-soft-hover transition-colors text-muted shrink-0"
             >
               <Icon name="mdiClose" :size="15" />
             </button>
@@ -84,6 +113,15 @@ function go(path) {
               </span>
             </button>
           </nav>
+
+          <button
+            v-if="authState.user"
+            @click="onLogout"
+            class="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-soft-hover transition-colors text-left border-t border-border/40 text-error"
+          >
+            <Icon name="mdiLogout" :size="15" class="shrink-0" />
+            <span class="text-xs flex-1">{{ t('Sign out') }}</span>
+          </button>
         </aside>
       </Transition>
     </Teleport>

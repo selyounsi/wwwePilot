@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n }          from '@/composables/i18n/useI18n.js'
 import { useServiceLoader } from '@/composables/loaders/useServiceLoader.js'
 import { useUiSettings }    from '@/composables/settings/useUiSettings.js'
+import { useAuth }          from '@/composables/auth/useAuth.js'
 
 const router = useRouter()
 const { t, lang, setLang, supportedLangs } = useI18n()
@@ -15,6 +16,12 @@ const {
   default: zoomDefault,
   incrementZoom, decrementZoom, resetZoom,
 } = useUiSettings()
+const { state: authState, logout } = useAuth()
+
+async function onLogout() {
+  await logout()
+  router.replace({ name: 'login' })
+}
 
 const subViewModules = import.meta.glob('@/services/*/views/*View.vue', { eager: true })
 const servicesWithSettings = computed(() => {
@@ -107,6 +114,56 @@ const servicesWithSettings = computed(() => {
             <span class="text-xs text-light flex-1 truncate">{{ t(s.name) }}</span>
             <Icon name="mdiChevronRight" :size="14" class="text-muted/40 shrink-0" />
           </button>
+        </div>
+      </section>
+
+      <section v-if="authState.user" class="flex flex-col gap-2">
+        <SectionLabel>{{ t('Account') }}</SectionLabel>
+
+        <div class="bg-surface-soft border border-border rounded-xl overflow-hidden">
+          <div class="px-3 py-3 flex items-center gap-3 border-b border-border/60">
+            <UserAvatar :user="authState.user" :size="40" />
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-semibold text-light truncate">
+                {{ authState.user.firstName && authState.user.lastName
+                    ? `${authState.user.firstName} ${authState.user.lastName}`
+                    : authState.user.name || authState.user.username || authState.user.email }}
+              </div>
+              <div v-if="authState.user.email" class="text-[11px] text-muted truncate">
+                {{ authState.user.email }}
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-if="authState.user.roles?.length || authState.user.groups?.length"
+            class="px-3 py-2.5 border-b border-border/60 flex flex-col gap-1.5"
+          >
+            <div v-if="authState.user.roles?.length" class="flex items-start gap-2">
+              <span class="text-[10px] uppercase tracking-wide text-muted/60 mt-0.5 w-12 shrink-0">{{ t('Roles') }}</span>
+              <div class="flex flex-wrap gap-1">
+                <span
+                  v-for="r in authState.user.roles" :key="r"
+                  class="text-[10px] px-1.5 py-0.5 rounded bg-surface text-light"
+                >{{ r }}</span>
+              </div>
+            </div>
+            <div v-if="authState.user.groups?.length" class="flex items-start gap-2">
+              <span class="text-[10px] uppercase tracking-wide text-muted/60 mt-0.5 w-12 shrink-0">{{ t('Groups') }}</span>
+              <div class="flex flex-wrap gap-1">
+                <span
+                  v-for="g in authState.user.groups" :key="g"
+                  class="text-[10px] px-1.5 py-0.5 rounded bg-surface text-light"
+                >{{ g }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="px-3 py-3">
+            <BaseButton variant="ghost" @click="onLogout">
+              {{ t('Sign out') }}
+            </BaseButton>
+          </div>
         </div>
       </section>
 
