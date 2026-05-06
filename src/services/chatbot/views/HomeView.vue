@@ -240,7 +240,4 @@ function format(text) {
 
 <style scoped>
 div :deep(strong) { color: var(--color-primary); font-weight: 600; }
-div::-webkit-scrollbar       { width: 3px; }
-div::-webkit-scrollbar-track { background: transparent; }
-div::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
 </style>

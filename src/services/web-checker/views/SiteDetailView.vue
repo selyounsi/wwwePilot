@@ -63,7 +63,7 @@ function clearAll() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-background flex flex-col">
+  <div class="h-screen bg-background flex flex-col">
     <AppHeader showBack :title="host" :subtitle="t('Check history')">
       <button
         @click="openSite"
@@ -74,7 +74,7 @@ function clearAll() {
       </button>
     </AppHeader>
 
-    <div class="flex-1 px-4 py-4 flex flex-col gap-3 overflow-y-auto">
+    <div class="flex-1 px-4 py-4 flex flex-col gap-3 overflow-y-auto min-h-0">
 
       <div class="grid grid-cols-3 gap-2 shrink-0">
         <StatBox :label="t('Modules')">{{ moduleRows.length }}</StatBox>

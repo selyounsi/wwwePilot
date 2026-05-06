@@ -1,6 +1,11 @@
 @import "tailwindcss";
 @source inline("justify-start justify-end justify-center items-start items-end items-center flex-row flex-col flex-row-reverse");
 
+html, body {
+  color-scheme: dark;
+  background: var(--color-background);
+}
+
 @theme {
   --color-primary:    #bad32c;
   --color-secondary:  #22272e;
