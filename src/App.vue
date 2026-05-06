@@ -58,7 +58,7 @@ window.addEventListener('unhandledrejection', (e) => {
 </script>
 
 <template>
-  <div>
+  <div class="h-full">
     <RouterView />
     <ToastContainer />
   </div>
