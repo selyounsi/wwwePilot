@@ -76,29 +76,30 @@ const servicesWithSettings = computed(() => {
               {{ t('Scales only the sidebar — independent of the browser zoom (Ctrl +/-).') }}
             </p>
             <div class="flex items-center gap-2">
-              <button
-                @click="decrementZoom"
+              <BaseButton
+                variant="square"
+                icon="mdiMinus"
+                :icon-size="14"
+                :tooltip="t('Decrease zoom')"
                 :disabled="uiSettings.zoom <= zoomMin"
-                :title="t('Decrease zoom')"
-                class="h-9 w-9 rounded-lg bg-surface border border-border text-muted hover:bg-surface-soft-hover transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <Icon name="mdiMinus" :size="14" />
-              </button>
-              <button
+                @click="decrementZoom"
+              />
+              <BaseButton
+                variant="square"
+                :tooltip="t('Reset zoom to {n}%', { n: zoomDefault })"
+                class="flex-1 text-light text-xs font-semibold tabular-nums"
                 @click="resetZoom"
-                :title="t('Reset zoom to {n}%', { n: zoomDefault })"
-                class="flex-1 h-9 rounded-lg bg-surface border border-border text-light text-xs font-semibold tabular-nums hover:bg-surface-soft-hover transition-colors"
               >
                 {{ uiSettings.zoom }}%
-              </button>
-              <button
-                @click="incrementZoom"
+              </BaseButton>
+              <BaseButton
+                variant="square"
+                icon="mdiPlus"
+                :icon-size="14"
+                :tooltip="t('Increase zoom')"
                 :disabled="uiSettings.zoom >= zoomMax"
-                :title="t('Increase zoom')"
-                class="h-9 w-9 rounded-lg bg-surface border border-border text-muted hover:bg-surface-soft-hover transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <Icon name="mdiPlus" :size="14" />
-              </button>
+                @click="incrementZoom"
+              />
             </div>
           </div>
         </div>

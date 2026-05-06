@@ -22,12 +22,13 @@ const RING  = { error: 'border-error/50', warning: 'border-alert/50', success: '
             <div v-if="toast.title" class="text-xs font-semibold text-light truncate">{{ toast.title }}</div>
             <div class="text-[11px] text-muted leading-snug break-words">{{ toast.message }}</div>
           </div>
-          <button
+          <BaseButton
+            variant="icon"
+            icon="mdiClose"
+            :icon-size="12"
+            class="text-muted/40 hover:text-light hover:bg-transparent shrink-0 -mr-1"
             @click="dismiss(toast.id)"
-            class="text-muted/40 hover:text-light shrink-0 -mr-1"
-          >
-            <Icon name="mdiClose" :size="12" />
-          </button>
+          />
         </div>
       </TransitionGroup>
     </div>

@@ -58,6 +58,8 @@ async function handleCheck() {
   }
   runChecks()
 }
+
+const hasCheck = computed(() => !!state.checkedTabId)
 </script>
 
 <template>
@@ -65,16 +67,26 @@ async function handleCheck() {
     <AppHeader showBack />
 
     <div class="flex-1 px-4 py-4 flex flex-col gap-2 overflow-y-auto">
-      <div class="flex items-center justify-between mb-1">
-        <SectionLabel>{{ t('Modules') }}</SectionLabel>
-        <div class="flex items-center gap-2">
-          <TabStatusBadge
-            :status="tabStatus"
-            :checked-name="state.checkedTabName"
-            @switch-tab="switchToCheckedTab"
-          />
-          <span v-if="state.lastChecked" class="text-xs text-muted">{{ state.lastChecked }}</span>
-        </div>
+      <div class="flex items-center justify-between gap-2">
+        <SectionLabel class="shrink-0">{{ t('Modules') }}</SectionLabel>
+        <BaseButton
+          v-if="hasCheck"
+          variant="square-sm"
+          icon="mdiPlayCircleOutline"
+          :icon-size="15"
+          :tooltip="t('Check current tab')"
+          class="shrink-0"
+          @click="runChecks()"
+        />
+      </div>
+      <div v-if="state.checkedTabId" class="flex items-center justify-between gap-2 min-w-0 -mt-1 mb-1">
+        <TabStatusBadge
+          :status="tabStatus"
+          :checked-name="state.checkedTabName"
+          class="min-w-0 flex-1"
+          @switch-tab="switchToCheckedTab"
+        />
+        <span v-if="state.lastChecked" class="text-xs text-muted shrink-0">{{ state.lastChecked }}</span>
       </div>
 
       <CardItem
@@ -82,23 +94,21 @@ async function handleCheck() {
         :icon="mod.icon" :title="t(mod.name)" :description="t(mod.description)"
         @click="router.push(`/service/web-checker/module/${mod.id}`)"
       >
-        <button
+        <BaseButton
+          variant="icon"
+          :icon="isFavorite('web-checker', mod.id) ? 'mdiStar' : 'mdiStarOutline'"
+          :icon-size="14"
+          :tooltip="isFavorite('web-checker', mod.id) ? t('Remove from favorites') : t('Add to favorites')"
+          :class="isFavorite('web-checker', mod.id) ? 'text-primary hover:text-primary' : ''"
           @click.stop="toggleFavorite('web-checker', mod.id)"
-          class="p-1 rounded-md hover:bg-surface transition-colors"
-          :title="isFavorite('web-checker', mod.id) ? t('Remove from favorites') : t('Add to favorites')"
-        >
-          <Icon
-            :name="isFavorite('web-checker', mod.id) ? 'mdiStar' : 'mdiStarOutline'"
-            :size="14"
-            :class="isFavorite('web-checker', mod.id) ? 'text-primary' : 'text-muted/40 hover:text-muted'"
-          />
-        </button>
+        />
         <LoadingSpinner v-if="state.results[mod.id]?.status === 'running'" size="sm" />
-        <span
+        <Tooltip
           v-else-if="state.results[mod.id]?.status === 'skipped'"
-          class="text-xs text-muted/60 px-2 py-0.5 rounded-lg bg-surface-soft"
-          :title="state.results[mod.id]?.skippedReason || ''"
-        >{{ t('Skipped') }}</span>
+          :text="state.results[mod.id]?.skippedReason || ''"
+        >
+          <span class="text-xs text-muted/60 px-2 py-0.5 rounded-lg bg-surface-soft">{{ t('Skipped') }}</span>
+        </Tooltip>
         <StatusPill v-else :count="errorCount(mod.id)" :warning-count="warningCount(mod.id)" />
       </CardItem>
     </div>

@@ -25,6 +25,7 @@ const setup = moduleConfig
       props.moduleId,
       moduleConfig.overlay      ?? null,
       moduleConfig.allowChatBot ?? false,
+      moduleConfig.actions      ?? {},
     )
   : null
 
@@ -91,8 +92,11 @@ const ignoredCount = computed(() => filteredResult.value?.ignoredCount ?? 0)
 const router    = useRouter()
 const { send }  = useChat()
 
-function toggle()   { overlay?.overlayToggle?.() }
-function recheck()  { setup?.recheck?.() }
+function toggle()              { overlay?.overlayToggle?.() }
+function recheck()             { setup?.recheck?.() }
+function recheckOnActiveTab()  { setup?.recheck?.({ activeTab: true }) }
+
+const hasCheck = computed(() => !!checkStore.state.checkedTabId && setup?.result?.value?.status === 'done')
 
 function clusterInChat() {
   const r       = rawResult.value
@@ -117,32 +121,45 @@ function clusterInChat() {
     <div class="flex items-center justify-between mb-2">
       <SectionLabel>{{ label }}</SectionLabel>
       <div class="flex items-center gap-2">
-        <button
+        <BaseButton
           v-if="allowChatBot && issueCount > 1"
+          variant="pill-toggle"
+          icon="mdiRobot"
+          :icon-size="13"
+          :tooltip="t('Analyze all {n} issues in chat', { n: issueCount })"
+          class="h-7 hover:bg-primary/10! hover:text-primary! shrink-0"
           @click="clusterInChat"
-          :title="t('Analyze all {n} issues in chat', { n: issueCount })"
-          class="text-xs h-7 px-2 rounded-lg bg-surface-soft border border-border text-muted hover:bg-primary/10 hover:text-primary transition-colors shrink-0 flex items-center gap-1"
         >
-          <Icon name="mdiRobot" :size="13" />
           <span class="font-medium tabular-nums">{{ issueCount }}</span>
-        </button>
-        <button
+        </BaseButton>
+        <BaseButton
           v-if="canRecheck"
+          variant="square-sm"
+          icon="mdiRefresh"
+          :icon-size="14"
+          :tooltip="recheckLabel"
+          class="shrink-0"
           @click="recheck"
-          :title="recheckLabel"
-          class="h-7 w-7 rounded-lg bg-surface-soft border border-border text-muted hover:bg-surface-soft-hover transition-colors shrink-0 flex items-center justify-center"
-        >
-          <Icon name="mdiRefresh" :size="14" />
-        </button>
-        <button
+        />
+        <BaseButton
+          v-if="canRecheck && hasCheck"
+          variant="square-sm"
+          icon="mdiPlayCircleOutline"
+          :icon-size="15"
+          :tooltip="t('Run on current tab')"
+          class="shrink-0"
+          @click="recheckOnActiveTab"
+        />
+        <BaseButton
           v-if="hasOverlay"
+          variant="square-sm"
+          :icon="overlayActive ? 'mdiEye' : 'mdiEyeOffOutline'"
+          :icon-size="14"
+          :tooltip="overlayActive ? onText : offText"
+          :active="overlayActive"
+          class="shrink-0"
           @click="toggle"
-          :title="overlayActive ? onText : offText"
-          class="h-7 w-7 rounded-lg transition-colors shrink-0 flex items-center justify-center"
-          :class="overlayActive ? 'bg-primary text-black/70' : 'bg-surface-soft border border-border text-muted hover:bg-surface-soft-hover'"
-        >
-          <Icon :name="overlayActive ? 'mdiEye' : 'mdiEyeOffOutline'" :size="14" />
-        </button>
+        />
       </div>
     </div>
 
@@ -166,14 +183,15 @@ function clusterInChat() {
         :placeholder="t('Search items…')"
         class="flex-1 bg-surface-soft border border-border text-xs rounded-lg px-3 py-2 outline-none focus:border-primary/50"
       />
-      <button
+      <BaseButton
+        variant="pill-toggle"
+        icon="mdiFormatListGroup"
+        :icon-size="14"
+        :tooltip="t('Group by rule')"
+        :active="groupBy"
+        class="shrink-0"
         @click="groupBy = !groupBy"
-        :title="t('Group by rule')"
-        class="text-xs px-2.5 py-2 rounded-lg transition-colors shrink-0"
-        :class="groupBy ? 'bg-primary text-black/70 font-semibold' : 'bg-surface-soft border border-border text-muted hover:bg-surface-soft-hover'"
-      >
-        <Icon name="mdiFormatListGroup" :size="14" />
-      </button>
+      />
     </div>
 
     <div class="flex flex-col gap-1">

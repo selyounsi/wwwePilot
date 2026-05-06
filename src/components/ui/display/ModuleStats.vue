@@ -58,11 +58,14 @@ const warningDelta = computed(() => deltaFor('warningCount', props.result.warnin
         <p class="text-xs text-muted">{{ t('Errors') }}</p>
         <p class="text-lg font-bold mt-0.5">
           {{ result.errorCount ?? 0 }}
-          <span v-if="errorDelta !== null && errorDelta !== 0"
-            class="text-[10px] font-medium ml-1 tabular-nums"
-            :class="errorDelta < 0 ? 'text-success' : 'text-error/80'"
-            :title="t('Previous audit: {n}', { n: history[history.length - 2].errorCount ?? 0 })"
-          >{{ errorDelta < 0 ? '▼' : '▲' }}{{ Math.abs(errorDelta) }}</span>
+          <Tooltip v-if="errorDelta !== null && errorDelta !== 0"
+            :text="t('Previous audit: {n}', { n: history[history.length - 2].errorCount ?? 0 })"
+          >
+            <span
+              class="text-[10px] font-medium ml-1 tabular-nums"
+              :class="errorDelta < 0 ? 'text-success' : 'text-error/80'"
+            >{{ errorDelta < 0 ? '▼' : '▲' }}{{ Math.abs(errorDelta) }}</span>
+          </Tooltip>
         </p>
       </div>
 
@@ -70,11 +73,14 @@ const warningDelta = computed(() => deltaFor('warningCount', props.result.warnin
         <p class="text-xs text-muted">{{ t('Warnings') }}</p>
         <p class="text-lg font-bold mt-0.5">
           {{ result.warningCount ?? 0 }}
-          <span v-if="warningDelta !== null && warningDelta !== 0"
-            class="text-[10px] font-medium ml-1 tabular-nums"
-            :class="warningDelta < 0 ? 'text-success' : 'text-alert/80'"
-            :title="t('Previous audit: {n}', { n: history[history.length - 2].warningCount ?? 0 })"
-          >{{ warningDelta < 0 ? '▼' : '▲' }}{{ Math.abs(warningDelta) }}</span>
+          <Tooltip v-if="warningDelta !== null && warningDelta !== 0"
+            :text="t('Previous audit: {n}', { n: history[history.length - 2].warningCount ?? 0 })"
+          >
+            <span
+              class="text-[10px] font-medium ml-1 tabular-nums"
+              :class="warningDelta < 0 ? 'text-success' : 'text-alert/80'"
+            >{{ warningDelta < 0 ? '▼' : '▲' }}{{ Math.abs(warningDelta) }}</span>
+          </Tooltip>
         </p>
       </div>
 

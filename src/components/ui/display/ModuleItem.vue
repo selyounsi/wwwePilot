@@ -16,8 +16,9 @@ import { APP_NAME_LOWER } from '@/config/app.js'
 const { t } = useI18n()
 
 const props = defineProps({
-  item:    { type: Object, required: true },
-  variant: { type: String, default: 'box' },
+  item:             { type: Object,  required: true },
+  variant:          { type: String,  default: 'box' },
+  hideEditorButton: { type: Boolean, default: false },
 })
 const emit = defineEmits(['click'])
 
@@ -34,9 +35,20 @@ const explainLoading = ref(false)
 const explainText    = ref('')
 const explainError   = ref('')
 
-const { labelFn = () => '', allowChatBot = false, moduleId = null } = inject('moduleOverlay', {})
+const {
+  labelFn      = () => '',
+  allowChatBot = false,
+  moduleId     = null,
+  actions      = {},
+} = inject('moduleOverlay', {})
 
-const { add: addIgnore, remove: removeIgnore } = useIgnoreList()
+const showLiveEditor    = actions.liveEditor    !== false
+const showChatbot       = actions.chatbot       !== false && allowChatBot
+const showClaudeExplain = actions.claudeExplain !== false
+const showIgnore        = actions.ignore        !== false
+
+const { add: addIgnore, remove: removeIgnore, getNote: getIgnoreNote } = useIgnoreList()
+const ignoreConfirmOpen = ref(false)
 const {
   editorTab,
   focusItem:        focusInLiveEditor,
@@ -57,11 +69,16 @@ const origin = computed(() => {
   try { return new URL(checkStore.state.checkedUrl ?? '').origin } catch { return null }
 })
 
-function ignoreItem() {
+function askIgnore() {
+  if (!origin.value || !moduleId) return
+  ignoreConfirmOpen.value = true
+}
+
+function confirmIgnore(note) {
   if (!origin.value || !moduleId) return
   ;(props.item.issues ?? [])
     .filter(i => i.type !== 'success')
-    .forEach(i => addIgnore(origin.value, moduleId, i.message))
+    .forEach(i => addIgnore(origin.value, moduleId, i.message, { note }))
 }
 
 function unignoreItem() {
@@ -70,6 +87,13 @@ function unignoreItem() {
     .filter(i => i.type !== 'success')
     .forEach(i => removeIgnore(origin.value, moduleId, i.message))
 }
+
+const ignoreNote = computed(() => {
+  if (!origin.value || !moduleId || !props.item._ignored) return ''
+  const firstIssue = (props.item.issues ?? []).find(i => i.type !== 'success')
+  if (!firstIssue) return ''
+  return getIgnoreNote(origin.value, moduleId, firstIssue.message)
+})
 
 const highlight = (clickType) => {
   highlightElement(props.item, labelFn(props.item), clickType)
@@ -193,7 +217,7 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
   <div
     :id="item.element ? `item-${item.element}` : undefined"
     :class="[
-      !item.visible ? 'opacity-40' : '',
+      !item.visible ? 'opacity-60' : '',
       item._ignored  ? 'opacity-60' : '',
       indent,
       variant === 'box'
@@ -240,46 +264,42 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
       <div class="flex flex-col items-end justify-between shrink-0" :class="image ? 'h-16' : 'h-8'">
         <span class="w-1.5 h-1.5 rounded-full" :class="dotColor[status]" />
         <div class="flex items-center gap-1">
-          <Icon v-if="!item.visible" name="mdiEyeOff" :size="12" class="text-muted/40" title="Element nicht sichtbar" />
-          <button
-            v-if="isLiveEditable"
+          <slot name="leading-actions" />
+          <BaseButton
+            v-if="showLiveEditor && isLiveEditable && !hideEditorButton"
+            variant="icon"
+            icon="mdiPencilOutline"
+            :tooltip="t('Show in Live Editor')"
             @click.stop="showInLiveEditor"
-            class="transition-all text-muted/40 hover:text-primary hover:bg-primary/10 rounded p-0.5 hover:scale-110"
-            :title="t('Show in Live Editor')"
-          >
-            <Icon name="mdiPencilOutline" :size="13" />
-          </button>
-          <button
-            v-if="allowChatBot && chatEnabled && item.issues?.some(i => i.type === 'error' || i.type === 'warning')"
+          />
+          <BaseButton
+            v-if="showChatbot && chatEnabled && item.issues?.some(i => i.type === 'error' || i.type === 'warning')"
+            variant="icon"
+            icon="mdiRobot"
+            :tooltip="t('Analyze in chat')"
             @click.stop="openInChat"
-            class="transition-all text-muted/40 hover:text-primary hover:bg-primary/10 rounded p-0.5 hover:scale-110"
-            :title="t('Analyze in chat')"
-          >
-            <Icon name="mdiRobot" :size="13" />
-          </button>
+          />
           <ClaudeButton
-            v-if="moduleId && item.issues?.some(i => i.type === 'error' || i.type === 'warning')"
+            v-if="showClaudeExplain && moduleId && item.issues?.some(i => i.type === 'error' || i.type === 'warning')"
             :loading="explainLoading"
             :label="t('Explain with Claude')"
             icon-only
             @click="explainWithClaude"
           />
-          <button
-            v-if="moduleId && !item._ignored && item.issues?.some(i => i.type === 'error' || i.type === 'warning')"
-            @click.stop="ignoreItem"
-            class="transition-all text-muted/40 hover:text-error hover:bg-error/10 rounded p-0.5 hover:scale-110"
-            :title="t('Ignore hint')"
-          >
-            <Icon name="mdiEyeOffOutline" :size="13" />
-          </button>
-          <button
-            v-if="moduleId && item._ignored"
+          <BaseButton
+            v-if="showIgnore && moduleId && !item._ignored && item.issues?.some(i => i.type === 'error' || i.type === 'warning')"
+            variant="icon-error"
+            icon="mdiEyeOffOutline"
+            :tooltip="t('Ignore hint')"
+            @click.stop="askIgnore"
+          />
+          <BaseButton
+            v-if="showIgnore && moduleId && item._ignored"
+            variant="icon-success"
+            icon="mdiEyeOutline"
+            :tooltip="ignoreNote ? t('Restore hint') + ' — ' + ignoreNote : t('Restore hint')"
             @click.stop="unignoreItem"
-            class="transition-all text-muted/60 hover:text-success hover:bg-success/10 rounded p-0.5 hover:scale-110"
-            :title="t('Restore hint')"
-          >
-            <Icon name="mdiEyeOutline" :size="13" />
-          </button>
+          />
           <slot name="trailing" />
         </div>
       </div>
@@ -323,6 +343,13 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
           class="text-xs"
           :class="issue.type === 'error' ? 'text-error' : issue.type === 'warning' ? 'text-alert' : 'text-success'"
         >{{ issue.message }}</div>
+        <div
+          v-if="item._ignored && ignoreNote"
+          class="text-[11px] text-muted/80 bg-surface rounded px-2 py-1 border border-border/50 flex gap-1.5 items-start"
+        >
+          <Icon name="mdiNoteOutline" :size="11" class="shrink-0 mt-0.5 text-muted/60" />
+          <span class="wrap-break-word leading-snug">{{ ignoreNote }}</span>
+        </div>
       </div>
     </div>
 
@@ -333,6 +360,18 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
       :error="explainError"
       :text="explainText"
       @update:open="explainOpen = $event"
+    />
+
+    <ConfirmDialog
+      :open="ignoreConfirmOpen"
+      :title="t('Ignore this hint?')"
+      :message="t('It will be hidden from the issue list. You can restore it any time.')"
+      :confirm-text="t('Ignore')"
+      variant="danger"
+      with-note
+      :note-placeholder="t('Why are you ignoring this? (optional)')"
+      @update:open="ignoreConfirmOpen = $event"
+      @confirm="confirmIgnore"
     />
   </div>
 </template>

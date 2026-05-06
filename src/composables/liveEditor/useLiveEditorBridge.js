@@ -5,7 +5,10 @@ import { useCheckStore } from '@/services/web-checker/composables/useCheckStore.
 // staging/preview hosts come along.
 const EDITOR_HOST_PATTERNS = [
   /^le-cms4\.[\w.-]+$/,
+  /^cms4\.euroweb\.de$/,
 ]
+
+const CMS4_OPEN_BASE = 'https://cms4.euroweb.de/website/'
 
 // CMS4 element types fall into two buckets:
 //
@@ -20,7 +23,7 @@ const EDITOR_HOST_PATTERNS = [
 //   background image — that container is editable, but a random <span>
 //   inside it isn't.
 const CONTENT_TYPES = [
-  'article', 'title', 'picture', 'button', 'html', 'file',
+  'article', 'title', 'text', 'picture', 'button', 'html', 'file',
   'audio', 'video', 'logo', 'horizontalLine', 'imprint', 'gdpr',
   'imprintContent', 'gdprContent', 'contactForm', 'contactFormContent',
   'newsletter', 'accessManager', 'galleryImage',
@@ -42,11 +45,18 @@ async function findEditorTabFor(checkedUrl) {
   let tabs
   try { tabs = await chrome.tabs.query({}) } catch { return null }
 
-  const candidates = tabs.filter(t => {
-    try { return t.url && isEditorHost(new URL(t.url).hostname) } catch { return false }
-  })
+  for (const tab of tabs) {
+    if (!tab.url) continue
+    let url
+    try { url = new URL(tab.url) } catch { continue }
+    if (!isEditorHost(url.hostname)) continue
 
-  for (const tab of candidates) {
+    if (url.hostname === 'cms4.euroweb.de') {
+      const m = url.pathname.match(/^\/website\/([^/]+)/)
+      if (m && m[1] === auditDomain) return tab
+      continue
+    }
+
     try {
       const [res] = await chrome.scripting.executeScript({
         target: { tabId: tab.id },
@@ -57,6 +67,13 @@ async function findEditorTabFor(checkedUrl) {
     } catch {}
   }
   return null
+}
+
+async function openEditorFor(checkedUrl) {
+  if (!checkedUrl) return null
+  let auditDomain
+  try { auditDomain = new URL(checkedUrl).hostname } catch { return null }
+  return chrome.tabs.create({ url: `${CMS4_OPEN_BASE}${auditDomain}/`, active: true })
 }
 
 // runs in the LE top-frame. Walks the iframe DOM, locates the audited element
@@ -126,7 +143,7 @@ function focusInEditor(meta, contentTypes, structuralTypes) {
         .replace(/\.[^.]+$/, '')
         .replace(/_(small|medium|large|resized|x1|x2).*$/i, '')
       if (m.alt?.length > 3) {
-        const byAlt = doc.querySelector(`img[alt="${m.alt}"]`)
+        const byAlt = Array.from(doc.querySelectorAll('img')).find(img => img.getAttribute('alt') === m.alt)
         if (byAlt) return byAlt
       }
       if (baseName) {
@@ -272,7 +289,7 @@ function batchResolveEditable(metas, contentTypes, structuralTypes) {
         .replace(/\.[^.]+$/, '')
         .replace(/_(small|medium|large|resized|x1|x2).*$/i, '')
       if (m.alt?.length > 3) {
-        const byAlt = doc.querySelector(`img[alt="${m.alt}"]`)
+        const byAlt = Array.from(doc.querySelectorAll('img')).find(img => img.getAttribute('alt') === m.alt)
         if (byAlt) return byAlt
       }
       if (baseName) {
@@ -418,11 +435,17 @@ export function useLiveEditorBridge() {
     }
   }
 
+  async function openEditor() {
+    const { state } = useCheckStore()
+    return openEditorFor(state.checkedUrl)
+  }
+
   return {
     editorTab,
     focusItem,
     refresh: refreshEditorTab,
     requestEditable,
     getEditable,
+    openEditor,
   }
 }

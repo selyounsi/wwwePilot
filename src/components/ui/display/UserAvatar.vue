@@ -38,17 +38,18 @@ const fontSize = computed(() => Math.round(props.size * 0.4))
 </script>
 
 <template>
-  <div
-    class="rounded-full flex items-center justify-center font-semibold shrink-0 select-none"
-    :style="{
-      width:  size + 'px',
-      height: size + 'px',
-      background: `hsl(${hue} 65% 45%)`,
-      color: 'white',
-      fontSize: fontSize + 'px',
-    }"
-    :title="user?.email || ''"
-  >
-    {{ initials }}
-  </div>
+  <Tooltip :text="user?.email || ''">
+    <div
+      class="rounded-full flex items-center justify-center font-semibold shrink-0 select-none"
+      :style="{
+        width:  size + 'px',
+        height: size + 'px',
+        background: `hsl(${hue} 65% 45%)`,
+        color: 'white',
+        fontSize: fontSize + 'px',
+      }"
+    >
+      {{ initials }}
+    </div>
+  </Tooltip>
 </template>

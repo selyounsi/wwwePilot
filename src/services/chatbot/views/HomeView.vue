@@ -107,23 +107,29 @@ function format(text) {
       <template #below>
         <ProviderToggle />
         <div class="flex-1" />
-        <button
+        <BaseButton
+          variant="header-icon"
+          icon="mdiHistory"
+          :icon-size="15"
+          :tooltip="t('History')"
+          :active="showHistory"
           @click="showHistory = !showHistory"
-          class="p-1.5 rounded-lg hover:bg-black/10 transition-colors"
-          :class="showHistory ? 'bg-black/20 text-black/80' : 'text-black/50'"
-          :title="t('History')"
-        ><Icon name="mdiHistory" :size="15" /></button>
-        <button
+        />
+        <BaseButton
+          variant="header-icon"
+          icon="mdiPencilOutline"
+          :icon-size="15"
+          :tooltip="t('New chat')"
           @click="newChat"
-          class="p-1.5 rounded-lg hover:bg-black/10 text-black/50 transition-colors"
-          :title="t('New chat')"
-        ><Icon name="mdiPencilOutline" :size="15" /></button>
-        <button
+        />
+        <BaseButton
           v-if="messages.length"
+          variant="header-icon"
+          icon="mdiClose"
+          :icon-size="15"
+          :tooltip="t('Clear chat')"
           @click="clear"
-          class="p-1.5 rounded-lg hover:bg-black/10 text-black/50 transition-colors"
-          :title="t('Clear chat')"
-        ><Icon name="mdiClose" :size="15" /></button>
+        />
       </template>
     </AppHeader>
 
@@ -140,11 +146,15 @@ function format(text) {
           {{ c.name }}
           <span class="text-muted/40 ml-1">({{ c.messages.length }})</span>
         </button>
-        <button
+        <BaseButton
           v-if="chats.length > 1"
+          variant="icon-error"
+          icon="mdiClose"
+          :icon-size="12"
+          :tooltip="t('Delete chat')"
+          class="opacity-0 group-hover:opacity-100"
           @click="deleteChat(c.id)"
-          class="opacity-0 group-hover:opacity-100 p-1 rounded text-muted/40 hover:text-error transition-all"
-        ><Icon name="mdiClose" :size="12" /></button>
+        />
       </div>
     </div>
 
@@ -182,21 +192,21 @@ function format(text) {
               :class="msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'"
             >
               <span class="text-muted/40" style="font-size:10px">{{ msg.timestamp }}</span>
-              <button
+              <BaseButton
+                variant="icon"
+                :icon="copiedId === msg.id ? 'mdiCheck' : 'mdiContentCopy'"
+                :icon-size="11"
+                :tooltip="copiedId === msg.id ? t('Copied!') : t('Copy')"
                 @click="handleCopy(msg)"
-                class="text-muted/40 hover:text-muted transition-colors"
-                :title="copiedId === msg.id ? t('Copied!') : t('Copy')"
-              >
-                <Icon :name="copiedId === msg.id ? 'mdiCheck' : 'mdiContentCopy'" :size="11" />
-              </button>
-              <button
+              />
+              <BaseButton
                 v-if="msg.isError"
+                variant="icon-alert"
+                icon="mdiRefresh"
+                :icon-size="11"
+                :tooltip="t('Try again')"
                 @click="retry"
-                class="text-muted/40 hover:text-alert transition-colors"
-                :title="t('Try again')"
-              >
-                <Icon name="mdiRefresh" :size="11" />
-              </button>
+              />
             </div>
           </div>
 
@@ -235,16 +245,14 @@ function format(text) {
           class="flex-1 bg-transparent text-xs outline-none resize-none text-light placeholder:text-muted leading-relaxed"
           style="field-sizing: content; max-height: 120px"
         />
-        <button
-          @click="handleSend"
+        <BaseButton
+          variant="send"
+          icon="mdiSend"
+          :tooltip="t('Send')"
           :disabled="!input.trim() || isLoading"
-          class="w-7 h-7 rounded-xl flex items-center justify-center shrink-0 transition-all duration-150"
-          :class="input.trim() && !isLoading
-            ? 'bg-primary text-black/70 hover:scale-110 active:scale-95'
-            : 'bg-surface-soft text-muted/30 cursor-not-allowed'"
-        >
-          <Icon name="mdiSend" :size="13" />
-        </button>
+          class="shrink-0"
+          @click="handleSend"
+        />
       </div>
       <div class="flex items-center justify-between mt-1.5 px-0.5">
         <p class="text-xs text-muted">{{ t('Enter to send · Shift+Enter for new line') }}</p>

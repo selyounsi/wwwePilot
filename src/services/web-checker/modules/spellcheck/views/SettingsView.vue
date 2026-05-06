@@ -60,13 +60,13 @@ function remove(word) {
               class="inline-flex items-center gap-1.5 bg-surface border border-border rounded-lg pl-2.5 pr-1 py-1"
             >
               <span class="text-xs font-mono text-light">{{ word }}</span>
-              <button
+              <BaseButton
+                variant="icon-error"
+                icon="mdiClose"
+                :icon-size="12"
+                :tooltip="t('Remove')"
                 @click="remove(word)"
-                class="text-muted/50 hover:text-error transition-colors"
-                :title="t('Remove')"
-              >
-                <Icon name="mdiClose" :size="12" />
-              </button>
+              />
             </span>
           </div>
           <p v-else class="text-[11px] text-muted/60 italic">

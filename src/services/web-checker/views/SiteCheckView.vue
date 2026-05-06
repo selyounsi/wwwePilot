@@ -6,6 +6,9 @@ import { useCheckStore }   from '../composables/useCheckStore.js'
 import { useWebChecker }   from '../composables/useWebChecker.js'
 import { useModuleLoader } from '@/composables/loaders/useModuleLoader.js'
 import { useI18n }         from '@/composables/i18n/useI18n.js'
+import { useClaude }       from '@/services/chatbot/modules/claude/composables/useClaude.js'
+import ClaudeButton        from '@/services/chatbot/modules/claude/components/ClaudeButton.vue'
+import ClaudeResult        from '@/services/chatbot/modules/claude/components/ClaudeResult.vue'
 
 const router = useRouter()
 const { loadPreflight, start, pause, resume, cancel, highlightCheckTab, store } = useSiteCheck()
@@ -296,6 +299,68 @@ function waitForComplete(tabId, timeoutMs = 30_000) {
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
+
+const claude = useClaude()
+const reportOpen    = ref(false)
+const reportLoading = ref(false)
+const reportText    = ref('')
+const reportError   = ref('')
+
+async function buildReport() {
+  reportOpen.value    = true
+  reportText.value    = ''
+  reportError.value   = ''
+  reportLoading.value = true
+  try {
+    const perModule = {}
+    let totalErrors = 0, totalWarnings = 0
+    for (const url of store.state.urls) {
+      const mods = store.state.results[url]
+      if (!mods) continue
+      for (const [modId, r] of Object.entries(mods)) {
+        if (modId === '__page__' || r.status === 'skipped') continue
+        const mod = modules.find(m => m.id === modId)
+        if (!mod) continue
+        const slot = perModule[modId] ?? (perModule[modId] = { name: mod.name, errors: 0, warnings: 0, samplePages: [] })
+        slot.errors   += r.errorCount   ?? 0
+        slot.warnings += r.warningCount ?? 0
+        if ((r.errorCount ?? 0) > 0 && slot.samplePages.length < 3) {
+          slot.samplePages.push({ url, errors: r.errorCount, warnings: r.warningCount })
+        }
+        totalErrors   += r.errorCount   ?? 0
+        totalWarnings += r.warningCount ?? 0
+      }
+    }
+
+    const summary = Object.entries(perModule)
+      .filter(([, v]) => v.errors > 0 || v.warnings > 0)
+      .map(([id, v]) => `Modul "${v.name}" (${id}): ${v.errors} Fehler, ${v.warnings} Warnungen` +
+        (v.samplePages.length ? `\n  Beispielseiten: ${v.samplePages.map(p => p.url).join(', ')}` : ''))
+      .join('\n')
+
+    const userMessage = [
+      `Domain: ${store.state.origin}`,
+      `Geprüfte Seiten: ${store.state.urls.length}`,
+      `Gesamt: ${totalErrors} Fehler, ${totalWarnings} Warnungen`,
+      '',
+      'Pro-Modul-Aggregat:',
+      summary || '(keine Probleme)',
+    ].join('\n')
+
+    const result = await claude.run({
+      max_tokens: 1200,
+      system: 'Du schreibst einen kurzen Web-QA-Bericht für nicht-technische Stakeholder. ' +
+              'Auf Deutsch. Struktur: 1) Eine-Satz-Fazit. 2) "Größte Risiken" (max 3 Punkte). ' +
+              '3) "Empfohlene nächste Schritte" (priorisiert, max 5 Punkte). Keine Floskeln, kein Marketing-Sprech.',
+      messages: [{ role: 'user', content: userMessage }],
+    })
+    reportText.value = result.text
+  } catch (e) {
+    reportError.value = e.message || String(e)
+  } finally {
+    reportLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -312,15 +377,15 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
           </div>
           <div class="flex items-center gap-2 min-w-0">
             <span class="text-[10px] uppercase tracking-wide text-muted/70 shrink-0">{{ t('Sitemap') }}</span>
-            <a
-              v-if="sitemapUrl"
-              :href="sitemapUrl" target="_blank" rel="noopener"
-              class="text-xs font-mono text-primary hover:underline truncate flex-1 inline-flex items-center gap-1"
-              :title="sitemapUrl"
-            >
-              <span class="truncate">{{ sitemapUrl }}</span>
-              <Icon name="mdiOpenInNew" :size="11" class="shrink-0" />
-            </a>
+            <Tooltip v-if="sitemapUrl" :text="sitemapUrl">
+              <a
+                :href="sitemapUrl" target="_blank" rel="noopener"
+                class="text-xs font-mono text-primary hover:underline truncate flex-1 inline-flex items-center gap-1"
+              >
+                <span class="truncate">{{ sitemapUrl }}</span>
+                <Icon name="mdiOpenInNew" :size="11" class="shrink-0" />
+              </a>
+            </Tooltip>
             <span v-else class="text-xs text-muted">—</span>
           </div>
         </div>
@@ -420,17 +485,15 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
                 class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-surface-soft-hover border-b border-border/30 last:border-b-0"
                 :style="{ paddingLeft: (12 + node.depth * 16) + 'px' }"
               >
-                <button
+                <BaseButton
                   v-if="node.children.length"
+                  variant="icon"
+                  :icon="isExpanded(node) ? 'mdiChevronDown' : 'mdiChevronRight'"
+                  :icon-size="14"
+                  :tooltip="isExpanded(node) ? t('Collapse') : t('Expand')"
+                  class="w-4 h-4 -ml-1 text-muted/70 hover:text-light hover:bg-surface hover:scale-100"
                   @click.stop.prevent="toggleExpanded(node)"
-                  class="w-4 h-4 flex items-center justify-center rounded hover:bg-surface text-muted/70 hover:text-light shrink-0 -ml-1"
-                  :title="isExpanded(node) ? t('Collapse') : t('Expand')"
-                >
-                  <Icon
-                    :name="isExpanded(node) ? 'mdiChevronDown' : 'mdiChevronRight'"
-                    :size="14"
-                  />
-                </button>
+                />
                 <span v-else class="w-4 shrink-0" aria-hidden="true" />
                 <input
                   type="checkbox"
@@ -496,9 +559,11 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
           <div class="flex items-center gap-2">
             <LoadingSpinner v-if="isRunning" size="sm" />
             <Icon v-else name="mdiPause" :size="14" class="text-alert shrink-0" />
-            <span class="text-xs text-light truncate flex-1" :title="store.state.currentUrl">
-              {{ pathOf(store.state.currentUrl) }}
-            </span>
+            <Tooltip :text="store.state.currentUrl">
+              <span class="text-xs text-light truncate flex-1">
+                {{ pathOf(store.state.currentUrl) }}
+              </span>
+            </Tooltip>
           </div>
           <div v-if="isRunning && runningModuleNames.length" class="text-[10px] text-muted/70 pl-6 truncate">
             {{ runningModuleNames.join(' · ') }}
@@ -514,14 +579,16 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
               {{ t("Don't close the background tab — otherwise the check will abort.") }}
             </p>
           </div>
-          <button
+          <BaseButton
+            variant="pill"
+            icon="mdiTabSearch"
+            :icon-size="12"
+            :tooltip="t('Bring the check tab to the foreground')"
+            class="shrink-0"
             @click="highlightCheckTab"
-            class="text-[11px] px-2 py-1 rounded-lg bg-surface border border-border text-light hover:bg-surface-soft-hover transition-colors shrink-0 inline-flex items-center gap-1"
-            :title="t('Bring the check tab to the foreground')"
           >
-            <Icon name="mdiTabSearch" :size="12" />
             {{ t('Show tab') }}
-          </button>
+          </BaseButton>
         </div>
 
         <div v-if="isDone" class="grid grid-cols-3 gap-2 shrink-0">
@@ -537,6 +604,15 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
         <p v-if="isDone" class="text-[11px] text-muted/70 px-1 leading-relaxed shrink-0">
           {{ t('Click a page to open it in a new tab — the sidebar will then show the details like a single check.') }}
         </p>
+
+        <ClaudeButton
+          v-if="isDone"
+          variant="pill"
+          :size="14"
+          :label="t('Generate report')"
+          :loading="reportLoading"
+          @click="buildReport"
+        />
 
         <div class="flex flex-col gap-1.5 flex-1 min-h-0 overflow-y-auto">
           <button
@@ -571,14 +647,15 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
               <Icon v-else-if="row.status === 'error'"
                 name="mdiAlertCircle" :size="14" class="text-error shrink-0"
               />
-              <span v-else-if="row.status === 'skipped'"
-                class="text-[10px] text-muted/60 shrink-0 px-1.5 py-0.5 rounded bg-surface min-w-7 text-center"
-                :title="t('Skipped — deselected before start')"
-              >–</span>
+              <Tooltip v-else-if="row.status === 'skipped'" :text="t('Skipped — deselected before start')">
+                <span class="text-[10px] text-muted/60 shrink-0 px-1.5 py-0.5 rounded bg-surface min-w-7 text-center">–</span>
+              </Tooltip>
               <span v-else class="text-muted/40 shrink-0 text-xs w-7 text-center">○</span>
 
               <div class="flex flex-col min-w-0 flex-1">
-                <span class="text-xs text-light truncate" :title="row.url">{{ pathOf(row.url) }}</span>
+                <Tooltip :text="row.url">
+                  <span class="text-xs text-light truncate">{{ pathOf(row.url) }}</span>
+                </Tooltip>
                 <span v-if="row.status === 'done' && row.errorCount > 0 && row.warningCount > 0"
                   class="text-[10px] text-muted/60 truncate"
                 >{{ row.warningCount === 1
@@ -644,5 +721,14 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
         </BaseButton>
       </div>
     </div>
+
+    <ClaudeResult
+      :open="reportOpen"
+      :title="t('Site report')"
+      :loading="reportLoading"
+      :error="reportError"
+      :text="reportText"
+      @update:open="reportOpen = $event"
+    />
   </div>
 </template>

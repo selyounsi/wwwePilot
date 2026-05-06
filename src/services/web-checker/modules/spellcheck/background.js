@@ -19,6 +19,7 @@ export async function handle(msg, sendResponse) {
         method: 'POST',
         body: JSON.stringify({
           text:     msg.text,
+          url:      msg.url      ?? undefined,
           language: msg.language ?? 'de-DE',
           domain:   msg.domain   ?? undefined,
           images:   msg.images?.length ? msg.images : undefined,

@@ -60,7 +60,11 @@
     "Viewport meta present": "Viewport-Meta vorhanden",
 
     "theme-color meta tag missing": "theme-color Meta-Tag fehlt",
-    "theme-color is default \"{color}\" — should match brand": "theme-color hat Standardfarbe \"{color}\" – sollte an Brand angepasst werden"
+    "theme-color is default \"{color}\" — should match brand": "theme-color hat Standardfarbe \"{color}\" – sollte an Brand angepasst werden",
+
+    "Generate description": "Beschreibung generieren",
+    "Suggested meta description": "Vorgeschlagene Meta-Description",
+    "Could not read the page content. Reopen the page and try again.": "Seiteninhalt konnte nicht gelesen werden. Seite neu öffnen und erneut versuchen."
   },
   "en": {}
 }

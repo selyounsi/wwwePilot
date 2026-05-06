@@ -1,19 +1,16 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useClaudeSettings }     from './useClaudeSettings.js'
 import { useChatbotProviders }   from '../../../composables/useChatbotProviders.js'
 
 const lastValidated = ref(false)
 let inflightValidation = null
+let eagerWatcherSetup = false
 
 function send(msg) {
   return new Promise(resolve => chrome.runtime.sendMessage(msg, resolve))
 }
 
-/**
- * Single source of truth for Claude availability across the extension.
- * `isAvailable` is `true` only when the user has the Claude provider
- * enabled in settings AND a saved API key that has been confirmed valid.
- */
+// `isAvailable` is true only when provider enabled, key saved and validated
 export function useClaude() {
   const { keyExists, validateKey } = useClaudeSettings()
   const { isEnabled }              = useChatbotProviders()
@@ -23,7 +20,6 @@ export function useClaude() {
     isEnabledByUser.value && keyExists.value && lastValidated.value
   )
 
-  /** Pings Anthropic once per session to confirm the key still works. */
   async function ensureValidated() {
     if (lastValidated.value)  return true
     if (!keyExists.value)     return false
@@ -44,10 +40,19 @@ export function useClaude() {
     lastValidated.value = false
   }
 
-  /**
-   * Runs a single-shot prompt against Claude. `system` and `messages` follow
-   * the Anthropic API shape. Returns the assistant text or throws.
-   */
+  // eager validate so `isAvailable` flips without requiring a user click
+  if (!eagerWatcherSetup) {
+    eagerWatcherSetup = true
+    watch(
+      () => isEnabledByUser.value && keyExists.value,
+      (ready) => {
+        if (ready && !lastValidated.value) ensureValidated().catch(() => {})
+        if (!ready) lastValidated.value = false
+      },
+      { immediate: true },
+    )
+  }
+
   async function run({ system, messages, model, max_tokens } = {}) {
     if (!isAvailable.value) {
       const ok = await ensureValidated()

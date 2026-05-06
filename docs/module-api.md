@@ -19,8 +19,18 @@ Vollständiger Vertrag für Modul-Autoren. Schnellstart in
 
   // Web-Checker-spezifisch:
   "checkOnReload": false,            // boolean, optional
-  "allowChatBot":  true,             // boolean, optional
+  "allowChatBot":  true,             // boolean, optional — Legacy-Alias für actions.chatbot
   "defaultFilter": "issues",         // 'all' | 'issues' | 'errors' | 'warnings'
+
+  // Action-Buttons pro Item ein/ausblenden, alle default true.
+  // Legacy `allowChatBot: false` wird respektiert wenn `actions.chatbot` nicht gesetzt ist.
+  "actions": {
+    "liveEditor":    true,           // mdiPencilOutline — im Live-Editor öffnen
+    "chatbot":       true,           // mdiRobot — im wwwe-Chat analysieren
+    "claudeExplain": true,           // mdiAutoFix — mit Claude erklären
+    "ignore":        true,           // mdiEyeOffOutline — Hinweis ignorieren
+    "altText":       true            // mdiTagTextOutline — nur Image-Modul
+  },
 
   // Pfad-Filter, optional pro Modus:
   "singlePage": {                    // (Single-Page-Check)

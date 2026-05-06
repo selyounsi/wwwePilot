@@ -48,10 +48,15 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
     </div>
 
     <div class="px-4 pt-3 flex items-center gap-3" :class="$slots.below ? 'pb-2' : 'pb-4'">
-      <button v-if="showBack" @click="router.back()"
-        class="w-8 h-8 flex items-center justify-center rounded-lg bg-black/10 hover:bg-black/20 transition-colors text-lg shrink-0">
+      <BaseButton
+        v-if="showBack"
+        variant="header-icon"
+        :tooltip="t('Back')"
+        class="w-8 h-8 bg-black/10 hover:bg-black/20 text-lg shrink-0"
+        @click="router.back()"
+      >
         ‹
-      </button>
+      </BaseButton>
       <div class="flex-1 min-w-0">
         <h1 class="text-lg font-bold leading-tight">{{ resolvedTitle }}</h1>
         <p v-if="resolvedSubtitle" class="text-xs text-black/50 mt-0.5">{{ resolvedSubtitle }}</p>

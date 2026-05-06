@@ -8,23 +8,31 @@ import { useModuleAttributes }  from '@/services/web-checker/composables/useModu
 
 const EMPTY_RESULT = { status: 'idle', errors: [], warnings: [], items: [], errorCount: 0, warningCount: 0 }
 
-export function useModuleSetup(moduleId, overlayConfig = null, allowChatBot = false) {
+export function useModuleSetup(moduleId, overlayConfig = null, allowChatBot = false, actions = {}) {
   const { state, setRunning, setResult, setCheckedTab } = useCheckStore()
   const { injectHelper, runChecker }                    = useCheckRunner()
   const { modules }                      = useModuleLoader('web-checker')
 
   const result = computed(() => state.results[moduleId] ?? EMPTY_RESULT)
 
-  async function recheck() {
+  async function recheck({ activeTab = false } = {}) {
     const mod = modules.find(m => m.id === moduleId)
     if (!mod) return
 
-    let tabId = state.checkedTabId
-    if (!tabId) {
+    let tabId
+    if (activeTab) {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
       if (!tab?.url || ['chrome://', 'chrome-extension://', 'edge://'].some(p => tab.url.startsWith(p))) return
       setCheckedTab(tab)
       tabId = tab.id
+    } else {
+      tabId = state.checkedTabId
+      if (!tabId) {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+        if (!tab?.url || ['chrome://', 'chrome-extension://', 'edge://'].some(p => tab.url.startsWith(p))) return
+        setCheckedTab(tab)
+        tabId = tab.id
+      }
     }
 
     setRunning(moduleId)
@@ -37,8 +45,21 @@ export function useModuleSetup(moduleId, overlayConfig = null, allowChatBot = fa
     }
   }
 
+  const resolvedActions = {
+    chatbot:       actions.chatbot       ?? allowChatBot ?? true,
+    claudeExplain: actions.claudeExplain ?? true,
+    ignore:        actions.ignore        ?? true,
+    liveEditor:    actions.liveEditor    ?? true,
+    altText:       actions.altText       ?? true,
+  }
+
   const moduleOverlay        = useModuleOverlay(moduleId, overlayConfig)
-  const moduleOverlayWithBot = { ...moduleOverlay, allowChatBot, moduleId }
+  const moduleOverlayWithBot = {
+    ...moduleOverlay,
+    allowChatBot: resolvedActions.chatbot,
+    actions:      resolvedActions,
+    moduleId,
+  }
   provide('moduleOverlay', moduleOverlayWithBot)
 
   useVisibilityWatcher(moduleId)

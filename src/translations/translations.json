@@ -109,7 +109,10 @@
     "Sitemap request timed out.": "Sitemap-Anfrage hat das Zeitlimit überschritten.",
     "The sitemap does not contain any URLs.": "Die Sitemap enthält keine URLs.",
     "Load this sitemap": "Diese Sitemap laden",
-    "Try default sitemap.xml again": "Erneut mit /sitemap.xml versuchen"
+    "Try default sitemap.xml again": "Erneut mit /sitemap.xml versuchen",
+
+    "Generate report": "Bericht erstellen",
+    "Site report": "Website-Bericht"
   },
   "en": {}
 }

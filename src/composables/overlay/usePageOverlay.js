@@ -53,7 +53,7 @@ function buildOverlayScript() {
           .replace(/\.[^.]+$/, '')
           .replace(/_(small|medium|large|resized|x1|x2).*$/i, '')
         if (meta.alt?.length > 3) {
-          const byAlt = doc.querySelector(`img[alt="${meta.alt}"]`)
+          const byAlt = Array.from(doc.querySelectorAll('img')).find(img => img.getAttribute('alt') === meta.alt)
           if (byAlt) return byAlt
         }
         if (baseName) {
@@ -155,6 +155,12 @@ function buildOverlayScript() {
         d.style.cssText = `color:${fg}; opacity:0.8; font-size:12px; word-break:break-word; font-weight:400;`
         d.textContent = issue.message
         badge.appendChild(d)
+        if (issue.description) {
+          const desc = document.createElement('div')
+          desc.style.cssText = `color:${fg}; opacity:0.6; font-size:11px; word-break:break-word; font-weight:400; margin-top:2px;`
+          desc.textContent = issue.description
+          badge.appendChild(desc)
+        }
       })
 
       if (moduleId) {

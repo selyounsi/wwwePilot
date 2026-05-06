@@ -140,14 +140,17 @@ zur ursprünglich geprüften URL gehört. Sucht im DOM nach `leConfig.website.do
 ### `liveEditor/useLiveEditorBridge.js`
 
 Brücke zwischen Audit-Items und einem **separat geöffneten** CMS4 Live-Editor-Tab
-(`le-cms4.*`). Stellt den "Im Live-Editor zeigen"-Stift-Button auf jedem
-Modul-Item bereit.
+(`le-cms4.*` für Staging oder `cms4.euroweb.de` für Production). Stellt den
+„Im Live-Editor zeigen"-Stift-Button auf jedem Modul-Item bereit, und erlaubt
+das Öffnen eines neuen LE-Tabs wenn keiner offen ist (siehe
+[live-editor.md](./live-editor.md) für die Pencil-3-States im Image-Modul).
 
 Mechanik:
 
-- **Reaktive LE-Tab-Erkennung** — singleton `editorTab` ref, scannt alle Tabs auf
-  `le-cms4.*` und matcht via `leConfig.website.domain` (auf Page-Main-World
-  gelesen) gegen `state.checkedUrl`. Reagiert auf `chrome.tabs.onUpdated/onCreated/onRemoved`.
+- **Reaktive LE-Tab-Erkennung** — singleton `editorTab` ref, scannt alle Tabs.
+  - Für `cms4.euroweb.de`: Path-Match `^/website/<auditDomain>/`
+  - Für `le-cms4.*`: Probe `window.leConfig.website.domain` im MAIN-World
+  - Reagiert auf `chrome.tabs.onUpdated/onCreated/onRemoved`.
 - **Editierbarkeits-Allowlist (zwei Klassen)** — pro Audit-Item wird im LE-Iframe
   geprüft, ob der nächste `[data-le-eid]`-Vorfahre einen content-Typ hat:
   - `CONTENT_TYPES` (article, title, picture, button, file, …) → editierbar wenn
@@ -171,8 +174,9 @@ Warum keine Sidebar-Auto-Öffnung? Der LE filtert Mausevents per
 werden ignoriert. Ein "Klick öffnet die Properties-Sidebar" wäre nur via
 `chrome.debugger`-Permission machbar (zu invasiv).
 
-API: `useLiveEditorBridge()` → `{ editorTab, focusItem, requestEditable, getEditable, refresh }`.
-Verwendet von: `ModuleItem.vue` (Stift-Button + reaktive Sichtbarkeit).
+API: `useLiveEditorBridge()` → `{ editorTab, focusItem, requestEditable, getEditable, refresh, openEditor }`.
+Verwendet von: `ModuleItem.vue` (Stift-Button + reaktive Sichtbarkeit),
+`ImageItem.vue` (3-state Pencil mit `openEditor` als Fallback).
 
 ### `highlight/index.js`
 
@@ -267,6 +271,14 @@ Setup-Bundle für jede Modul-Page (`<ModulePage moduleId>`). Bündelt:
 - `useModuleOverlay` für Overlay-Toggle
 - `useVisibilityWatcher` für Live-Visibility-Updates
 - `useModuleAttributes` apply-Trigger
+- **`recheck({ activeTab })`** — Modul-spezifischer Re-Run, optional auf dem
+  aktuell aktiven Tab (statt `state.checkedTabId`). Siehe
+  [check-flow.md](./check-flow.md).
+- **`actions`-Konfig** aus `module.json` wird gelesen, mit `allowChatBot`
+  als Legacy-Alias für `actions.chatbot` gemerged, und via
+  `provide('moduleOverlay', { actions, … })` an Item-Komponenten gereicht.
+  ModuleItem zeigt Action-Buttons (Stift, Roboter, Zauberstab, Eye-off) nur
+  wenn die jeweilige Action im Modul aktiv ist.
 
 Dadurch braucht eine Modul-Page nur `<ModulePage moduleId="…">` — der Rest ist
 zentralisiert.
@@ -298,13 +310,20 @@ filteredResult }`.
 
 Updated `item.visible` für jedes Item live, basierend auf computed-Style des
 echten DOM-Elements. Mechanik:
-1. `injectDirtyListener(tabId)` setzt einen scroll/resize-Listener im Page-Kontext,
-   der nur ein `window.__wpVisibilityDirty = true` setzt — billig
+1. `injectDirtyListener(tabId)` setzt einen capture-phase scroll/resize-Listener
+   am `document` im Page-Kontext, der nur ein `window.__wpVisibilityDirty = true`
+   setzt — billig. Capture-Phase fängt auch Scrolls innerhalb von
+   `overflow:auto`-Containern.
 2. 400ms-Polling von der Sidebar prüft das Flag, recheckt nur bei dirty
-3. Bei Tab-Switch (`onActivated`) frisch injizieren + recheck
+3. **5s-Safety-Net** — unconditional Recheck + Re-Inject der Iframe-Listener
+   (per `WeakSet`-Tracking). Fängt lazy-geladene Iframes ab, deren Scrolls der
+   ursprüngliche Listener nicht mitbekommt.
+4. Bei Tab-Switch (`onActivated`) frisch injizieren + recheck
 
 So bleibt die Sichtbarkeit (für gestrichene/durchsichtige Items) live, ohne
-permanenten DOM-Traffic. Beachtet auch Live-Editor-iframes.
+permanenten DOM-Traffic. Beachtet auch Live-Editor-iframes. Beide Intervalle
+werden in `onUnmounted` aufgeräumt — kein Overhead außerhalb der Modul-Detail-
+Ansicht.
 
 ### `useWebCheckerSettings.js`
 
@@ -324,8 +343,9 @@ setDefaultFilter, setShowSearch }`. Plus `whenWebCheckerSettingsHydrated()` für
 
 Per-Origin-Ignore-Liste für einzelne Item-Hinweise. Erlaubt dem User, falsch
 positive Items dauerhaft auszublenden (z.B. ein bewusst leeres `alt` auf einem
-Dekobild). Gespeichert als `Map<origin, Map<moduleId, Set<message>>>` in
-`chrome.storage.local` (`wp-web-checker-ignore-list`).
+Dekobild) — optional **mit Notiz**, warum das ignoriert wurde. Gespeichert
+unter `wp-ignored-issues` in `chrome.storage.local` als
+`byOrigin[origin][moduleId] = [{ message, note, addedAt }]`.
 
 Mechanik:
 - Origin = `new URL(checkedUrl).origin` — pro Domain getrennt (eine Site darf
@@ -335,10 +355,16 @@ Mechanik:
 - `useModuleFilter` filtert die ignorierten Items raus und exposed sie unter
   einem separaten `'ignored'`-Filter, damit der User sie wieder reaktivieren
   kann
+- **Confirm-Flow im UI**: Klick auf den Eye-off-Button öffnet
+  [`<ConfirmDialog>`](./ui-components.md#confirmdialog--action-bestätigung)
+  mit optionalem Notiz-Feld. Die Notiz wird mit jeder gespeicherten Issue-
+  Message zusammen abgelegt und im Restore-Tooltip + im Expand-Bereich des
+  ignorierten Items angezeigt.
 
-API: `useIgnoreList()` → `{ state, listFor, isIgnored, add, remove, clearOrigin }`.
-Verwendet von: `ModuleItem.vue` (`Hinweis ignorieren`/`Hinweis wiederherstellen`-
-Buttons), `useModuleFilter`.
+API: `useIgnoreList()` → `{ state, listFor, isIgnored, add, remove, getNote,
+setNote, clearOrigin }`. `add(origin, moduleId, message, { note })` — note
+ist optional. Verwendet von: `ModuleItem.vue` (Confirm-Dialog beim Ignorieren),
+`useModuleFilter`.
 
 ### `useRunHistory.js`
 
@@ -371,8 +397,35 @@ Chat-Store + Provider-Dispatch. Hält pro Provider:
 Verlauf. Toggle iteriert via `modules.value` über alle aktiven Provider — UI
 ist provider-agnostisch.
 
+Re-resolve, wenn der aktive Provider deaktiviert wird: ein `watch` auf
+`useChatbotProviders().isEnabled(activeProvider)` switched automatisch zum
+ersten verbleibenden aktiven Provider. Verhindert „toter Chat"-States.
+
 Provider-Vertrag: [chatbot/README.md](../src/services/chatbot/README.md).
 Storage: `localStorage` (`${APP_NAME_LOWER}-chats-v2`), nicht `chrome.storage`.
+
+### `useChatbotProviders.js`
+
+Singleton-Store für die Provider-Toggle-States pro User (siehe
+[chatbot-providers.md](./chatbot-providers.md)). Persistiert via
+`createSettingsStore('wp-chatbot-providers', { userScoped: true })`.
+
+API: `{ modules, enabledModules, anyEnabled, isEnabled(id), setEnabled(id, bool) }`.
+Hydration via `whenChatbotProvidersHydrated()` in [main.js](../src/main.js).
+
+### `modules/claude/composables/useClaude.js`
+
+Zentrale Verfügbarkeits-Quelle und Generic-Prompt-Runner für die
+Claude-Aktionen außerhalb des reinen Chats. Siehe
+[claude-actions.md](./claude-actions.md) für Feature-Übersicht.
+
+API: `{ isAvailable, isEnabledByUser, lastValidated, ensureValidated,
+invalidate, run({ system, messages, model?, max_tokens? }) }`.
+
+`isAvailable` = `isEnabledByUser ∧ keyExists ∧ lastValidated`. Eager-Validation
+via Singleton-`watch` triggert `ensureValidated()` automatisch wenn beide
+Voraussetzungen erfüllt sind — verhindert Henne-Ei-Problem (Button gated auf
+`isAvailable`, Validation nur über Klick).
 
 ---
 

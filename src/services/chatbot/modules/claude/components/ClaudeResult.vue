@@ -69,21 +69,21 @@ function format(text) {
         <div class="px-4 py-3 border-b border-border flex items-center gap-2 shrink-0">
           <Icon name="mdiAutoFix" :size="16" class="text-primary shrink-0" />
           <span class="text-sm font-semibold text-light flex-1 truncate">{{ title || t('Claude') }}</span>
-          <button
+          <BaseButton
             v-if="text && !loading && !error"
+            variant="surface-icon"
+            :icon="copied ? 'mdiCheck' : 'mdiContentCopy'"
+            :icon-size="14"
+            :tooltip="t('Copy')"
             @click="copy"
-            class="p-1.5 rounded-lg hover:bg-surface-soft text-muted hover:text-light transition-colors"
-            :title="t('Copy')"
-          >
-            <Icon :name="copied ? 'mdiCheck' : 'mdiContentCopy'" :size="14" />
-          </button>
-          <button
+          />
+          <BaseButton
+            variant="surface-icon"
+            icon="mdiClose"
+            :icon-size="14"
+            :tooltip="t('Close')"
             @click="close"
-            class="p-1.5 rounded-lg hover:bg-surface-soft text-muted hover:text-light transition-colors"
-            :title="t('Close')"
-          >
-            <Icon name="mdiClose" :size="14" />
-          </button>
+          />
         </div>
 
         <div class="flex-1 overflow-y-auto px-4 py-4">

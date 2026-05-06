@@ -118,13 +118,14 @@ function removeSite(origin, ev) {
           :icon="mod.icon" :title="t(mod.name)" :description="t(mod.description)"
           @click="router.push(`/service/${mod.serviceId}/module/${mod.id}`)"
         >
-          <button
+          <BaseButton
+            variant="icon"
+            icon="mdiStar"
+            :icon-size="14"
+            :tooltip="t('Remove from favorites')"
+            class="text-primary hover:text-primary"
             @click.stop="toggleFavorite(mod.serviceId, mod.id)"
-            class="p-1 rounded-md hover:bg-surface transition-colors"
-            :title="t('Remove from favorites')"
-          >
-            <Icon name="mdiStar" :size="14" class="text-primary" />
-          </button>
+          />
         </CardItem>
       </section>
 
@@ -146,20 +147,20 @@ function removeSite(origin, ev) {
           </div>
           <div class="flex items-center gap-1 shrink-0 ml-2">
             <StatusPill :count="site.errors || null" :warning-count="site.warnings || null" />
-            <button
+            <BaseButton
+              variant="icon"
+              icon="mdiOpenInNew"
+              :icon-size="14"
+              :tooltip="t('Open in new tab')"
               @click="openSite(site.origin, $event)"
-              class="p-1 rounded-md text-muted/40 hover:text-primary hover:bg-surface transition-colors"
-              :title="t('Open in new tab')"
-            >
-              <Icon name="mdiOpenInNew" :size="14" />
-            </button>
-            <button
+            />
+            <BaseButton
+              variant="icon-error"
+              icon="mdiClose"
+              :icon-size="14"
+              :tooltip="t('Remove from history')"
               @click="removeSite(site.origin, $event)"
-              class="p-1 rounded-md text-muted/40 hover:text-error hover:bg-error/10 transition-colors"
-              :title="t('Remove from history')"
-            >
-              <Icon name="mdiClose" :size="14" />
-            </button>
+            />
           </div>
         </button>
       </section>

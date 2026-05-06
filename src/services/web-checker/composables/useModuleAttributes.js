@@ -42,7 +42,8 @@ export function useModuleAttributes(moduleId) {
           // resolution order: selector (modules that inject their own spans, e.g. spellcheck) → tag+idx → text+tag → background-image div by idx → image attrs
           function findEl(meta) {
             if (meta.selector) {
-              return document.querySelector(meta.selector) ?? null
+              const bySel = document.querySelector(meta.selector)
+              if (bySel) return bySel
             }
 
             if (meta.tag !== undefined && meta.idx !== undefined) {
@@ -71,7 +72,7 @@ export function useModuleAttributes(moduleId) {
                 .replace(/_(small|medium|large|resized|x1|x2).*$/i, '')
 
               if (meta.alt?.length > 3) {
-                const byAlt = document.querySelector(`img[alt="${meta.alt}"]`)
+                const byAlt = Array.from(document.querySelectorAll('img')).find(img => img.getAttribute('alt') === meta.alt)
                 if (byAlt) return byAlt
               }
 
@@ -108,6 +109,7 @@ export function useModuleAttributes(moduleId) {
   }
 
   async function remove() {
+    // strip lookup attrs only — injected spans survive until the next check() run
     const tabIds = await getTabIds()
     await Promise.all(tabIds.map(tabId =>
       chrome.scripting.executeScript({
@@ -120,13 +122,6 @@ export function useModuleAttributes(moduleId) {
             el.removeAttribute(`data-${prefix}-meta`)
             el.removeAttribute(`data-${prefix}-title`)
             el.removeAttribute(`data-${prefix}-desc`)
-          })
-
-          document.querySelectorAll(`[data-${prefix}-injected="${moduleId}"]`).forEach(span => {
-            const parent = span.parentNode
-            if (!parent) return
-            parent.replaceChild(document.createTextNode(span.textContent), span)
-            parent.normalize()
           })
         },
         args: [moduleId, APP_NAME_LOWER],

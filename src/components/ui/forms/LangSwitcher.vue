@@ -9,11 +9,12 @@ function toggle() {
 </script>
 
 <template>
-  <button
+  <BaseButton
+    variant="header-icon"
+    :tooltip="lang === 'en' ? 'Sprache wechseln (Deutsch)' : 'Switch language (English)'"
+    class="px-2 py-1 text-[11px] font-bold text-black/70 hover:bg-black/20 bg-black/10 shrink-0"
     @click="toggle"
-    class="px-2 py-1 rounded-lg bg-black/10 hover:bg-black/20 text-[11px] font-bold text-black/70 transition-colors shrink-0"
-    :title="lang === 'en' ? 'Sprache wechseln (Deutsch)' : 'Switch language (English)'"
   >
     {{ lang.toUpperCase() }}
-  </button>
+  </BaseButton>
 </template>

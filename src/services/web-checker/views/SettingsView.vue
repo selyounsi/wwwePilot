@@ -124,13 +124,14 @@ function submitSelector() {
               class="flex items-center justify-between gap-2 bg-surface border border-border rounded-lg px-3 py-2"
             >
               <span class="text-xs font-mono text-light truncate flex-1">{{ sel }}</span>
-              <button
+              <BaseButton
+                variant="icon-error"
+                icon="mdiClose"
+                :icon-size="14"
+                :tooltip="t('Remove')"
+                class="shrink-0"
                 @click="removeCustomSelector(sel)"
-                class="text-muted/50 hover:text-error transition-colors shrink-0"
-                :title="t('Remove')"
-              >
-                <Icon name="mdiClose" :size="14" />
-              </button>
+              />
             </div>
           </div>
           <p v-else class="text-[11px] text-muted/60 italic">

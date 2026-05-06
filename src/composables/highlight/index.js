@@ -7,7 +7,11 @@ export async function highlightElement(item, label, clickType = 'click') {
     id:     item.element,
     label:  label,
     type:   item.type  ?? 'success',
-    issues: (item.issues ?? []).map(i => ({ type: i.type, message: i.message })),
+    issues: (item.issues ?? []).map(i => ({
+      type:        i.type,
+      message:     i.message,
+      description: i.description || '',
+    })),
     meta:   item._meta ?? {},
   })
 }

@@ -2,9 +2,13 @@ import { onMounted, onUnmounted } from 'vue'
 import { useCheckStore }  from './useCheckStore.js'
 import { APP_NAME_LOWER } from '@/config/app.js'
 
+const FULL_RECHECK_MS  = 5_000
+const DIRTY_POLL_MS    = 400
+
 export function useVisibilityWatcher(moduleId) {
   const { state, setResult } = useCheckStore()
-  let pollInterval  = null
+  let dirtyInterval = null
+  let fullInterval  = null
   let lastTabId     = null
 
   // runs in the page context via executeScript
@@ -69,14 +73,24 @@ export function useVisibilityWatcher(moduleId) {
     await chrome.scripting.executeScript({
       target: { tabId },
       func: () => {
-        if (window.__wpVisibilityListenerActive) return
-        window.__wpVisibilityListenerActive = true
-        window.__wpVisibilityDirty = false
-        const mark = () => { window.__wpVisibilityDirty = true }
-        window.addEventListener('scroll', mark, { passive: true })
-        window.addEventListener('resize', mark, { passive: true })
+        if (!window.__wpVisibilityListenerActive) {
+          window.__wpVisibilityListenerActive = true
+          window.__wpVisibilityDirty          = false
+          window.__wpVisibilityIframes        = new WeakSet()
+          const mark = () => { window.__wpVisibilityDirty = true }
+          window.__wpVisibilityMark = mark
+          document.addEventListener('scroll', mark, { capture: true, passive: true })
+          window.addEventListener('resize', mark, { passive: true })
+        }
+        const mark    = window.__wpVisibilityMark
+        const tracked = window.__wpVisibilityIframes
         document.querySelectorAll('iframe').forEach(f => {
-          try { f.contentWindow?.addEventListener('scroll', mark, { passive: true }) } catch {}
+          if (tracked.has(f)) return
+          try {
+            f.contentWindow?.addEventListener('scroll',  mark, { capture: true, passive: true })
+            f.contentDocument?.addEventListener('scroll', mark, { capture: true, passive: true })
+            tracked.add(f)
+          } catch {}
         })
       },
     }).catch(() => {})
@@ -107,20 +121,26 @@ export function useVisibilityWatcher(moduleId) {
 
     await injectDirtyListener(tab.id)
     await recheckVisibility(tab.id)
-    // second pass: gives lazy-loaded elements a chance to render
     setTimeout(() => recheckVisibility(tab.id), 600)
 
-    // re-check only after scroll/resize, otherwise idle
-    pollInterval = setInterval(async () => {
+    dirtyInterval = setInterval(async () => {
       if (!lastTabId) return
       if (await isDirty(lastTabId)) recheckVisibility(lastTabId)
-    }, 400)
+    }, DIRTY_POLL_MS)
+
+    // safety net for lazy iframes / overflow containers
+    fullInterval = setInterval(async () => {
+      if (!lastTabId) return
+      await injectDirtyListener(lastTabId)
+      recheckVisibility(lastTabId)
+    }, FULL_RECHECK_MS)
 
     chrome.tabs.onActivated.addListener(onTabActivated)
   })
 
   onUnmounted(() => {
-    clearInterval(pollInterval)
+    clearInterval(dirtyInterval)
+    clearInterval(fullInterval)
     chrome.tabs.onActivated.removeListener(onTabActivated)
   })
 }

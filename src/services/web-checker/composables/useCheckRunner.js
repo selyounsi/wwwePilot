@@ -125,7 +125,7 @@ export function useCheckRunner() {
           function addItem(el, checks, extra = {}) {
             const issues = checks
               .filter(c => c.when && c.type !== 'success')
-              .map(({ type, title }) => ({ type, message: title }))
+              .map(({ type, title, description }) => ({ type, message: title, description: description || '' }))
 
             const status = issues.some(i => i.type === 'error')   ? 'error'
                          : issues.some(i => i.type === 'warning') ? 'warning'

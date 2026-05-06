@@ -81,4 +81,9 @@ Erst lesen, dann fragen:
 - Modul-API (Page-Kontext-Helper) → [docs/module-api.md](docs/module-api.md)
 - Übersetzungssystem → [docs/i18n.md](docs/i18n.md)
 - Login / OIDC → [docs/auth.md](docs/auth.md)
+- Chatbot-Provider an/aus → [docs/chatbot-providers.md](docs/chatbot-providers.md)
+- Claude-Aktionen (Erklären, Alt-Text, Site-Bericht, Meta) → [docs/claude-actions.md](docs/claude-actions.md)
+- Live-Editor-Bridge + CMS4-Erkennung → [docs/live-editor.md](docs/live-editor.md)
+- Re-Check-Flow + Tab-Handling → [docs/check-flow.md](docs/check-flow.md)
+- Globale UI-Bausteine (BaseButton, Tooltip, ConfirmDialog) → [docs/ui-components.md](docs/ui-components.md)
 - Was prüft Modul X im Detail → `services/web-checker/modules/<x>/README.md`

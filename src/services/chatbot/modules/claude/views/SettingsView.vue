@@ -66,13 +66,14 @@ async function remove() {
               <Icon name="mdiCheck" :size="14" class="text-success shrink-0" />
               <p class="text-xs text-success truncate">{{ t('API key is saved') }}</p>
             </div>
-            <button
-              @click="testSaved"
+            <BaseButton
+              variant="pill"
               :disabled="testing"
-              class="text-[11px] px-2 py-1 rounded-lg bg-surface border border-border text-light hover:bg-surface-soft-hover transition-colors shrink-0 disabled:opacity-50"
+              class="shrink-0"
+              @click="testSaved"
             >
               {{ testing ? t('Testing…') : t('Test now') }}
-            </button>
+            </BaseButton>
           </div>
 
           <p v-else class="text-[11px] text-muted leading-snug">
@@ -89,32 +90,36 @@ async function remove() {
                 class="flex-1 bg-transparent text-xs text-light outline-none placeholder:text-muted/40 font-mono"
                 @keydown.enter="save"
               />
-              <button
+              <BaseButton
+                variant="icon"
+                :icon="masked ? 'mdiEye' : 'mdiEyeOff'"
+                :icon-size="13"
+                :tooltip="masked ? t('Show key') : t('Hide key')"
+                class="shrink-0"
                 @click="masked = !masked"
-                class="text-muted/40 hover:text-muted transition-colors shrink-0"
-              >
-                <Icon :name="masked ? 'mdiEye' : 'mdiEyeOff'" :size="13" />
-              </button>
+              />
             </div>
           </div>
 
           <div class="flex gap-2">
-            <button
-              @click="save"
+            <BaseButton
               :disabled="!input.trim() || saving"
-              class="flex-1 py-2 rounded-xl text-xs font-medium transition-all"
-              :class="input.trim() && !saving
-                ? 'bg-primary text-black/80 hover:opacity-90'
-                : 'bg-surface-soft text-muted/40 cursor-not-allowed'"
-            >{{ saving ? t('Verifying…') : t('Save & test') }}</button>
-            <button
-              v-if="keyExists"
-              @click="remove"
-              class="px-3 py-2 rounded-xl text-xs text-error/70 hover:text-error hover:bg-error/10 border border-error/20 transition-all"
-              :title="t('Delete key')"
+              :loading="saving"
+              class="flex-1 py-2 rounded-xl text-xs"
+              @click="save"
             >
-              <Icon name="mdiTrashCan" :size="14" />
-            </button>
+              {{ saving ? t('Verifying…') : t('Save & test') }}
+              <template #loading>{{ t('Verifying…') }}</template>
+            </BaseButton>
+            <BaseButton
+              v-if="keyExists"
+              variant="icon-error"
+              icon="mdiTrashCan"
+              :icon-size="14"
+              :tooltip="t('Delete key')"
+              class="px-3 py-2 rounded-xl border border-error/20"
+              @click="remove"
+            />
           </div>
         </div>
       </div>

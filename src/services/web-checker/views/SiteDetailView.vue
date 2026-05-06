@@ -65,13 +65,13 @@ function clearAll() {
 <template>
   <div class="h-full bg-background flex flex-col">
     <AppHeader showBack :title="host" :subtitle="t('Check history')">
-      <button
+      <BaseButton
+        variant="header-icon"
+        icon="mdiOpenInNew"
+        :icon-size="14"
+        :tooltip="t('Open in new tab')"
         @click="openSite"
-        class="p-1.5 rounded-lg hover:bg-black/10 text-black/60 transition-colors"
-        :title="t('Open in new tab')"
-      >
-        <Icon name="mdiOpenInNew" :size="14" />
-      </button>
+      />
     </AppHeader>
 
     <div class="flex-1 px-4 py-4 flex flex-col gap-3 overflow-y-auto min-h-0">
@@ -106,11 +106,12 @@ function clearAll() {
         </div>
 
         <div class="flex items-end gap-0.5 h-10">
-          <div
+          <Tooltip
             v-for="(run, i) in row.runs" :key="i"
-            class="flex-1 min-w-0 rounded-sm relative group"
-            :title="`${new Date(run.timestamp).toLocaleString()}\n${t('{n} errors',   { n: run.errorCount   ?? 0 })}\n${t('{n} warnings', { n: run.warningCount ?? 0 })}`"
-            :style="{ height: '100%' }"
+            :text="`${new Date(run.timestamp).toLocaleString()}\n${t('{n} errors',   { n: run.errorCount   ?? 0 })}\n${t('{n} warnings', { n: run.warningCount ?? 0 })}`"
+          >
+          <div
+            class="flex-1 min-w-0 rounded-sm relative group h-full"
           >
             <div
               v-if="(run.errorCount ?? 0) > 0"
@@ -128,6 +129,7 @@ function clearAll() {
               style="height: 8%"
             />
           </div>
+          </Tooltip>
         </div>
 
         <div class="flex items-center justify-between text-[10px] text-muted/60">

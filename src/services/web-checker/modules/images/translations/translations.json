@@ -23,7 +23,14 @@
     "Lightbox class missing (lightbox-zoom-image)": "Lightbox-Klasse fehlt (lightbox-zoom-image)",
     "Image upscaled: rendered {rw}×{rh}px, original {w}×{h}px": "Bild wird hochskaliert: {rw}×{rh}px gerendert, Original {w}×{h}px",
     "Image OK": "Bild korrekt",
-    "Lightbox correctly configured": "Lightbox korrekt konfiguriert"
+    "Lightbox correctly configured": "Lightbox korrekt konfiguriert",
+
+    "Generate alt text": "Alt-Text generieren",
+    "Generate alt text — needs attention": "Alt-Text generieren – braucht Beschreibung",
+    "Suggested alt text": "Vorgeschlagener Alt-Text",
+
+    "Open Live Editor": "Live-Editor öffnen",
+    "Element not editable in Live Editor": "Element ist im Live-Editor nicht editierbar"
   },
   "en": {}
 }

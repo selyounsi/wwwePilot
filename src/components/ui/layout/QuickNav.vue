@@ -38,22 +38,23 @@ const displayName = computed(() => {
 
 <template>
   <div class="shrink-0">
-    <button
+    <BaseButton
       v-if="authState.user"
+      variant="circle"
+      :tooltip="displayName || t('Menu')"
       @click="toggle"
-      class="rounded-full ring-2 ring-black/10 hover:ring-black/30 transition-all"
-      :title="displayName || t('Menu')"
     >
       <UserAvatar :user="authState.user" :size="32" />
-    </button>
-    <button
+    </BaseButton>
+    <BaseButton
       v-else
+      variant="header-icon"
+      icon="mdiMenu"
+      :icon-size="16"
+      :tooltip="t('Menu')"
+      class="w-8 h-8 bg-black/10 hover:bg-black/20 text-black/70"
       @click="toggle"
-      class="w-8 h-8 flex items-center justify-center rounded-lg bg-black/10 hover:bg-black/20 transition-colors text-black/70"
-      :title="t('Menu')"
-    >
-      <Icon name="mdiMenu" :size="16" />
-    </button>
+    />
 
     <Teleport to="body">
       <Transition name="qn-fade">
@@ -76,12 +77,14 @@ const displayName = computed(() => {
               <div v-if="authState.user?.email" class="text-[11px] text-muted truncate">{{ authState.user.email }}</div>
               <span v-else class="text-sm font-semibold text-light">{{ t('Menu') }}</span>
             </div>
-            <button
+            <BaseButton
+              variant="surface-icon"
+              icon="mdiClose"
+              :icon-size="15"
+              :tooltip="t('Close')"
+              class="shrink-0"
               @click="close"
-              class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-surface-soft-hover transition-colors text-muted shrink-0"
-            >
-              <Icon name="mdiClose" :size="15" />
-            </button>
+            />
           </div>
 
           <nav class="flex-1 overflow-y-auto py-2 flex flex-col">
