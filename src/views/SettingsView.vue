@@ -6,6 +6,7 @@ import { useServiceLoader } from '@/composables/loaders/useServiceLoader.js'
 import { useUiSettings }    from '@/composables/settings/useUiSettings.js'
 import { useAuth }          from '@/composables/auth/useAuth.js'
 import { useToast }         from '@/composables/useToast.js'
+import { useExtensionVersion } from '@/composables/useExtensionVersion.js'
 
 const router = useRouter()
 const { t, lang, setLang, supportedLangs } = useI18n()
@@ -19,6 +20,12 @@ const {
 } = useUiSettings()
 const { state: authState, logout } = useAuth()
 const toast = useToast()
+const { state: versionState, hasUpdate, refresh: refreshVersion } = useExtensionVersion()
+
+function downloadUpdate() {
+  if (!versionState.downloadUrl) return
+  chrome.tabs.create({ url: versionState.downloadUrl, active: true })
+}
 
 async function onLogout() {
   await logout()
@@ -167,6 +174,45 @@ const servicesWithSettings = computed(() => {
             <BaseButton variant="ghost" @click="onLogout">
               {{ t('Sign out') }}
             </BaseButton>
+          </div>
+        </div>
+      </section>
+
+      <section class="flex flex-col gap-2">
+        <SectionLabel>{{ t('About') }}</SectionLabel>
+
+        <div class="bg-surface-soft border border-border rounded-xl overflow-hidden">
+          <div class="px-3 py-2.5 flex items-center justify-between gap-2 border-b border-border/60">
+            <span class="text-xs text-muted">{{ t('Installed version') }}</span>
+            <span class="text-xs font-mono text-light">{{ versionState.current }}</span>
+          </div>
+          <div class="px-3 py-2.5 flex items-center justify-between gap-2 border-b border-border/60">
+            <span class="text-xs text-muted">{{ t('Latest version') }}</span>
+            <span class="text-xs font-mono" :class="hasUpdate ? 'text-alert' : 'text-light'">
+              {{ versionState.latest ?? '—' }}
+            </span>
+          </div>
+
+          <div v-if="hasUpdate" class="px-3 py-3 flex flex-col gap-2 bg-alert/10">
+            <p class="text-[11px] text-alert leading-snug">
+              {{ t('A new version is available. Download the ZIP and reload the extension in chrome://extensions/.') }}
+            </p>
+            <BaseButton variant="primary" @click="downloadUpdate">
+              {{ t('Download update ({version})', { version: versionState.latest }) }}
+            </BaseButton>
+          </div>
+
+          <div v-else class="px-3 py-3 flex items-center justify-between gap-2">
+            <span class="text-[11px] text-muted">
+              {{ versionState.latest ? t('You are on the latest version.') : t('Checking for updates…') }}
+            </span>
+            <BaseButton
+              variant="square-sm"
+              icon="mdiRefresh"
+              :icon-size="14"
+              :tooltip="t('Check now')"
+              @click="refreshVersion"
+            />
           </div>
         </div>
       </section>

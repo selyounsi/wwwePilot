@@ -5,12 +5,14 @@ import { useServiceLoader } from '@/composables/loaders/useServiceLoader.js'
 import { useI18n }          from '@/composables/i18n/useI18n.js'
 import { useAuth }          from '@/composables/auth/useAuth.js'
 import { useToast }         from '@/composables/useToast.js'
+import { useExtensionVersion } from '@/composables/useExtensionVersion.js'
 
 const router = useRouter()
 const { services } = useServiceLoader()
 const { t, lang }  = useI18n()
 const { state: authState, logout } = useAuth()
 const toast = useToast()
+const { hasUpdate } = useExtensionVersion()
 
 const open = ref(false)
 function close()  { open.value = false }
@@ -37,11 +39,11 @@ const displayName = computed(() => {
 </script>
 
 <template>
-  <div class="shrink-0">
+  <div class="shrink-0 relative">
     <BaseButton
       v-if="authState.user"
       variant="circle"
-      :tooltip="displayName || t('Menu')"
+      :tooltip="hasUpdate ? t('Update available') : (displayName || t('Menu'))"
       @click="toggle"
     >
       <UserAvatar :user="authState.user" :size="32" />
@@ -51,9 +53,13 @@ const displayName = computed(() => {
       variant="header-icon"
       icon="mdiMenu"
       :icon-size="16"
-      :tooltip="t('Menu')"
+      :tooltip="hasUpdate ? t('Update available') : t('Menu')"
       class="w-8 h-8 bg-black/10 hover:bg-black/20 text-black/70"
       @click="toggle"
+    />
+    <span
+      v-if="hasUpdate"
+      class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-alert ring-2 ring-primary pointer-events-none"
     />
 
     <Teleport to="body">
@@ -113,7 +119,10 @@ const displayName = computed(() => {
               class="mt-3 flex items-center gap-3 px-4 py-2.5 hover:bg-surface-soft-hover transition-colors text-left border-t border-border/40"
             >
               <Icon name="mdiCog" :size="15" class="text-muted shrink-0" />
-              <span class="text-xs text-light flex-1">{{ t('Settings') }}</span>
+              <span class="text-xs text-light flex-1 inline-flex items-center gap-1.5">
+                {{ t('Settings') }}
+                <span v-if="hasUpdate" class="w-1.5 h-1.5 rounded-full bg-alert" />
+              </span>
               <span class="text-[10px] font-mono font-semibold text-muted/80 px-1.5 py-0.5 rounded bg-surface-soft">
                 {{ lang.toUpperCase() }}
               </span>

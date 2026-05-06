@@ -25,4 +25,7 @@ export const API = {
   config: {
     url: `${BACKEND}/api/config`,
   },
+  version: {
+    url: `${BACKEND}/api/version`,
+  },
 }

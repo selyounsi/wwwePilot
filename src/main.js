@@ -11,6 +11,7 @@ import { whenAuthHydrated }               from './composables/auth/useAuth.js'
 import { whenFavoritesHydrated }          from './composables/useFavorites.js'
 import { whenChatbotProvidersHydrated }   from './services/chatbot/composables/useChatbotProviders.js'
 import { whenAppConfigHydrated }           from './composables/useAppConfig.js'
+import { whenExtensionVersionReady }       from './composables/useExtensionVersion.js'
 
 ;(async () => {
   await Promise.all([
@@ -22,6 +23,7 @@ import { whenAppConfigHydrated }           from './composables/useAppConfig.js'
     whenFavoritesHydrated(),
     whenChatbotProvidersHydrated(),
     whenAppConfigHydrated(),
+    whenExtensionVersionReady(),
   ])
 
   const app = createApp(App)
