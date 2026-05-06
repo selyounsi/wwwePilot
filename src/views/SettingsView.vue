@@ -39,7 +39,7 @@ const servicesWithSettings = computed(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-background flex flex-col">
+  <div class="min-h-full bg-background flex flex-col">
     <AppHeader showBack :title="t('Settings')" />
 
     <div class="flex-1 px-4 py-4 flex flex-col gap-5 overflow-y-auto">

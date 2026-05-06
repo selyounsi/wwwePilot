@@ -84,7 +84,7 @@ function format(text) {
 </script>
 
 <template>
-  <div class="h-screen bg-background flex flex-col">
+  <div class="h-full bg-background flex flex-col">
     <AppHeader showBack>
       <template #below>
         <ProviderToggle />

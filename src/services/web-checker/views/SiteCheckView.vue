@@ -299,7 +299,7 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
 </script>
 
 <template>
-  <div class="h-screen bg-background flex flex-col">
+  <div class="h-full bg-background flex flex-col">
     <AppHeader showBack :title="t('Full Website')" :subtitle="t('Sitemap-based check')" />
 
     <div class="flex-1 px-4 py-4 flex flex-col gap-3 min-h-0">

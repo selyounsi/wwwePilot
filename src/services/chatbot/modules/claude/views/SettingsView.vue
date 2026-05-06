@@ -24,7 +24,7 @@ async function remove() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-background flex flex-col">
+  <div class="min-h-full bg-background flex flex-col">
     <AppHeader showBack :subtitle="t('Settings')" />
 
     <div class="flex-1 px-4 py-4 flex flex-col gap-4 overflow-y-auto">

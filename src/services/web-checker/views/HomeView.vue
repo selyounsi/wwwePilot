@@ -61,7 +61,7 @@ async function handleCheck() {
 </script>
 
 <template>
-  <div class="h-screen bg-background flex flex-col">
+  <div class="h-full bg-background flex flex-col">
     <AppHeader showBack />
 
     <div class="flex-1 px-4 py-4 flex flex-col gap-2 overflow-y-auto">

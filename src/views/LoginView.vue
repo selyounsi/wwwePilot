@@ -34,7 +34,7 @@ async function onLogin() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-background flex flex-col">
+  <div class="min-h-full bg-background flex flex-col">
     <div class="bg-primary px-4 py-5">
       <h1 class="text-lg font-bold leading-tight">{{ APP_NAME }}</h1>
       <p class="text-xs text-black/50 mt-0.5">{{ t('Sign in to continue') }}</p>

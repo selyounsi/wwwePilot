@@ -2,8 +2,14 @@
 @source inline("justify-start justify-end justify-center items-start items-end items-center flex-row flex-col flex-row-reverse");
 
 html, body {
+  height: 100%;
+  margin: 0;
   color-scheme: dark;
   background: var(--color-background);
+}
+
+#app {
+  height: 100%;
 }
 
 @theme {

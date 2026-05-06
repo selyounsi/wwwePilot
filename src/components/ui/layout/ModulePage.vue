@@ -35,7 +35,7 @@ const defaultFilter = computed(() => settings.defaultFilter ?? config.value?.def
     </ModulePage>
 -->
 <template>
-  <div class="min-h-screen bg-background flex flex-col">
+  <div class="min-h-full bg-background flex flex-col">
     <AppHeader showBack />
 
     <ModuleSection :moduleId="moduleId" :label="label" :defaultFilter="defaultFilter" v-slot="{ result, raw }">
