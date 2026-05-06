@@ -10,6 +10,7 @@ import { whenWebCheckerSettingsHydrated } from './services/web-checker/composabl
 import { whenAuthHydrated }               from './composables/auth/useAuth.js'
 import { whenFavoritesHydrated }          from './composables/useFavorites.js'
 import { whenChatbotProvidersHydrated }   from './services/chatbot/composables/useChatbotProviders.js'
+import { whenAppConfigHydrated }           from './composables/useAppConfig.js'
 
 ;(async () => {
   await Promise.all([
@@ -20,6 +21,7 @@ import { whenChatbotProvidersHydrated }   from './services/chatbot/composables/u
     whenAuthHydrated(),
     whenFavoritesHydrated(),
     whenChatbotProvidersHydrated(),
+    whenAppConfigHydrated(),
   ])
 
   const app = createApp(App)

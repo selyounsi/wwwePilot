@@ -22,4 +22,7 @@ export const API = {
   pagespeed: {
     url: `${BACKEND}/api/pagespeed`,
   },
+  config: {
+    url: `${BACKEND}/api/config`,
+  },
 }

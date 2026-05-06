@@ -1,14 +1,16 @@
 import { ref, watch } from 'vue'
 import { useCheckStore } from '@/services/web-checker/composables/useCheckStore.js'
+import { useAppConfig }  from '@/composables/useAppConfig.js'
 
-// hosts that run the CMS4 Live-Editor (top-frame). Add patterns here if more
-// staging/preview hosts come along.
-const EDITOR_HOST_PATTERNS = [
-  /^le-cms4\.[\w.-]+$/,
-  /^cms4\.euroweb\.de$/,
-]
+const { state: appConfig } = useAppConfig()
 
-const CMS4_OPEN_BASE = 'https://cms4.euroweb.de/website/'
+function editorHostPatterns() {
+  const cfg = appConfig.liveEditor
+  const patterns = []
+  if (cfg.cms4Staging)  { try { patterns.push(new RegExp(cfg.cms4Staging)) } catch {} }
+  if (cfg.cms4ProdHost) { try { patterns.push(new RegExp(`^${cfg.cms4ProdHost.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`)) } catch {} }
+  return patterns
+}
 
 // CMS4 element types fall into two buckets:
 //
@@ -34,7 +36,7 @@ const STRUCTURAL_TYPES = [
 ]
 
 function isEditorHost(host) {
-  return EDITOR_HOST_PATTERNS.some(re => re.test(host))
+  return editorHostPatterns().some(re => re.test(host))
 }
 
 async function findEditorTabFor(checkedUrl) {
@@ -51,7 +53,7 @@ async function findEditorTabFor(checkedUrl) {
     try { url = new URL(tab.url) } catch { continue }
     if (!isEditorHost(url.hostname)) continue
 
-    if (url.hostname === 'cms4.euroweb.de') {
+    if (appConfig.liveEditor.cms4ProdHost && url.hostname === appConfig.liveEditor.cms4ProdHost) {
       const m = url.pathname.match(/^\/website\/([^/]+)/)
       if (m && m[1] === auditDomain) return tab
       continue
@@ -71,9 +73,11 @@ async function findEditorTabFor(checkedUrl) {
 
 async function openEditorFor(checkedUrl) {
   if (!checkedUrl) return null
+  const base = appConfig.liveEditor.cms4ProdBase
+  if (!base) return null
   let auditDomain
   try { auditDomain = new URL(checkedUrl).hostname } catch { return null }
-  return chrome.tabs.create({ url: `${CMS4_OPEN_BASE}${auditDomain}/`, active: true })
+  return chrome.tabs.create({ url: `${base}${auditDomain}/`, active: true })
 }
 
 // runs in the LE top-frame. Walks the iframe DOM, locates the audited element
