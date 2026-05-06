@@ -3,12 +3,14 @@ import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth }  from '@/composables/auth/useAuth.js'
 import { useI18n }  from '@/composables/i18n/useI18n.js'
+import { useToast } from '@/composables/useToast.js'
 import { APP_NAME } from '@/config/app.js'
 
 const router = useRouter()
 const route  = useRoute()
 const { t }  = useI18n()
 const { login } = useAuth()
+const toast = useToast()
 
 const error = ref('')
 const busy  = ref(false)
@@ -17,11 +19,14 @@ async function onLogin() {
   busy.value  = true
   error.value = ''
   try {
-    await login()
+    const user = await login()
+    const greeting = user?.firstName || user?.username || user?.email || ''
+    toast.success(greeting ? t('Hi, {name}!', { name: greeting }) : t('Signed in'))
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
     router.replace(redirect)
   } catch (e) {
     error.value = e.message || t('Login failed')
+    toast.error(error.value, { title: t('Login failed') })
   } finally {
     busy.value = false
   }

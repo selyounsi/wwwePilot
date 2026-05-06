@@ -59,6 +59,11 @@
     "Expand all": "Alle aufklappen",
     "Collapse all": "Alle einklappen",
 
+    "Something went wrong": "Etwas ist schiefgelaufen",
+    "Background error": "Hintergrund-Fehler",
+    "Signed in": "Angemeldet",
+    "Signed out": "Abgemeldet",
+
     "Open in new tab": "In neuem Tab öffnen",
     "Remove from history": "Aus dem Verlauf entfernen",
     "Check history": "Prüfungs-Verlauf",

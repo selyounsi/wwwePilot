@@ -4,11 +4,13 @@ import { useRouter } from 'vue-router'
 import { useServiceLoader } from '@/composables/loaders/useServiceLoader.js'
 import { useI18n }          from '@/composables/i18n/useI18n.js'
 import { useAuth }          from '@/composables/auth/useAuth.js'
+import { useToast }         from '@/composables/useToast.js'
 
 const router = useRouter()
 const { services } = useServiceLoader()
 const { t, lang }  = useI18n()
 const { state: authState, logout } = useAuth()
+const toast = useToast()
 
 const open = ref(false)
 function close()  { open.value = false }
@@ -22,6 +24,7 @@ function go(path) {
 async function onLogout() {
   close()
   await logout()
+  toast.info(t('Signed out'))
   router.replace({ name: 'login' })
 }
 

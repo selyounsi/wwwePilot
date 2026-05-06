@@ -5,6 +5,7 @@ import { useI18n }          from '@/composables/i18n/useI18n.js'
 import { useServiceLoader } from '@/composables/loaders/useServiceLoader.js'
 import { useUiSettings }    from '@/composables/settings/useUiSettings.js'
 import { useAuth }          from '@/composables/auth/useAuth.js'
+import { useToast }         from '@/composables/useToast.js'
 
 const router = useRouter()
 const { t, lang, setLang, supportedLangs } = useI18n()
@@ -17,9 +18,11 @@ const {
   incrementZoom, decrementZoom, resetZoom,
 } = useUiSettings()
 const { state: authState, logout } = useAuth()
+const toast = useToast()
 
 async function onLogout() {
   await logout()
+  toast.info(t('Signed out'))
   router.replace({ name: 'login' })
 }
 

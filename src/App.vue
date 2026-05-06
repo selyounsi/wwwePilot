@@ -1,13 +1,17 @@
 <script setup>
-import { onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { onMounted, onUnmounted, onErrorCaptured, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useModuleLoader } from '@/composables/loaders/useModuleLoader.js'
 import { useTabWatcher }   from '@/services/web-checker/composables/useTabWatcher.js'
+import { useToast }        from '@/composables/useToast.js'
+import { useI18n }         from '@/composables/i18n/useI18n.js'
 
 const router = useRouter()
 const route  = useRoute()
 const { modules } = useModuleLoader('web-checker')
 const { start, stop } = useTabWatcher(modules)
+const toast = useToast()
+const { t } = useI18n()
 
 let port
 const onOverlayClick = (msg) => {
@@ -38,8 +42,24 @@ onUnmounted(() => {
   port?.disconnect()
   chrome.runtime.onMessage.removeListener(onOverlayClick)
 })
+
+// Catch unhandled component errors so a crash in one module doesn't take
+// the whole sidebar down silently.
+onErrorCaptured((err, _instance, info) => {
+  console.error('[App]', info, err)
+  toast.error(err?.message || String(err), { title: t('Something went wrong') })
+  return false
+})
+
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('[App] unhandled rejection', e.reason)
+  toast.error(e.reason?.message || String(e.reason), { title: t('Background error') })
+})
 </script>
 
 <template>
-  <RouterView />
+  <div>
+    <RouterView />
+    <ToastContainer />
+  </div>
 </template>
