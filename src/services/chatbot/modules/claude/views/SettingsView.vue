@@ -1,25 +1,50 @@
 <script setup>
 import { ref } from 'vue'
 import { useI18n } from '@/composables/i18n/useI18n.js'
+import { useToast } from '@/composables/useToast.js'
 import { useClaudeSettings } from '../composables/useClaudeSettings.js'
 
 const { t } = useI18n()
-const { keyExists, saveKey, deleteKey } = useClaudeSettings()
+const toast = useToast()
+const { keyExists, saveKey, deleteKey, validateKey } = useClaudeSettings()
 
-const input  = ref('')
-const saving = ref(false)
-const masked = ref(true)
+const input    = ref('')
+const saving   = ref(false)
+const testing  = ref(false)
+const masked   = ref(true)
 
 async function save() {
-  if (!input.value.trim()) return
+  const key = input.value.trim()
+  if (!key) return
   saving.value = true
-  await saveKey(input.value.trim())
-  saving.value = false
-  input.value  = ''
+  try {
+    const check = await validateKey(key)
+    if (!check?.ok) {
+      toast.error(check?.error ?? t('Could not verify the key.'), { title: t('Validation failed') })
+      return
+    }
+    await saveKey(key)
+    toast.success(t('API key saved and verified'))
+    input.value = ''
+  } finally {
+    saving.value = false
+  }
+}
+
+async function testSaved() {
+  testing.value = true
+  try {
+    const check = await validateKey()
+    if (check?.ok) toast.success(t('Saved key is working'))
+    else           toast.error(check?.error ?? t('Could not verify the key.'), { title: t('Validation failed') })
+  } finally {
+    testing.value = false
+  }
 }
 
 async function remove() {
   await deleteKey()
+  toast.info(t('API key removed'))
 }
 </script>
 
@@ -36,9 +61,18 @@ async function remove() {
         </div>
         <div class="px-3 py-3 flex flex-col gap-3">
 
-          <div v-if="keyExists" class="flex items-center gap-2 bg-success/10 border border-success/20 rounded-xl px-3 py-2">
-            <Icon name="mdiCheck" :size="14" class="text-success shrink-0" />
-            <p class="text-xs text-success">{{ t('API key is saved') }}</p>
+          <div v-if="keyExists" class="flex items-center justify-between gap-2 bg-success/10 border border-success/20 rounded-xl px-3 py-2">
+            <div class="flex items-center gap-2 min-w-0">
+              <Icon name="mdiCheck" :size="14" class="text-success shrink-0" />
+              <p class="text-xs text-success truncate">{{ t('API key is saved') }}</p>
+            </div>
+            <button
+              @click="testSaved"
+              :disabled="testing"
+              class="text-[11px] px-2 py-1 rounded-lg bg-surface border border-border text-light hover:bg-surface-soft-hover transition-colors shrink-0 disabled:opacity-50"
+            >
+              {{ testing ? t('Testing…') : t('Test now') }}
+            </button>
           </div>
 
           <p v-else class="text-[11px] text-muted leading-snug">
@@ -72,7 +106,7 @@ async function remove() {
               :class="input.trim() && !saving
                 ? 'bg-primary text-black/80 hover:opacity-90'
                 : 'bg-surface-soft text-muted/40 cursor-not-allowed'"
-            >{{ saving ? t('Saving…') : t('Save') }}</button>
+            >{{ saving ? t('Verifying…') : t('Save & test') }}</button>
             <button
               v-if="keyExists"
               @click="remove"

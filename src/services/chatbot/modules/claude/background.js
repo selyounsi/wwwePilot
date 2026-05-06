@@ -1,4 +1,4 @@
-export const types = ['CLAUDE_CHAT', 'CLAUDE_KEY_SET', 'CLAUDE_KEY_EXISTS', 'CLAUDE_KEY_DELETE']
+export const types = ['CLAUDE_CHAT', 'CLAUDE_KEY_SET', 'CLAUDE_KEY_EXISTS', 'CLAUDE_KEY_DELETE', 'CLAUDE_KEY_VALIDATE']
 
 export async function handle(msg, sendResponse) {
   switch (msg.type) {
@@ -18,6 +18,34 @@ export async function handle(msg, sendResponse) {
     case 'CLAUDE_KEY_DELETE': {
       await chrome.storage.local.remove('claude_api_key')
       sendResponse({ ok: true })
+      break
+    }
+
+    case 'CLAUDE_KEY_VALIDATE': {
+      let key = msg.key
+      if (!key) {
+        const data = await chrome.storage.local.get('claude_api_key')
+        key = data.claude_api_key
+      }
+      if (!key) { sendResponse({ ok: false, error: 'No key provided' }); break }
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/models?limit=1', {
+          method: 'GET',
+          headers: {
+            'x-api-key':                                     key,
+            'anthropic-version':                             '2023-06-01',
+            'anthropic-dangerous-direct-browser-access':     'true',
+          },
+        })
+        if (res.ok) {
+          sendResponse({ ok: true })
+        } else {
+          const data = await res.json().catch(() => ({}))
+          sendResponse({ ok: false, error: data.error?.message ?? `HTTP ${res.status}` })
+        }
+      } catch (e) {
+        sendResponse({ ok: false, error: e.message })
+      }
       break
     }
 

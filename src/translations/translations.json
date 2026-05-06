@@ -64,6 +64,16 @@
     "Signed in": "Angemeldet",
     "Signed out": "Abgemeldet",
 
+    "Save & test": "Speichern & testen",
+    "Verifying…": "Wird geprüft…",
+    "Test now": "Jetzt testen",
+    "Testing…": "Wird getestet…",
+    "API key saved and verified": "API-Key gespeichert und geprüft",
+    "Saved key is working": "Gespeicherter Key funktioniert",
+    "Could not verify the key.": "Key konnte nicht geprüft werden.",
+    "Validation failed": "Prüfung fehlgeschlagen",
+    "API key removed": "API-Key entfernt",
+
     "Open in new tab": "In neuem Tab öffnen",
     "Remove from history": "Aus dem Verlauf entfernen",
     "Check history": "Prüfungs-Verlauf",
