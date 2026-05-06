@@ -3,6 +3,10 @@ import { ref, inject, computed, useSlots } from 'vue'
 import { useRouter } from 'vue-router'
 import { highlightElement } from '@/composables/highlight/index.js'
 import { useChat } from '@/services/chatbot/composables/useChat.js'
+import { useChatbotProviders } from '@/services/chatbot/composables/useChatbotProviders.js'
+import { useClaude } from '@/services/chatbot/modules/claude/composables/useClaude.js'
+import ClaudeButton from '@/services/chatbot/modules/claude/components/ClaudeButton.vue'
+import ClaudeResult from '@/services/chatbot/modules/claude/components/ClaudeResult.vue'
 import { useCheckStore } from '@/services/web-checker/composables/useCheckStore.js'
 import { useIgnoreList } from '@/services/web-checker/composables/useIgnoreList.js'
 import { useLiveEditorBridge } from '@/composables/liveEditor/useLiveEditorBridge.js'
@@ -19,9 +23,16 @@ const emit = defineEmits(['click'])
 
 const router       = useRouter()
 const { send }     = useChat()
+const { anyEnabled: chatEnabled } = useChatbotProviders()
+const claude       = useClaude()
 const checkStore   = useCheckStore()
 const slots        = useSlots()
 const open         = ref(false)
+
+const explainOpen    = ref(false)
+const explainLoading = ref(false)
+const explainText    = ref('')
+const explainError   = ref('')
 
 const { labelFn = () => '', allowChatBot = false, moduleId = null } = inject('moduleOverlay', {})
 
@@ -103,6 +114,43 @@ async function fetchElementHtml() {
     } catch {}
   }
   return null
+}
+
+async function explainWithClaude() {
+  explainOpen.value    = true
+  explainText.value    = ''
+  explainError.value   = ''
+  explainLoading.value = true
+  try {
+    const issues = (props.item.issues ?? []).filter(i => i.type !== 'success')
+    const label  = labelFn(props.item) || props.item.title || props.item.text || props.item.name || ''
+    const html   = await fetchElementHtml()
+    const trimmedHtml = html && html.length > 2000 ? html.slice(0, 2000) + '\n…' : html
+
+    const checkedUrl = checkStore.state.checkedUrl ?? ''
+    const issueLines = issues.map(i => `- [${i.type}] ${i.message}`).join('\n')
+
+    const userMessage = [
+      `Module: ${moduleId}`,
+      checkedUrl && `Page: ${checkedUrl}`,
+      `Element: ${label}`,
+      issueLines && `Issues:\n${issueLines}`,
+      trimmedHtml && `HTML:\n\`\`\`html\n${trimmedHtml}\n\`\`\``,
+    ].filter(Boolean).join('\n\n')
+
+    const result = await claude.run({
+      max_tokens: 800,
+      system: 'You are a senior web QA engineer helping a developer fix issues found on a web page. ' +
+              'Reply in German, concise (3-6 short paragraphs maximum). Explain WHY the issue matters, ' +
+              'then give a CONCRETE FIX with code if applicable. No fluff, no apologies.',
+      messages: [{ role: 'user', content: userMessage }],
+    })
+    explainText.value = result.text
+  } catch (e) {
+    explainError.value = e.message || String(e)
+  } finally {
+    explainLoading.value = false
+  }
 }
 
 async function openInChat() {
@@ -202,13 +250,20 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
             <Icon name="mdiPencilOutline" :size="13" />
           </button>
           <button
-            v-if="allowChatBot && item.issues?.some(i => i.type === 'error' || i.type === 'warning')"
+            v-if="allowChatBot && chatEnabled && item.issues?.some(i => i.type === 'error' || i.type === 'warning')"
             @click.stop="openInChat"
             class="transition-all text-muted/40 hover:text-primary hover:bg-primary/10 rounded p-0.5 hover:scale-110"
             :title="t('Analyze in chat')"
           >
             <Icon name="mdiRobot" :size="13" />
           </button>
+          <ClaudeButton
+            v-if="moduleId && item.issues?.some(i => i.type === 'error' || i.type === 'warning')"
+            :loading="explainLoading"
+            :label="t('Explain with Claude')"
+            icon-only
+            @click="explainWithClaude"
+          />
           <button
             v-if="moduleId && !item._ignored && item.issues?.some(i => i.type === 'error' || i.type === 'warning')"
             @click.stop="ignoreItem"
@@ -270,5 +325,14 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
         >{{ issue.message }}</div>
       </div>
     </div>
+
+    <ClaudeResult
+      :open="explainOpen"
+      :title="t('Explain with Claude')"
+      :loading="explainLoading"
+      :error="explainError"
+      :text="explainText"
+      @update:open="explainOpen = $event"
+    />
   </div>
 </template>

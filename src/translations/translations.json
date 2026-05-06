@@ -64,6 +64,22 @@
     "Signed in": "Angemeldet",
     "Signed out": "Abgemeldet",
 
+    "Ask Claude": "Mit Claude analysieren",
+    "Explain with Claude": "Mit Claude erklären",
+    "Asking Claude…": "Frage an Claude läuft…",
+    "Powered by Claude": "Bereitgestellt durch Claude",
+    "Copied to clipboard": "In die Zwischenablage kopiert",
+    "Could not copy": "Konnte nicht kopiert werden",
+    "Copy": "Kopieren",
+    "Close": "Schließen",
+
+    "Active chatbots": "Aktive Chatbots",
+    "No chatbot enabled — the chat service is currently inactive.": "Kein Chatbot aktiviert — der Chat-Service ist gerade nicht nutzbar.",
+    "Disabled chatbots are completely hidden across the extension.": "Deaktivierte Chatbots werden in der gesamten Erweiterung ausgeblendet.",
+    "No chatbot enabled.": "Kein Chatbot aktiviert.",
+    "Activate at least one chatbot in the chat settings to start a conversation.": "Aktiviere mindestens einen Chatbot in den Chat-Einstellungen.",
+    "Open chat settings": "Chat-Einstellungen öffnen",
+
     "Save & test": "Speichern & testen",
     "Verifying…": "Wird geprüft…",
     "Test now": "Jetzt testen",

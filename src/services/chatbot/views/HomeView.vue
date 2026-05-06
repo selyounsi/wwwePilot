@@ -1,14 +1,17 @@
 <script setup>
 import { ref, nextTick, watch, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useChat } from '../composables/useChat.js'
 import { useI18n } from '@/composables/i18n/useI18n.js'
 import ProviderToggle from '../components/ProviderToggle.vue'
 
 const {
-  modules, chats, activeChat, activeModule, messages, isLoading, activeProvider,
+  modules, enabledModules, anyEnabled,
+  chats, activeChat, activeModule, messages, isLoading, activeProvider,
   send, clear, newChat, switchChat, deleteChat, copyMessage, setProvider,
 } = useChat()
 const { t } = useI18n()
+const router = useRouter()
 
 const input       = ref('')
 const messagesEl  = ref(null)
@@ -85,6 +88,21 @@ function format(text) {
 
 <template>
   <div class="h-full bg-background flex flex-col">
+    <template v-if="!anyEnabled">
+      <AppHeader showBack />
+      <div class="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center">
+        <Icon name="mdiRobot" :size="40" class="text-muted/40" />
+        <p class="text-sm text-light max-w-xs">{{ t('No chatbot enabled.') }}</p>
+        <p class="text-xs text-muted max-w-xs leading-snug">
+          {{ t('Activate at least one chatbot in the chat settings to start a conversation.') }}
+        </p>
+        <BaseButton variant="ghost" @click="router.push('/service/chatbot/settings')">
+          {{ t('Open chat settings') }}
+        </BaseButton>
+      </div>
+    </template>
+
+    <template v-else>
     <AppHeader showBack>
       <template #below>
         <ProviderToggle />
@@ -235,6 +253,7 @@ function format(text) {
         </p>
       </div>
     </div>
+    </template>
   </div>
 </template>
 

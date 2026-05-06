@@ -1,7 +1,8 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { APP_NAME_LOWER } from '@/config/app.js'
-import { useI18n }         from '@/composables/i18n/useI18n.js'
-import { useModuleLoader } from '@/composables/loaders/useModuleLoader.js'
+import { useI18n }              from '@/composables/i18n/useI18n.js'
+import { useModuleLoader }      from '@/composables/loaders/useModuleLoader.js'
+import { useChatbotProviders }  from './useChatbotProviders.js'
 
 const STORAGE_KEY = `${APP_NAME_LOWER}-chats-v2`
 
@@ -46,16 +47,29 @@ function saveChats(state) {
 // Lazy singletons — initialized on first useChat() call. Initializing at
 // module-top would deadlock against a circular import: useModuleLoader's
 // eager glob loads each module's views/Index.vue, and those import useChat.
-let modules, allChats, activeProvider, activeChatIds, isLoading, error
+let modules, allChats, activeProvider, activeChatIds, isLoading, error, providers
 
 function init() {
   if (modules) return
   modules        = useModuleLoader('chatbot').modules
+  providers      = useChatbotProviders()
   allChats       = ref(loadChats(modules))
-  activeProvider = ref(modules[0]?.id ?? '')
+  activeProvider = ref(providers.enabledModules.value[0]?.id ?? modules[0]?.id ?? '')
   activeChatIds  = ref(Object.fromEntries(modules.map(m => [m.id, allChats.value[m.id]?.[0]?.id])))
   isLoading      = ref(false)
   error          = ref(null)
+
+  // Auto-switch to the first enabled provider whenever the active one is
+  // disabled in settings, so the chat view doesn't get stuck on an invisible
+  // provider.
+  watch(
+    () => providers.isEnabled(activeProvider.value),
+    (stillEnabled) => {
+      if (stillEnabled) return
+      const next = providers.enabledModules.value[0]?.id
+      if (next) activeProvider.value = next
+    },
+  )
 }
 
 export function useChat() {
@@ -112,7 +126,7 @@ export function useChat() {
   }
 
   function setProvider(id) {
-    if (modules.find(m => m.id === id)) activeProvider.value = id
+    if (modules.find(m => m.id === id) && providers.isEnabled(id)) activeProvider.value = id
   }
 
   function clear() {
@@ -148,6 +162,8 @@ export function useChat() {
 
   return {
     modules,
+    enabledModules: providers.enabledModules,
+    anyEnabled: providers.anyEnabled,
     chats, activeChat, activeModule, messages, isLoading, error, activeProvider,
     send, clear, newChat, switchChat, deleteChat, copyMessage, setProvider,
   }

@@ -1,4 +1,4 @@
-export const types = ['CLAUDE_CHAT', 'CLAUDE_KEY_SET', 'CLAUDE_KEY_EXISTS', 'CLAUDE_KEY_DELETE', 'CLAUDE_KEY_VALIDATE']
+export const types = ['CLAUDE_CHAT', 'CLAUDE_KEY_SET', 'CLAUDE_KEY_EXISTS', 'CLAUDE_KEY_DELETE', 'CLAUDE_KEY_VALIDATE', 'CLAUDE_RUN']
 
 export async function handle(msg, sendResponse) {
   switch (msg.type) {
@@ -45,6 +45,39 @@ export async function handle(msg, sendResponse) {
         }
       } catch (e) {
         sendResponse({ ok: false, error: e.message })
+      }
+      break
+    }
+
+    case 'CLAUDE_RUN': {
+      const data = await chrome.storage.local.get('claude_api_key')
+      const apiKey = data.claude_api_key
+      if (!apiKey) { sendResponse({ error: 'No API key saved' }); break }
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type':                              'application/json',
+            'x-api-key':                                 apiKey,
+            'anthropic-version':                         '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true',
+          },
+          body: JSON.stringify({
+            model:      msg.model      ?? 'claude-sonnet-4-6',
+            max_tokens: msg.max_tokens ?? 1024,
+            system:     msg.system,
+            messages:   msg.messages,
+          }),
+        })
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}))
+          sendResponse({ error: err.error?.message ?? `HTTP ${res.status}` })
+          break
+        }
+        const body = await res.json()
+        sendResponse({ content: body.content, raw: body })
+      } catch (e) {
+        sendResponse({ error: e.message })
       }
       break
     }
