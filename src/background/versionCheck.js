@@ -1,9 +1,3 @@
-/**
- * Polls the backend for new extension versions while the side panel is
- * closed. When a newer version is found we fire a desktop notification —
- * deduplicated per version so a Mitarbeiter only ever sees one toast per
- * release. Click on the notification opens the side panel directly.
- */
 import { API } from '@/config/api.js'
 import { APP_NAME } from '@/config/app.js'
 import { compareVersions } from '@/utils/version.js'
@@ -67,7 +61,5 @@ export function registerVersionCheck() {
     openUpdatesPanel()
   })
 
-  // Also do an immediate check on service-worker boot so we don't wait
-  // up to an hour after the worker spins up.
   maybeNotify()
 }

@@ -32,10 +32,6 @@ function cancelPathEdit() {
   editingPath.value = false
 }
 
-// Watches the single download we kicked off in Step 1. As soon as Chrome
-// reports state=complete, we jump the user straight into the native file
-// explorer (chrome.downloads.show) — saves a click and makes the flow feel
-// magical. Listener self-detaches once the matching id finishes.
 function watchDownloadComplete(id) {
   const handler = (delta) => {
     if (delta.id !== id) return
