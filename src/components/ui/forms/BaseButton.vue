@@ -80,8 +80,14 @@ const buttonClasses = computed(() => {
         <span v-else class="w-3 h-3 border-2 border-muted/30 border-t-primary rounded-full animate-spin" />
       </template>
       <template v-else>
-        <Icon v-if="icon" :name="icon" :size="iconSize" />
-        <slot />
+        <span v-if="icon && $slots.default" class="inline-flex items-center justify-center gap-1.5">
+          <Icon :name="icon" :size="iconSize" />
+          <slot />
+        </span>
+        <template v-else>
+          <Icon v-if="icon" :name="icon" :size="iconSize" />
+          <slot />
+        </template>
       </template>
     </button>
   </Tooltip>

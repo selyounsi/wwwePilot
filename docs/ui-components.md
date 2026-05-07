@@ -48,6 +48,10 @@ Eine Komponente für alles. Variant-Prop entscheidet über Stil. Optional
 </BaseButton>
 ```
 
+Wenn `icon` und Slot-Inhalt zusammen gesetzt sind, wrappt BaseButton beide
+intern in einen `inline-flex` mit `gap-1.5` — Icon und Text haben damit
+automatisch sauberen Abstand, ohne dass der Caller das selbst stylen muss.
+
 ## `<Tooltip>` — gestylter Hover-Tooltip
 
 Ersetzt `title="…"` mit teleportiertem Float-Element. Auto-Flip oben → unten
