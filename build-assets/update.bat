@@ -5,16 +5,25 @@ cd /d "%~dp0"
 set "BACKEND_URL=__BACKEND_URL__"
 
 echo.
-echo [wwweBar Update] Hole neueste Version...
-for /f "delims=" %%v in ('powershell -NoProfile -Command "try { (Invoke-RestMethod '!BACKEND_URL!/api/version').latest } catch { '' }"') do set "VERSION=%%v"
-
-if "!VERSION!"=="" (
-    echo Konnte Version nicht ermitteln. Backend erreichbar?
+echo [wwweBar Update] Hole neueste Version von !BACKEND_URL!/api/version
+curl -s -f "!BACKEND_URL!/api/version" -o version.tmp
+if errorlevel 1 (
+    echo Backend nicht erreichbar.
+    if exist version.tmp del /q version.tmp
     pause
     exit /b 1
 )
 
-echo [wwweBar Update] Lade !VERSION!.zip...
+for /f "delims=" %%v in ('powershell -NoProfile -Command "(Get-Content -Raw version.tmp ^| ConvertFrom-Json).latest"') do set "VERSION=%%v"
+del /q version.tmp
+
+if "!VERSION!"=="" (
+    echo Konnte Version nicht parsen.
+    pause
+    exit /b 1
+)
+
+echo [wwweBar Update] Lade !VERSION!.zip ...
 curl -L -f -o update.zip "!BACKEND_URL!/api/version/download/!VERSION!"
 if errorlevel 1 (
     echo Download fehlgeschlagen.
@@ -31,7 +40,7 @@ for %%f in (*) do (
 echo [wwweBar Update] Entpacke...
 tar -xf update.zip
 if errorlevel 1 (
-    echo Entpacken fehlgeschlagen. Bitte ZIP manuell entpacken.
+    echo Entpacken fehlgeschlagen.
     pause
     exit /b 1
 )

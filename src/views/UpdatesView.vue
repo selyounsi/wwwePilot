@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from '@/composables/i18n/useI18n.js'
 import { useToast } from '@/composables/useToast.js'
 import { useExtensionVersion } from '@/composables/useExtensionVersion.js'
@@ -13,11 +13,15 @@ const { state: versionState, hasUpdate, refresh: refreshVersion, compareVersions
 const { state: pathState, hasPath, setPath, clear: clearPath } = useExtensionPath()
 const { state: authState } = useAuth()
 
+const method      = ref(hasPath.value ? 'auto' : 'manual')
 const downloadId  = ref(null)
 const downloading = ref(false)
 const step        = ref(1)
 const editingPath = ref(false)
 const pathDraft   = ref('')
+
+watch(method, () => { step.value = 1 })
+watch(hasPath, (v) => { if (!v && method.value === 'auto') method.value = 'manual' })
 
 function startEditingPath() {
   pathDraft.value = pathState.path
@@ -94,7 +98,7 @@ async function copyUpdateScriptPath() {
     toast.error(t('Could not copy'))
     return
   }
-  step.value = 3
+  step.value = 2
 }
 
 function showInDownloads() {
@@ -209,115 +213,185 @@ const step1Done = computed(() => step.value > 1)
 
       <div v-if="hasUpdate" class="flex flex-col gap-3">
 
-        <div
-          class="border rounded-xl p-3 flex flex-col gap-2 transition-colors"
-          :class="step === 1 ? 'bg-alert/10 border-alert/40' : 'bg-surface-soft border-border opacity-60'"
-        >
-          <div class="flex items-center gap-2">
-            <span class="text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center"
-              :class="step1Done ? 'bg-success text-black' : 'bg-alert text-black'"
-            >{{ step1Done ? '✓' : '1' }}</span>
-            <span class="text-xs font-medium text-light">{{ t('Download ZIP') }}</span>
-          </div>
-          <BaseButton
-            variant="primary"
-            icon="mdiDownload"
-            :icon-size="14"
-            :loading="downloading"
-            @click="downloadUpdate"
+        <div class="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            class="border rounded-xl px-3 py-2.5 flex flex-col items-start gap-0.5 transition-colors text-left"
+            :class="method === 'auto' ? 'bg-alert/10 border-alert/40' : 'bg-surface-soft border-border opacity-60 hover:opacity-100'"
+            :disabled="!hasPath"
+            @click="method = 'auto'"
           >
-            {{ t('Download update ({version})', { version: versionState.latest }) }}
-          </BaseButton>
+            <span class="text-xs font-medium text-light">{{ t('Auto-Update') }}</span>
+            <span class="text-[10px] text-muted leading-snug">{{ t('Run update.bat — 1 click + reload') }}</span>
+          </button>
+          <button
+            type="button"
+            class="border rounded-xl px-3 py-2.5 flex flex-col items-start gap-0.5 transition-colors text-left"
+            :class="method === 'manual' ? 'bg-alert/10 border-alert/40' : 'bg-surface-soft border-border opacity-60 hover:opacity-100'"
+            @click="method = 'manual'"
+          >
+            <span class="text-xs font-medium text-light">{{ t('Manual') }}</span>
+            <span class="text-[10px] text-muted leading-snug">{{ t('Download ZIP, replace, reload') }}</span>
+          </button>
         </div>
 
-        <div
-          class="border rounded-xl p-3 flex flex-col gap-2 transition-colors"
-          :class="step === 2 ? 'bg-alert/10 border-alert/40' : (step2Done ? 'bg-surface-soft border-border opacity-60' : 'bg-surface-soft/40 border-border/40 opacity-40')"
-        >
-          <div class="flex items-center gap-2">
-            <span class="text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center"
-              :class="step2Done ? 'bg-success text-black' : (step === 2 ? 'bg-alert text-black' : 'bg-surface-soft text-muted')"
-            >{{ step2Done ? '✓' : '2' }}</span>
-            <span class="text-xs font-medium text-light">{{ t('Replace files in extension folder') }}</span>
-          </div>
+        <p v-if="!hasPath" class="text-[10px] text-muted/60 leading-snug -mt-1">
+          {{ t('Save the extension folder path above to enable auto-update.') }}
+        </p>
 
-          <p v-if="hasPath" class="text-[11px] text-muted leading-snug">
-            {{ t('Copies the extension folder path so you can paste it in Win+R and replace the files there.') }}
-          </p>
-          <p v-else class="text-[11px] text-muted leading-snug">
-            {{ t('Unzip the downloaded ZIP and copy the files into your extension folder.') }}
-          </p>
-
-          <BaseButton
-            v-if="hasPath"
-            variant="primary"
-            icon="mdiClipboardTextOutline"
-            :icon-size="14"
-            :disabled="step < 2"
-            @click="copyExtensionPath"
+        <template v-if="method === 'auto'">
+          <div
+            class="border rounded-xl p-3 flex flex-col gap-2 transition-colors"
+            :class="step === 1 ? 'bg-alert/10 border-alert/40' : 'bg-surface-soft border-border opacity-60'"
           >
-            {{ t('Copy extension folder path') }}
-          </BaseButton>
-          <BaseButton
-            v-else
-            variant="primary"
-            icon="mdiFolderOpen"
-            :icon-size="14"
-            :disabled="step < 2"
-            @click="showInDownloads"
-          >
-            {{ t('Show ZIP in file explorer') }}
-          </BaseButton>
-
-          <div v-if="hasPath" class="flex flex-col gap-1.5 pt-1 border-t border-border/40">
-            <p class="text-[11px] text-muted leading-snug pt-2">
-              {{ t('Optional: run update.bat (shipped with the extension) to download, replace and unzip automatically.') }}
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center"
+                :class="step1Done ? 'bg-success text-black' : 'bg-alert text-black'"
+              >{{ step1Done ? '✓' : '1' }}</span>
+              <span class="text-xs font-medium text-light">{{ t('Run update.bat') }}</span>
+            </div>
+            <p class="text-[11px] text-muted leading-snug">
+              {{ t('Copies the script path. Paste in Win+R, hit Enter — the script downloads and replaces all files.') }}
             </p>
             <BaseButton
-              variant="ghost"
+              variant="primary"
               icon="mdiConsole"
               :icon-size="14"
-              :disabled="step < 2"
-              class="text-xs!"
               @click="copyUpdateScriptPath"
             >
-              {{ t('Copy update.bat path (auto-update)') }}
+              {{ t('Copy update.bat path') }}
             </BaseButton>
           </div>
-        </div>
 
-        <div
-          class="border rounded-xl p-3 flex flex-col gap-2 transition-colors"
-          :class="step === 3 ? 'bg-alert/10 border-alert/40' : 'bg-surface-soft/40 border-border/40 opacity-40'"
-        >
-          <div class="flex items-center gap-2">
-            <span class="text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center"
-              :class="step === 3 ? 'bg-alert text-black' : 'bg-surface-soft text-muted'"
-            >3</span>
-            <span class="text-xs font-medium text-light">{{ t('Reload the extension') }}</span>
+          <div
+            class="border rounded-xl p-3 flex flex-col gap-2 transition-colors"
+            :class="step === 2 ? 'bg-alert/10 border-alert/40' : 'bg-surface-soft/40 border-border/40 opacity-40'"
+          >
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center"
+                :class="step === 2 ? 'bg-alert text-black' : 'bg-surface-soft text-muted'"
+              >2</span>
+              <span class="text-xs font-medium text-light">{{ t('Reload the extension') }}</span>
+            </div>
+            <p class="text-[11px] text-muted leading-snug">
+              {{ t('Once the script finished, reload to activate the new version.') }}
+            </p>
+            <BaseButton
+              variant="primary"
+              icon="mdiRefresh"
+              :icon-size="14"
+              :disabled="step < 2"
+              @click="reloadExtension"
+            >
+              {{ t('Reload extension') }}
+            </BaseButton>
+            <BaseButton
+              variant="ghost"
+              icon="mdiPuzzle"
+              :icon-size="14"
+              :disabled="step < 2"
+              @click="openExtensionsPage"
+            >
+              {{ t('Open extensions page') }}
+            </BaseButton>
           </div>
-          <p class="text-[11px] text-muted leading-snug">
-            {{ t('After replacing the files, reload to activate the new version.') }}
-          </p>
-          <BaseButton
-            variant="primary"
-            icon="mdiRefresh"
-            :icon-size="14"
-            :disabled="step < 3"
-            @click="reloadExtension"
+        </template>
+
+        <template v-else>
+          <div
+            class="border rounded-xl p-3 flex flex-col gap-2 transition-colors"
+            :class="step === 1 ? 'bg-alert/10 border-alert/40' : 'bg-surface-soft border-border opacity-60'"
           >
-            {{ t('Reload extension') }}
-          </BaseButton>
-          <BaseButton
-            variant="ghost"
-            icon="mdiPuzzle"
-            :icon-size="14"
-            :disabled="step < 3"
-            @click="openExtensionsPage"
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center"
+                :class="step1Done ? 'bg-success text-black' : 'bg-alert text-black'"
+              >{{ step1Done ? '✓' : '1' }}</span>
+              <span class="text-xs font-medium text-light">{{ t('Download ZIP') }}</span>
+            </div>
+            <BaseButton
+              variant="primary"
+              icon="mdiDownload"
+              :icon-size="14"
+              :loading="downloading"
+              @click="downloadUpdate"
+            >
+              {{ t('Download update ({version})', { version: versionState.latest }) }}
+            </BaseButton>
+          </div>
+
+          <div
+            class="border rounded-xl p-3 flex flex-col gap-2 transition-colors"
+            :class="step === 2 ? 'bg-alert/10 border-alert/40' : (step2Done ? 'bg-surface-soft border-border opacity-60' : 'bg-surface-soft/40 border-border/40 opacity-40')"
           >
-            {{ t('Open extensions page') }}
-          </BaseButton>
-        </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center"
+                :class="step2Done ? 'bg-success text-black' : (step === 2 ? 'bg-alert text-black' : 'bg-surface-soft text-muted')"
+              >{{ step2Done ? '✓' : '2' }}</span>
+              <span class="text-xs font-medium text-light">{{ t('Replace files in extension folder') }}</span>
+            </div>
+
+            <p v-if="hasPath" class="text-[11px] text-muted leading-snug">
+              {{ t('Copies the extension folder path so you can paste it in Win+R and replace the files there.') }}
+            </p>
+            <p v-else class="text-[11px] text-muted leading-snug">
+              {{ t('Unzip the downloaded ZIP and copy the files into your extension folder.') }}
+            </p>
+
+            <BaseButton
+              v-if="hasPath"
+              variant="primary"
+              icon="mdiClipboardTextOutline"
+              :icon-size="14"
+              :disabled="step < 2"
+              @click="copyExtensionPath"
+            >
+              {{ t('Copy extension folder path') }}
+            </BaseButton>
+            <BaseButton
+              v-else
+              variant="primary"
+              icon="mdiFolderOpen"
+              :icon-size="14"
+              :disabled="step < 2"
+              @click="showInDownloads"
+            >
+              {{ t('Show ZIP in file explorer') }}
+            </BaseButton>
+          </div>
+
+          <div
+            class="border rounded-xl p-3 flex flex-col gap-2 transition-colors"
+            :class="step === 3 ? 'bg-alert/10 border-alert/40' : 'bg-surface-soft/40 border-border/40 opacity-40'"
+          >
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center"
+                :class="step === 3 ? 'bg-alert text-black' : 'bg-surface-soft text-muted'"
+              >3</span>
+              <span class="text-xs font-medium text-light">{{ t('Reload the extension') }}</span>
+            </div>
+            <p class="text-[11px] text-muted leading-snug">
+              {{ t('After replacing the files, reload to activate the new version.') }}
+            </p>
+            <BaseButton
+              variant="primary"
+              icon="mdiRefresh"
+              :icon-size="14"
+              :disabled="step < 3"
+              @click="reloadExtension"
+            >
+              {{ t('Reload extension') }}
+            </BaseButton>
+            <BaseButton
+              variant="ghost"
+              icon="mdiPuzzle"
+              :icon-size="14"
+              :disabled="step < 3"
+              @click="openExtensionsPage"
+            >
+              {{ t('Open extensions page') }}
+            </BaseButton>
+          </div>
+        </template>
 
       </div>
 
