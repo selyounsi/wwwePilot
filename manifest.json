@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "{{VITE_APP_NAME}}",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "action": {
     "default_icon": {
       "192": "icons/android-chrome-192x192.png",
@@ -15,7 +15,7 @@
   "side_panel": {
     "default_path": "index.html"
   },
-  "permissions": ["sidePanel", "scripting", "tabs", "activeTab", "storage", "webRequest", "identity", "cookies"],
+  "permissions": ["sidePanel", "scripting", "tabs", "activeTab", "storage", "webRequest", "identity", "cookies", "downloads", "notifications", "alarms"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "src/background.js"

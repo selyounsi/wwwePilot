@@ -1,9 +1,10 @@
 # Extension-Versionierung
 
-Die Extension prüft beim Start gegen das Backend, ob eine neuere Version
-existiert. Falls ja, blendet sich oben rechts auf dem AppHeader-Avatar ein
-roter Punkt ein, und in den Settings unter „Über" gibt's einen
-Download-Button.
+Die Extension prüft gegen das Backend, ob eine neuere Version existiert —
+sowohl im Vordergrund (Sidebar offen) als auch im Hintergrund (Service
+Worker via `chrome.alarms`). Bei einem neuen Release blendet sich ein roter
+Punkt im QuickNav ein **und** der Mitarbeiter sieht eine native
+Desktop-Notification (Klick öffnet die Sidebar direkt im Updates-View).
 
 ## Wo die Version herkommt
 
@@ -33,14 +34,37 @@ triggert.
 
 ## Update-Flow
 
-1. Klick auf „Update herunterladen" in den Settings
-2. `chrome.tabs.create({ url: state.downloadUrl })` → ZIP-Download startet
-3. User entpackt das ZIP
-4. `chrome://extensions/` → „Entpackte Erweiterung laden" oder Reload-Knopf
-   auf der bestehenden Extension
+Drei sichtbare Steps in [UpdatesView.vue](../src/views/UpdatesView.vue):
 
-> Chrome erlaubt keiner Extension sich selbst zu installieren — der manuelle
-> Reload ist Pflicht für self-hosted Extensions ohne Chrome Web Store.
+1. **Download** — `chrome.downloads.download()` mit Bearer-Token. Sobald
+   Chrome via `downloads.onChanged` `state=complete` meldet, triggert die
+   Extension automatisch `chrome.downloads.show(id)` → der native
+   Windows-Explorer öffnet sich mit der ZIP markiert. Spart einen Klick.
+2. **Replace files** — Mitarbeiter entpackt ZIP, kopiert Files in den
+   Extension-Ordner. Wenn der Pfad einmalig gespeichert wurde
+   ([useExtensionPath.js](../src/composables/useExtensionPath.js)), reicht
+   ein Klick auf „Pfad kopieren" → einfügen in Win+E. Ohne gespeicherten
+   Pfad: Mitarbeiter sieht die ZIP eh schon im Explorer (Step 1).
+3. **Reload** — `chrome.runtime.reload()` startet die Extension neu.
+
+> Chrome erlaubt keiner Extension sich selbst neu zu installieren — der
+> manuelle File-Replace + Reload ist Pflicht für self-hosted Extensions
+> ohne Chrome Web Store. Native Messaging wäre die einzige Alternative,
+> braucht aber einen lokalen Helper auf jedem Rechner.
+
+## Hintergrund-Notification
+
+[src/background/versionCheck.js](../src/background/versionCheck.js) wird in
+`background.js` einmalig via `registerVersionCheck()` aktiviert:
+
+- Stündlicher Alarm via `chrome.alarms` (`periodInMinutes: 60`)
+- Plus Sofort-Check bei Service-Worker-Boot, `onStartup` und `onInstalled`
+- Pollt das **unauthentifizierte** `GET /api/version` (kein Token nötig —
+  liefert nur die Version, keine sensiblen Daten)
+- Bei `latest > installed`: `chrome.notifications.create()` mit
+  Dedup-Check via `chrome.storage.local` (jede Version wird nur einmal
+  gemeldet)
+- Klick auf die Notification → `chrome.sidePanel.open({ windowId })`
 
 ## Backend-Vertrag
 

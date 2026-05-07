@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onBeforeUnmount } from 'vue'
 import { useI18n } from '@/composables/i18n/useI18n.js'
 import { useToast } from '@/composables/useToast.js'
 import { useExtensionVersion } from '@/composables/useExtensionVersion.js'
@@ -32,6 +32,26 @@ function cancelPathEdit() {
   editingPath.value = false
 }
 
+// Watches the single download we kicked off in Step 1. As soon as Chrome
+// reports state=complete, we jump the user straight into the native file
+// explorer (chrome.downloads.show) — saves a click and makes the flow feel
+// magical. Listener self-detaches once the matching id finishes.
+function watchDownloadComplete(id) {
+  const handler = (delta) => {
+    if (delta.id !== id) return
+    if (delta.state?.current === 'complete') {
+      try { chrome.downloads.show(id) } catch {}
+      step.value = 2
+      chrome.downloads.onChanged.removeListener(handler)
+    } else if (delta.state?.current === 'interrupted') {
+      toast.error(t('Download failed'))
+      chrome.downloads.onChanged.removeListener(handler)
+    }
+  }
+  chrome.downloads.onChanged.addListener(handler)
+  onBeforeUnmount(() => chrome.downloads.onChanged.removeListener(handler))
+}
+
 async function downloadUpdate() {
   if (!versionState.latest) return
   downloading.value = true
@@ -46,7 +66,7 @@ async function downloadUpdate() {
         : undefined,
     })
     downloadId.value = id
-    step.value = 2
+    watchDownloadComplete(id)
   } catch (e) {
     toast.error(e.message || t('Download failed'))
   } finally {
@@ -54,12 +74,15 @@ async function downloadUpdate() {
   }
 }
 
-async function openExtensionFolder() {
+async function copyExtensionPath() {
   if (!hasPath.value) return
-  try { await navigator.clipboard.writeText(pathState.path) } catch {}
-  const url = pathState.path.replace(/\\/g, '/').replace(/^file:\/+/, '')
-  chrome.tabs.create({ url: `file:///${url}`, active: true })
-  toast.success(t('Path copied — paste it in Win+E for the native explorer'))
+  try {
+    await navigator.clipboard.writeText(pathState.path)
+    toast.success(t('Path copied to clipboard — paste in Win+E'))
+  } catch {
+    toast.error(t('Could not copy'))
+    return
+  }
   step.value = 3
 }
 
@@ -208,21 +231,21 @@ const step1Done = computed(() => step.value > 1)
           </div>
 
           <p v-if="hasPath" class="text-[11px] text-muted leading-snug">
-            {{ t('Opens the folder as browser-tab and copies the path so you can paste it into Win+E for the native explorer.') }}
+            {{ t('Copies the extension folder path so you can paste it in Win+E and replace the files there.') }}
           </p>
           <p v-else class="text-[11px] text-muted leading-snug">
-            {{ t('Show the ZIP in your file explorer, then unzip and copy the files into your extension folder.') }}
+            {{ t('Unzip the downloaded ZIP and copy the files into your extension folder.') }}
           </p>
 
           <BaseButton
             v-if="hasPath"
             variant="primary"
-            icon="mdiFolderOpen"
+            icon="mdiClipboardTextOutline"
             :icon-size="14"
             :disabled="step < 2"
-            @click="openExtensionFolder"
+            @click="copyExtensionPath"
           >
-            {{ t('Open extension folder') }}
+            {{ t('Copy extension folder path') }}
           </BaseButton>
           <BaseButton
             v-else

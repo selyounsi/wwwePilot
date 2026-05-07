@@ -2,6 +2,7 @@ import { reactive, computed, watch } from 'vue'
 import { useAuth, whenAuthHydrated } from './auth/useAuth.js'
 import { apiJson } from './auth/apiClient.js'
 import { API } from '@/config/api.js'
+import { compareVersions } from '@/utils/version.js'
 
 const state = reactive({
   current:     chrome.runtime?.getManifest?.()?.version ?? '0.0.0',
@@ -12,16 +13,6 @@ const state = reactive({
   loadedAt:    0,
   error:       null,
 })
-
-function compareVersions(a, b) {
-  const pa = String(a).split('.').map(n => parseInt(n, 10) || 0)
-  const pb = String(b).split('.').map(n => parseInt(n, 10) || 0)
-  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
-    const da = pa[i] ?? 0, db = pb[i] ?? 0
-    if (da !== db) return da - db
-  }
-  return 0
-}
 
 let inflight = null
 async function refresh() {

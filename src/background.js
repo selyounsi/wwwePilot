@@ -1,4 +1,5 @@
 import { APP_NAME_LOWER } from './config/app.js'
+import { registerVersionCheck } from './background/versionCheck.js'
 
 const moduleHandlers  = import.meta.glob('./services/*/modules/*/background.js', { eager: true })
 const serviceHandlers = import.meta.glob('./services/*/background.js',            { eager: true })
@@ -20,6 +21,8 @@ for (const [path, mod] of Object.entries(handlerModules)) {
 console.log('[background] registered handlers:', Object.keys(handlerMap))
 
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
+
+registerVersionCheck()
 
 // register MAIN-world content-script via API — bypasses page CSP and the
 // crxjs HMR loader, hooks console.* before any page script runs
