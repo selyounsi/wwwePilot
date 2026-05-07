@@ -64,7 +64,8 @@ Flow im Updates-View bei gespeichertem Pfad:
 1. Klick auf **„update.bat-Pfad kopieren (Auto-Update)"**
 2. Win+R → einfügen → Enter
 3. Terminal:
-   - holt `latest` via `Invoke-RestMethod`
+   - prüft Sicherheits-Schranken (siehe unten)
+   - holt `latest` via `curl` + `ConvertFrom-Json` (PowerShell)
    - lädt `<version>.zip` via `curl`
    - löscht alle alten Files (außer sich selbst + ZIP)
    - entpackt mit `tar -xf` (Win10+ built-in)
@@ -72,6 +73,18 @@ Flow im Updates-View bei gespeichertem Pfad:
 
 Spart das manuelle Entpacken + Reinkopieren. Weiterhin manuell ist nur der
 Reload — Chrome triggert für Unpacked-Extensions keinen Auto-Reload.
+
+Sicherheits-Schranken (Abbruch ohne Änderung):
+
+- **manifest.json muss existieren** im Bat-Ordner — verhindert, dass das
+  Script bei versehentlichem Ausführen außerhalb des Extension-Ordners
+  beliebige Dateien löscht.
+- **BACKEND_URL muss `https://`** beginnen — ein versehentlich nicht
+  ersetzter `__BACKEND_URL__`-Platzhalter (z.B. wenn jemand die Source-
+  Version statt der gebauten kopiert) bricht den Lauf ab.
+- **Heruntergeladene ZIP muss `manifest.json` enthalten** (`tar -tf` Check)
+  — schützt vor dem Fall, dass das Backend einen Müll-Response liefert
+  und das Script anschließend alle alten Files löscht.
 
 Caveats:
 - Anti-Virus könnte das Script flaggen — bei Erstausführung evtl.
