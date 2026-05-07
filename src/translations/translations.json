@@ -143,7 +143,13 @@
     "Edit": "Bearbeiten",
     "Save": "Speichern",
     "Path saved": "Pfad gespeichert",
-    "Remove path": "Pfad entfernen"
+    "Remove path": "Pfad entfernen",
+
+    "Version history": "Versions-Verlauf",
+    "installed": "installiert",
+    "newer": "neuer",
+    "Download {version}.zip": "{version}.zip herunterladen",
+    "Download started ({version})": "Download gestartet ({version})"
   },
   "en": {}
 }

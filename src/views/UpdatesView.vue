@@ -9,7 +9,7 @@ import { useAuth } from '@/composables/auth/useAuth.js'
 
 const { t } = useI18n()
 const toast = useToast()
-const { state: versionState, hasUpdate, refresh: refreshVersion } = useExtensionVersion()
+const { state: versionState, hasUpdate, refresh: refreshVersion, compareVersions } = useExtensionVersion()
 const { state: pathState, hasPath, setPath, clear: clearPath } = useExtensionPath()
 const { state: authState } = useAuth()
 
@@ -75,6 +75,27 @@ function reloadExtension() {
 
 function openExtensionsPage() {
   chrome.tabs.create({ url: 'chrome://extensions/', active: true })
+}
+
+async function downloadVersion(version) {
+  try {
+    await chrome.downloads.download({
+      url:      `${API.version.url}/download/${version}`,
+      filename: `${version}.zip`,
+      saveAs:   false,
+      headers:  authState.accessToken
+        ? [{ name: 'Authorization', value: `Bearer ${authState.accessToken}` }]
+        : undefined,
+    })
+    toast.success(t('Download started ({version})', { version }))
+  } catch (e) {
+    toast.error(e.message || t('Download failed'))
+  }
+}
+
+function formatReleasedAt(iso) {
+  if (!iso) return '—'
+  try { return new Date(iso).toLocaleString() } catch { return iso }
 }
 
 const step2Done = computed(() => step.value > 2)
@@ -261,6 +282,40 @@ const step1Done = computed(() => step.value > 1)
           :tooltip="t('Check now')"
           @click="refreshVersion"
         />
+      </div>
+
+      <div v-if="versionState.releases.length" class="flex flex-col gap-2 mt-2">
+        <SectionLabel>{{ t('Version history') }}</SectionLabel>
+
+        <div class="bg-surface-soft border border-border rounded-xl divide-y divide-border/40">
+          <div
+            v-for="r in versionState.releases" :key="r.sha || r.version"
+            class="px-3 py-2.5 flex items-center gap-2"
+          >
+            <span class="text-xs font-mono text-light shrink-0 min-w-14">{{ r.version }}</span>
+            <span
+              v-if="r.version === versionState.current"
+              class="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded bg-success/20 text-success shrink-0"
+            >{{ t('installed') }}</span>
+            <span
+              v-else-if="versionState.latest && compareVersions(r.version, versionState.current) > 0"
+              class="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded bg-alert/20 text-alert shrink-0"
+            >{{ t('newer') }}</span>
+
+            <span class="text-[10px] text-muted/70 flex-1 truncate">
+              {{ formatReleasedAt(r.releasedAt) }}
+              <span v-if="r.trigger" class="opacity-60"> · {{ r.trigger }}</span>
+            </span>
+
+            <BaseButton
+              variant="square-sm"
+              icon="mdiDownload"
+              :icon-size="13"
+              :tooltip="t('Download {version}.zip', { version: r.version })"
+              @click="downloadVersion(r.version)"
+            />
+          </div>
+        </div>
       </div>
 
     </div>

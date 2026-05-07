@@ -8,6 +8,7 @@ const state = reactive({
   latest:      null,
   releasedAt:  null,
   downloadUrl: null,
+  releases:    [],
   loadedAt:    0,
   error:       null,
 })
@@ -27,10 +28,14 @@ async function refresh() {
   if (inflight) return inflight
   inflight = (async () => {
     try {
-      const data = await apiJson(API.version.url)
-      state.latest      = data?.latest ?? null
-      state.releasedAt  = data?.releasedAt ?? null
-      state.downloadUrl = data?.downloadUrl ?? null
+      const [meta, history] = await Promise.all([
+        apiJson(API.version.url),
+        apiJson(`${API.version.url}/releases`).catch(() => ({ releases: [] })),
+      ])
+      state.latest      = meta?.latest ?? null
+      state.releasedAt  = meta?.releasedAt ?? null
+      state.downloadUrl = meta?.downloadUrl ?? null
+      state.releases    = Array.isArray(history?.releases) ? history.releases : []
       state.loadedAt    = Date.now()
       state.error       = null
     } catch (e) {
@@ -67,5 +72,6 @@ export function useExtensionVersion() {
     state,
     hasUpdate,
     refresh,
+    compareVersions,
   }
 }
