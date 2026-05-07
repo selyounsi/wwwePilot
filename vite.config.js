@@ -87,11 +87,14 @@ export default defineConfig(({ mode }) => {
     vue(),
     crx({ manifest: { ...manifest, name: appName } }),
     {
+      // crxjs sometimes strips permissions during the build. We re-apply
+      // them from the source manifest after bundling so what we declare
+      // there is what ships — no separate hardcoded list to keep in sync.
       name: 'fix-manifest-permissions',
       closeBundle() {
         const distManifest = JSON.parse(fs.readFileSync('dist/manifest.json', 'utf-8'))
-        distManifest.permissions = ['sidePanel', 'scripting', 'tabs', 'activeTab', 'storage', 'webRequest', 'identity', 'cookies', 'downloads']
-        distManifest.host_permissions = ['<all_urls>']
+        distManifest.permissions      = manifest.permissions
+        distManifest.host_permissions = manifest.host_permissions
         fs.writeFileSync('dist/manifest.json', JSON.stringify(distManifest, null, 2))
       }
     },
