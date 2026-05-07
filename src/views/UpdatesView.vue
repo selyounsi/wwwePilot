@@ -74,7 +74,22 @@ async function copyExtensionPath() {
   if (!hasPath.value) return
   try {
     await navigator.clipboard.writeText(pathState.path)
-    toast.success(t('Path copied to clipboard — paste in Win+E'))
+    toast.success(t('Path copied to clipboard — paste in Win+R'))
+  } catch {
+    toast.error(t('Could not copy'))
+    return
+  }
+  step.value = 3
+}
+
+async function copyUpdateScriptPath() {
+  if (!hasPath.value) return
+  const sep = pathState.path.includes('/') && !pathState.path.includes('\\') ? '/' : '\\'
+  const trimmed = pathState.path.replace(/[\\/]+$/, '')
+  const scriptPath = `${trimmed}${sep}update.bat`
+  try {
+    await navigator.clipboard.writeText(scriptPath)
+    toast.success(t('Script path copied — paste in Win+R'))
   } catch {
     toast.error(t('Could not copy'))
     return
@@ -227,7 +242,7 @@ const step1Done = computed(() => step.value > 1)
           </div>
 
           <p v-if="hasPath" class="text-[11px] text-muted leading-snug">
-            {{ t('Copies the extension folder path so you can paste it in Win+E and replace the files there.') }}
+            {{ t('Copies the extension folder path so you can paste it in Win+R and replace the files there.') }}
           </p>
           <p v-else class="text-[11px] text-muted leading-snug">
             {{ t('Unzip the downloaded ZIP and copy the files into your extension folder.') }}
@@ -253,6 +268,22 @@ const step1Done = computed(() => step.value > 1)
           >
             {{ t('Show ZIP in file explorer') }}
           </BaseButton>
+
+          <div v-if="hasPath" class="flex flex-col gap-1.5 pt-1 border-t border-border/40">
+            <p class="text-[11px] text-muted leading-snug pt-2">
+              {{ t('Optional: run update.bat (shipped with the extension) to download, replace and unzip automatically.') }}
+            </p>
+            <BaseButton
+              variant="ghost"
+              icon="mdiConsole"
+              :icon-size="14"
+              :disabled="step < 2"
+              class="text-xs!"
+              @click="copyUpdateScriptPath"
+            >
+              {{ t('Copy update.bat path (auto-update)') }}
+            </BaseButton>
+          </div>
         </div>
 
         <div

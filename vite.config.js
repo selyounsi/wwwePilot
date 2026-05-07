@@ -97,6 +97,14 @@ export default defineConfig(({ mode }) => {
       }
     },
     {
+      name: 'emit-update-script',
+      closeBundle() {
+        const tmpl = fs.readFileSync('build-assets/update.bat', 'utf-8')
+        const url  = env.VITE_BACKEND_URL || env.VITE_BACKEND_LOCAL || ''
+        fs.writeFileSync('dist/update.bat', tmpl.replace('__BACKEND_URL__', url))
+      }
+    },
+    {
       name: 'copy-axe-core',
       configResolved() { copyAxe() },
       buildStart()     { copyAxe() },

@@ -43,7 +43,7 @@ Drei sichtbare Steps in [UpdatesView.vue](../src/views/UpdatesView.vue):
 2. **Replace files** — Mitarbeiter entpackt ZIP, kopiert Files in den
    Extension-Ordner. Wenn der Pfad einmalig gespeichert wurde
    ([useExtensionPath.js](../src/composables/useExtensionPath.js)), reicht
-   ein Klick auf „Pfad kopieren" → einfügen in Win+E. Ohne gespeicherten
+   ein Klick auf „Pfad kopieren" → einfügen in Win+R. Ohne gespeicherten
    Pfad: Mitarbeiter sieht die ZIP eh schon im Explorer (Step 1).
 3. **Reload** — `chrome.runtime.reload()` startet die Extension neu.
 
@@ -51,6 +51,33 @@ Drei sichtbare Steps in [UpdatesView.vue](../src/views/UpdatesView.vue):
 > manuelle File-Replace + Reload ist Pflicht für self-hosted Extensions
 > ohne Chrome Web Store. Native Messaging wäre die einzige Alternative,
 > braucht aber einen lokalen Helper auf jedem Rechner.
+
+### Optional: `update.bat` für Auto-Replace
+
+Im Build-Output liegt eine `update.bat`, die der Vite-Plugin
+`emit-update-script` ([vite.config.js](../vite.config.js)) aus
+[build-assets/update.bat](../build-assets/update.bat) generiert — die
+Backend-URL wird zur Build-Zeit eingebaut.
+
+Flow im Updates-View bei gespeichertem Pfad:
+
+1. Klick auf **„update.bat-Pfad kopieren (Auto-Update)"**
+2. Win+R → einfügen → Enter
+3. Terminal:
+   - holt `latest` via `Invoke-RestMethod`
+   - lädt `<version>.zip` via `curl`
+   - löscht alle alten Files (außer sich selbst + ZIP)
+   - entpackt mit `tar -xf` (Win10+ built-in)
+4. Mitarbeiter klickt anschließend in `chrome://extensions/` auf Reload
+
+Spart das manuelle Entpacken + Reinkopieren. Weiterhin manuell ist nur der
+Reload — Chrome triggert für Unpacked-Extensions keinen Auto-Reload.
+
+Caveats:
+- Anti-Virus könnte das Script flaggen — bei Erstausführung evtl.
+  SmartScreen-Warnung.
+- Falls Chrome Files locked hält, kann `del` fehlschlagen — Mitarbeiter
+  muss dann manuell die Side Panel schließen und nochmal starten.
 
 ## Hintergrund-Notification
 
