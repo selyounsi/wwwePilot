@@ -1,6 +1,7 @@
-# wwweBar
+# Extension
 
 Inhouse Chrome Extension (Manifest V3, Side Panel) für die wwwe-Mitarbeiter.
+Der Anzeigename wird zur Build-Zeit aus `VITE_APP_NAME` (`.env`) bezogen.
 Sidebar mit mehreren Services, die die tägliche Arbeit an Webseiten
 vereinfachen — Qualitätsprüfung, KI-Hilfe, mehrsprachig (EN/DE).
 
@@ -24,8 +25,8 @@ automatisch im Dashboard und im Burger-Menü auf — siehe
 ## Setup
 
 ```bash
-git clone <repo-url>
-cd wwweBar/extension
+git clone <repo-url> extension
+cd extension
 npm install
 cp .env.example .env       # ggf. Backend-URLs anpassen
 npm run dev                # Dev-Build mit Hot Reload, Output nach dist/

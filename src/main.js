@@ -12,6 +12,7 @@ import { whenFavoritesHydrated }          from './composables/useFavorites.js'
 import { whenChatbotProvidersHydrated }   from './services/chatbot/composables/useChatbotProviders.js'
 import { whenAppConfigHydrated }           from './composables/useAppConfig.js'
 import { whenExtensionVersionReady }       from './composables/useExtensionVersion.js'
+import { whenExtensionPathHydrated }       from './composables/useExtensionPath.js'
 
 ;(async () => {
   await Promise.all([
@@ -24,6 +25,7 @@ import { whenExtensionVersionReady }       from './composables/useExtensionVersi
     whenChatbotProvidersHydrated(),
     whenAppConfigHydrated(),
     whenExtensionVersionReady(),
+    whenExtensionPathHydrated(),
   ])
 
   const app = createApp(App)

@@ -12,7 +12,7 @@ export function useServiceLoader() {
     const view = serviceViews[`/src/services/${id}/views/HomeView.vue`]?.default
 
     if (!view) {
-      console.warn(`⚠️ Service "${id}" fehlt views/HomeView.vue`)
+      console.warn(`Service "${id}" missing views/HomeView.vue`)
       continue
     }
 

@@ -115,14 +115,35 @@
     "Site report": "Website-Bericht",
 
     "About": "Über",
+    "Updates": "Updates",
     "Installed version": "Installierte Version",
     "Latest version": "Neueste Version",
     "Update available": "Update verfügbar",
-    "A new version is available. Download the ZIP and reload the extension in chrome://extensions/.": "Es ist eine neue Version verfügbar. Lade das ZIP herunter und lade die Erweiterung in chrome://extensions/ neu.",
+    "Download ZIP": "ZIP herunterladen",
     "Download update ({version})": "Update herunterladen ({version})",
+    "Download failed": "Download fehlgeschlagen",
+    "Replace files in extension folder": "Dateien im Extension-Ordner ersetzen",
+    "Show the ZIP in your file explorer, then unzip and copy the files into your extension folder.": "ZIP im Datei-Explorer anzeigen, dann entpacken und die Dateien in deinen Extension-Ordner kopieren.",
+    "Show ZIP in file explorer": "ZIP im Datei-Explorer zeigen",
+    "Opens the folder as browser-tab and copies the path so you can paste it into Win+E for the native explorer.": "Öffnet den Ordner als Browser-Tab und kopiert den Pfad — kannst du in Win+E einfügen für den echten Explorer.",
+    "Open extension folder": "Extension-Ordner öffnen",
+    "Path copied — paste it in Win+E for the native explorer": "Pfad kopiert — in Win+E einfügen für den echten Datei-Explorer",
+    "Reload the extension": "Erweiterung neu laden",
+    "After replacing the files, reload to activate the new version.": "Nach dem Ersetzen der Dateien neu laden, um die neue Version zu aktivieren.",
+    "Reload extension": "Erweiterung neu laden",
+    "Open extensions page": "Erweiterungs-Seite öffnen",
     "You are on the latest version.": "Du bist auf der aktuellen Version.",
     "Checking for updates…": "Suche nach Updates…",
-    "Check now": "Jetzt prüfen"
+    "Check now": "Jetzt prüfen",
+
+    "Extension folder": "Extension-Ordner",
+    "Optional. Save the path once so updates can copy it directly to the clipboard.": "Optional. Pfad einmal speichern, damit Updates ihn direkt in die Zwischenablage kopieren können.",
+    "Find the path in chrome://extensions/ → Details → Path.": "Pfad findest du in chrome://extensions/ → Details → Pfad.",
+    "Add path": "Pfad hinzufügen",
+    "Edit": "Bearbeiten",
+    "Save": "Speichern",
+    "Path saved": "Pfad gespeichert",
+    "Remove path": "Pfad entfernen"
   },
   "en": {}
 }

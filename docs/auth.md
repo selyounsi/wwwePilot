@@ -1,12 +1,12 @@
 # Authentifizierung (OIDC)
 
-Wie sich User in der wwweBar einloggen — kompakt, mit den nötigen Schritten zum Onboarden neuer Umgebungen.
+Wie sich User in der Extension einloggen — kompakt, mit den nötigen Schritten zum Onboarden neuer Umgebungen.
 
 ## Was ist OIDC und warum
 
-**OpenID Connect** ist ein Standard für „Login mit zentralem Account". Statt dass jede Anwendung eigene Passwörter speichert, vertraut sie einem Identity Provider (bei uns **EverAuth**). Vorteil: ein Account, ein Login-Erlebnis für alle wwwe-Tools (panel, vault, wwweBar, …).
+**OpenID Connect** ist ein Standard für „Login mit zentralem Account". Statt dass jede Anwendung eigene Passwörter speichert, vertraut sie einem Identity Provider (bei uns **EverAuth**). Vorteil: ein Account, ein Login-Erlebnis für alle wwwe-Tools (panel, vault, …).
 
-Die wwweBar ist ein **OIDC Client** (eine Anwendung, die einen User über EverAuth authentifiziert). Konkret heißt das:
+Die Extension ist ein **OIDC Client** (eine Anwendung, die einen User über EverAuth authentifiziert). Konkret heißt das:
 
 1. User klickt im Side Panel auf „Mit wwwe-Account anmelden"
 2. Browser öffnet die EverAuth-Login-Seite
@@ -43,9 +43,9 @@ Schick **Kerem** (IT) folgende Info:
 > - **Scopes:** `openid profile email groups roles permissions`
 > - **Grant Type:** Authorization Code mit PKCE
 
-Bei wwweBar konkret:
-- Dev: `https://wwwebar.everapps.dev/api/auth/callback`
-- Prod: `https://wwwebar.everapps.io/api/auth/callback`
+Beispiel:
+- Dev: `https://<subdomain>.everapps.dev/api/auth/callback`
+- Prod: `https://<subdomain>.everapps.io/api/auth/callback`
 
 ### 2. Vault-Zugang einrichten
 
@@ -58,9 +58,9 @@ In der Sammlung gibt es zwei Ordner — einen pro Umgebung:
 ```
 EverAuth OIDC/
 ├── auth.everapps.dev/
-│   └── wwweBar/        ← Client ID + Secret + Issuer-URL
+│   └── <App-Name>/     ← Client ID + Secret + Issuer-URL
 └── auth.everapps.io/
-    └── wwweBar/        ← Client ID + Secret + Issuer-URL
+    └── <App-Name>/     ← Client ID + Secret + Issuer-URL
 ```
 
 Sobald Kerem den Client angelegt hat, taucht der Eintrag dort auf. Drei Werte rauskopieren:
@@ -71,13 +71,13 @@ Sobald Kerem den Client angelegt hat, taucht der Eintrag dort auf. Drei Werte ra
 
 ### 3. Werte in die Server-`.env` eintragen
 
-Auf dem Server (für wwweBar typischerweise `/var/dimages/wwweBar/backend/.env`):
+Auf dem Server (typischerweise `/var/dimages/<projekt-ordner>/backend/.env`):
 
 ```env
 OIDC_ISSUER_URL=https://auth.everapps.dev
 OIDC_CLIENT_ID=…
 OIDC_CLIENT_SECRET=…
-PUBLIC_BASE_URL=https://wwwebar.everapps.dev
+PUBLIC_BASE_URL=https://<subdomain>.<domain>
 ```
 
 `PUBLIC_BASE_URL` muss zur Hosting-URL passen, damit Backend die Callback-URLs korrekt gegen den Provider sendet.
@@ -85,13 +85,13 @@ PUBLIC_BASE_URL=https://wwwebar.everapps.dev
 ### 4. Container neu starten
 
 ```bash
-cd /var/dimages/wwweBar/backend
+cd /var/dimages/<projekt-ordner>/backend
 bash _scripts/deploy.sh
 ```
 
 Verifizieren:
 ```bash
-curl https://wwwebar.everapps.dev/api/auth/config
+curl https://<subdomain>.<domain>/api/auth/config
 # → {"oidcConfigured":true, ...}
 ```
 
@@ -140,7 +140,7 @@ Extension  fängt Tokens via launchWebAuthFlow ab,
            speichert in chrome.storage.local (`wp-auth`)
 ```
 
-Die App-JWTs (Access + Refresh) sind **eigene** Tokens des wwweBar-Backends, nicht die vom Provider. So bleibt die Extension unabhängig von der Provider-Session — Refresh läuft komplett über das Backend, ohne den User nochmal an EverAuth zu schicken.
+Die App-JWTs (Access + Refresh) sind **eigene** Tokens des Backends, nicht die vom Provider. So bleibt die Extension unabhängig von der Provider-Session — Refresh läuft komplett über das Backend, ohne den User nochmal an EverAuth zu schicken.
 
 ## EverAuth-spezifische Quirks
 
@@ -150,7 +150,7 @@ Drei Eigenheiten die der Login-Code im Backend kompensieren muss:
    `/oidc/authorize` wirft `INTERNAL_SERVER_ERROR` wenn der Browser noch eine alte Provider-Session hat. Wir routen jeden Login deshalb erst durch `/oidc/logout` und dann erst zu `/authorize`. Das macht jede Session frisch.
 
 2. **`postLogoutRedirectUris`-Wildcard matcht nur 1 Pfad-Segment**
-   `https://wwwebar.everapps.dev/*` akzeptiert `/anything`, aber **nicht** `/api/auth/logout/callback` (4 Segmente). Deshalb gibt's eine Top-Level-Route `/auth-bridge`, die zum Pre-Logout-Handler gemounted ist.
+   `https://<subdomain>.<domain>/*` akzeptiert `/anything`, aber **nicht** `/api/auth/logout/callback` (4 Segmente). Deshalb gibt's eine Top-Level-Route `/auth-bridge`, die zum Pre-Logout-Handler gemounted ist.
 
 3. **`client_secret_basic` ohne URL-Encode**
    EverAuth akzeptiert raw `Buffer.from(id:secret).toString('base64')`, lehnt aber den von RFC 6749 verlangten URL-encoded Variant ab (den `openid-client` standardmäßig sendet). Wir injizieren deshalb eine Custom-Auth-Funktion, siehe [oidcClient.js](../../backend/_apps/backend/src/auth/oidcClient.js).

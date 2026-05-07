@@ -121,7 +121,7 @@ fehlt), ist meist die `_meta`-Lookup-Heuristik in `useModuleAttributes.findEl`
 schief — sieh dazu auch [composables.md](./composables.md). Beispiel-Prompt:
 
 > Lade https://example.com, lass das Headings-Modul laufen, gib mir die
-> resultierenden `data-wwwebar-id`-Attribute aus dem DOM und vergleiche sie
+> resultierenden `data-<app-name>-id`-Attribute aus dem DOM und vergleiche sie
 > gegen die `items[].element`-UUIDs aus dem useCheckStore.
 
 `evaluate_script` kann sowohl Page-Kontext als auch (über das DevTools-Panel)

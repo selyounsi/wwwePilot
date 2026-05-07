@@ -21,7 +21,7 @@ export function useModuleLoader(serviceId) {
     const view          = allViews[`/src/services/${svcId}/modules/${modId}/views/Index.vue`]?.default
 
     if (!checkerModule || !view) {
-      console.warn(`⚠️ Modul "${modId}" fehlt index.js oder views/Index.vue`)
+      console.warn(`Module "${modId}" missing index.js or views/Index.vue`)
       continue
     }
 

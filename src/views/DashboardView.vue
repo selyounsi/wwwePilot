@@ -8,6 +8,7 @@ import { useRunHistory }    from '@/services/web-checker/composables/useRunHisto
 import { useI18n }          from '@/composables/i18n/useI18n.js'
 import { useAuth }          from '@/composables/auth/useAuth.js'
 import { useFavorites }     from '@/composables/useFavorites.js'
+import { useExtensionVersion } from '@/composables/useExtensionVersion.js'
 import { APP_NAME }         from '@/config/app.js'
 
 const router = useRouter()
@@ -16,6 +17,7 @@ const { state } = useCheckStore()
 const { t } = useI18n()
 const { state: authState } = useAuth()
 const { state: favState, toggle: toggleFavorite } = useFavorites()
+const { state: versionState, hasUpdate } = useExtensionVersion()
 const runHistory = useRunHistory()
 
 const greeting = computed(() => {
@@ -107,7 +109,20 @@ function removeSite(origin, ev) {
 
 <template>
   <div class="min-h-full bg-background flex flex-col">
-    <AppHeader :title="APP_NAME" :subtitle="greeting" />
+    <AppHeader :title="APP_NAME" :subtitle="greeting">
+      <Tooltip :text="hasUpdate ? t('Update available') : t('Updates')">
+        <button
+          @click="router.push('/updates')"
+          class="relative text-[10px] font-mono font-semibold text-black/50 hover:text-black/80 bg-black/10 hover:bg-black/15 px-2 py-1 rounded-md transition-colors"
+        >
+          v{{ versionState.current }}
+          <span
+            v-if="hasUpdate"
+            class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-alert"
+          />
+        </button>
+      </Tooltip>
+    </AppHeader>
 
     <div class="flex-1 px-4 py-4 flex flex-col gap-5">
 

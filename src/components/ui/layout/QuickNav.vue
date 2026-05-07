@@ -6,13 +6,14 @@ import { useI18n }          from '@/composables/i18n/useI18n.js'
 import { useAuth }          from '@/composables/auth/useAuth.js'
 import { useToast }         from '@/composables/useToast.js'
 import { useExtensionVersion } from '@/composables/useExtensionVersion.js'
+import { APP_NAME } from '@/config/app.js'
 
 const router = useRouter()
 const { services } = useServiceLoader()
 const { t, lang }  = useI18n()
 const { state: authState, logout } = useAuth()
 const toast = useToast()
-const { hasUpdate } = useExtensionVersion()
+const { state: versionState, hasUpdate } = useExtensionVersion()
 
 const open = ref(false)
 function close()  { open.value = false }
@@ -119,12 +120,19 @@ const displayName = computed(() => {
               class="mt-3 flex items-center gap-3 px-4 py-2.5 hover:bg-surface-soft-hover transition-colors text-left border-t border-border/40"
             >
               <Icon name="mdiCog" :size="15" class="text-muted shrink-0" />
-              <span class="text-xs text-light flex-1 inline-flex items-center gap-1.5">
-                {{ t('Settings') }}
-                <span v-if="hasUpdate" class="w-1.5 h-1.5 rounded-full bg-alert" />
-              </span>
+              <span class="text-xs text-light flex-1">{{ t('Settings') }}</span>
               <span class="text-[10px] font-mono font-semibold text-muted/80 px-1.5 py-0.5 rounded bg-surface-soft">
                 {{ lang.toUpperCase() }}
+              </span>
+            </button>
+            <button
+              @click="go('/updates')"
+              class="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-soft-hover transition-colors text-left"
+            >
+              <Icon name="mdiDownload" :size="15" class="text-muted shrink-0" />
+              <span class="text-xs text-light flex-1 inline-flex items-center gap-1.5">
+                {{ t('Updates') }}
+                <span v-if="hasUpdate" class="w-1.5 h-1.5 rounded-full bg-alert" />
               </span>
             </button>
           </nav>
@@ -136,6 +144,17 @@ const displayName = computed(() => {
           >
             <Icon name="mdiLogout" :size="15" class="shrink-0" />
             <span class="text-xs flex-1">{{ t('Sign out') }}</span>
+          </button>
+
+          <button
+            @click="go('/updates')"
+            class="flex items-center justify-between gap-2 px-4 py-2 hover:bg-surface-soft-hover transition-colors border-t border-border/40 text-[10px] text-muted/70"
+          >
+            <span class="font-mono">{{ APP_NAME }} v{{ versionState.current }}</span>
+            <span v-if="hasUpdate" class="inline-flex items-center gap-1 text-alert">
+              <span class="w-1.5 h-1.5 rounded-full bg-alert" />
+              {{ t('Update available') }}
+            </span>
           </button>
         </aside>
       </Transition>

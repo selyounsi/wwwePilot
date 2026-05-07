@@ -442,7 +442,7 @@ Voraussetzungen erfüllt sind — verhindert Henne-Ei-Problem (Button gated auf
 | LE-Tab-Detection + Editierbarkeits-Cache | `useLiveEditorBridge` | nur in-Memory (reactive) |
 | Single-Page-Check-Resultate | `useCheckStore` | nur in-Memory (reactive) |
 | Site-Check-Cache | `useSiteCheckStore` | nur in-Memory (reactive) |
-| Chat-Verläufe | `useChat` | `localStorage: wwwebar-chats-v2` |
+| Chat-Verläufe | `useChat` | `localStorage: <app-name>-chats-v2` (Prefix aus `APP_NAME_LOWER`) |
 | Page-Overlay-Active-Flag | `usePageOverlay` | nur in-Memory (reactive) |
 
 ## Siehe auch

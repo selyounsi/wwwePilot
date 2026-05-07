@@ -1,3 +1,5 @@
+import { APP_NAME } from './app.js'
+
 const isProd = import.meta.env.VITE_ENV === 'production'
 const BACKEND = isProd
   ? import.meta.env.VITE_BACKEND_URL
@@ -5,7 +7,7 @@ const BACKEND = isProd
 
 if (!BACKEND) {
   console.error(
-    `[wwweBar] Backend-URL fehlt — ${isProd ? 'VITE_BACKEND_URL' : 'VITE_BACKEND_LOCAL'} in .env setzen.`
+    `[${APP_NAME}] Backend-URL fehlt — ${isProd ? 'VITE_BACKEND_URL' : 'VITE_BACKEND_LOCAL'} in .env setzen.`
   )
 }
 

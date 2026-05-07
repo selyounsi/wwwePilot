@@ -10,14 +10,14 @@ for (const [path, mod] of Object.entries(handlerModules)) {
     const types = Array.isArray(mod.types) ? mod.types : mod.type ? [mod.type] : []
     for (const t of types) {
       handlerMap[t] = mod.handle
-      console.log(`[background] Handler registriert: ${t} (${path})`)
+      console.log(`[background] handler registered: ${t} (${path})`)
     }
   } catch (e) {
-    console.error(`[background] Handler-Fehler in ${path}:`, e)
+    console.error(`[background] handler error in ${path}:`, e)
   }
 }
 
-console.log('[background] Registrierte Handler:', Object.keys(handlerMap))
+console.log('[background] registered handlers:', Object.keys(handlerMap))
 
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
 
@@ -84,7 +84,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   Promise.resolve()
     .then(() => handler(msg, sendResponse, sender))
     .catch(e => {
-      console.error(`[background] Handler ${msg.type} Fehler:`, e)
+      console.error(`[background] handler ${msg.type} error:`, e)
       sendResponse({ error: e.message })
     })
 

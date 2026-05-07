@@ -4,6 +4,7 @@ import { useModuleLoader } from '@/composables/loaders/useModuleLoader.js'
 import { useAuth } from '@/composables/auth/useAuth.js'
 import DashboardView from '../views/DashboardView.vue'
 import SettingsView  from '../views/SettingsView.vue'
+import UpdatesView   from '../views/UpdatesView.vue'
 import LoginView     from '../views/LoginView.vue'
 
 const { services } = useServiceLoader()
@@ -108,6 +109,7 @@ const router = createRouter({
     { path: '/login',    name: 'login',     component: LoginView,     meta: { public: true } },
     { path: '/',         name: 'dashboard', component: DashboardView },
     { path: '/settings', name: 'settings',  component: SettingsView,  meta: { settingsRoot: true } },
+    { path: '/updates',  name: 'updates',   component: UpdatesView },
     ...serviceRoutes,
   ],
 })

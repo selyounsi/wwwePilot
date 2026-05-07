@@ -1,6 +1,6 @@
 # Architektur
 
-Wie die wwweBar Chrome Extension aufgebaut ist.
+Wie die Chrome Extension aufgebaut ist (Anzeigename kommt aus `VITE_APP_NAME`).
 
 ## Drei JS-Kontexte
 
