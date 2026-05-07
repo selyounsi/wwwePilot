@@ -14,8 +14,10 @@ if errorlevel 1 (
     exit /b 1
 )
 
-for /f "delims=" %%v in ('powershell -NoProfile -Command "(Get-Content -Raw version.tmp ^| ConvertFrom-Json).latest"') do set "VERSION=%%v"
-del /q version.tmp
+powershell -NoProfile -Command "(Get-Content -Raw version.tmp | ConvertFrom-Json).latest" > version-out.tmp
+set "VERSION="
+set /p VERSION=<version-out.tmp
+del /q version.tmp version-out.tmp
 
 if "!VERSION!"=="" (
     echo Konnte Version nicht parsen.
