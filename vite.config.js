@@ -99,9 +99,12 @@ export default defineConfig(({ mode }) => {
     {
       name: 'emit-update-script',
       closeBundle() {
-        const tmpl = fs.readFileSync('build-assets/update.bat', 'utf-8')
-        const url  = env.VITE_BACKEND_URL || env.VITE_BACKEND_LOCAL || ''
-        fs.writeFileSync('dist/update.bat', tmpl.replace('__BACKEND_URL__', url))
+        const url = env.VITE_BACKEND_URL || env.VITE_BACKEND_LOCAL || ''
+        const bat = fs.readFileSync('build-assets/update.bat', 'utf-8')
+        fs.writeFileSync('dist/update.bat', bat.replace('__BACKEND_URL__', url))
+        const sh = fs.readFileSync('build-assets/update.sh', 'utf-8')
+        fs.writeFileSync('dist/update.sh', sh.replace('__BACKEND_URL__', url))
+        fs.chmodSync('dist/update.sh', 0o755)
       }
     },
     {

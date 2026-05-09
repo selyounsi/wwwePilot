@@ -19,6 +19,12 @@ const downloading = ref(false)
 const step        = ref(1)
 const editingPath = ref(false)
 const pathDraft   = ref('')
+const platformOs  = ref('win')
+
+chrome.runtime.getPlatformInfo?.().then(info => { platformOs.value = info?.os || 'win' }).catch(() => {})
+
+const isMac = computed(() => platformOs.value === 'mac' || platformOs.value === 'linux')
+const scriptName = computed(() => isMac.value ? 'update.sh' : 'update.bat')
 
 watch(method, () => { step.value = 1 })
 watch(hasPath, (v) => { if (!v && method.value === 'auto') method.value = 'manual' })
@@ -90,10 +96,13 @@ async function copyUpdateScriptPath() {
   if (!hasPath.value) return
   const sep = pathState.path.includes('/') && !pathState.path.includes('\\') ? '/' : '\\'
   const trimmed = pathState.path.replace(/[\\/]+$/, '')
-  const scriptPath = `${trimmed}${sep}update.bat`
+  const fullPath = `${trimmed}${sep}${scriptName.value}`
+  const clipboardText = isMac.value ? `bash "${fullPath}"` : fullPath
   try {
-    await navigator.clipboard.writeText(scriptPath)
-    toast.success(t('Script path copied — paste in Win+R'))
+    await navigator.clipboard.writeText(clipboardText)
+    toast.success(isMac.value
+      ? t('Command copied — paste in Terminal + Enter')
+      : t('Script path copied — paste in Win+R'))
   } catch {
     toast.error(t('Could not copy'))
     return
@@ -222,7 +231,7 @@ const step1Done = computed(() => step.value > 1)
             @click="method = 'auto'"
           >
             <span class="text-xs font-medium text-light">{{ t('Auto-Update') }}</span>
-            <span class="text-[10px] text-muted leading-snug">{{ t('Run update.bat — 1 click + reload') }}</span>
+            <span class="text-[10px] text-muted leading-snug">{{ isMac ? t('Run update.sh — 1 click + reload') : t('Run update.bat — 1 click + reload') }}</span>
           </button>
           <button
             type="button"
@@ -248,10 +257,12 @@ const step1Done = computed(() => step.value > 1)
               <span class="text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center"
                 :class="step1Done ? 'bg-success text-black' : 'bg-alert text-black'"
               >{{ step1Done ? '✓' : '1' }}</span>
-              <span class="text-xs font-medium text-light">{{ t('Run update.bat') }}</span>
+              <span class="text-xs font-medium text-light">{{ isMac ? t('Run update.sh') : t('Run update.bat') }}</span>
             </div>
             <p class="text-[11px] text-muted leading-snug">
-              {{ t('Copies the script path. Paste in Win+R, hit Enter — the script downloads and replaces all files.') }}
+              {{ isMac
+                ? t('Copies the bash command. Paste in Terminal, hit Enter — the script downloads and replaces all files.')
+                : t('Copies the script path. Paste in Win+R, hit Enter — the script downloads and replaces all files.') }}
             </p>
             <BaseButton
               variant="primary"
@@ -259,7 +270,7 @@ const step1Done = computed(() => step.value > 1)
               :icon-size="14"
               @click="copyUpdateScriptPath"
             >
-              {{ t('Copy update.bat path') }}
+              {{ isMac ? t('Copy update.sh command') : t('Copy update.bat path') }}
             </BaseButton>
           </div>
 

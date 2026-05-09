@@ -52,23 +52,33 @@ Drei sichtbare Steps in [UpdatesView.vue](../src/views/UpdatesView.vue):
 > ohne Chrome Web Store. Native Messaging wäre die einzige Alternative,
 > braucht aber einen lokalen Helper auf jedem Rechner.
 
-### Optional: `update.bat` für Auto-Replace
+### Optional: Auto-Update-Script (`update.bat` / `update.sh`)
 
-Im Build-Output liegt eine `update.bat`, die der Vite-Plugin
+Im Build-Output liegen zwei Scripts, die der Vite-Plugin
 `emit-update-script` ([vite.config.js](../vite.config.js)) aus
-[build-assets/update.bat](../build-assets/update.bat) generiert — die
-Backend-URL wird zur Build-Zeit eingebaut.
+[build-assets/](../build-assets/) generiert — die Backend-URL wird zur
+Build-Zeit eingebaut, das `.sh` bekommt zusätzlich `chmod +x`:
 
-Flow im Updates-View bei gespeichertem Pfad:
+| Plattform | Script | Aufruf |
+|---|---|---|
+| Windows | `update.bat` | Win+R → Pfad einfügen → Enter |
+| macOS / Linux | `update.sh` | Terminal → `bash "<pfad>/update.sh"` einfügen → Enter |
 
-1. Klick auf **„update.bat-Pfad kopieren (Auto-Update)"**
-2. Win+R → einfügen → Enter
-3. Terminal:
+Die Extension erkennt das OS via `chrome.runtime.getPlatformInfo()` und
+zeigt den passenden Button an — Mac/Linux-User sehen „update.sh-Befehl
+kopieren", Windows-User „update.bat-Pfad kopieren".
+
+Flow:
+
+1. Klick auf den passenden Button (Auto-Update-Karte → Step 1)
+2. Einfügen + Enter
+3. Terminal/Cmd:
    - prüft Sicherheits-Schranken (siehe unten)
-   - holt `latest` via `curl` + `ConvertFrom-Json` (PowerShell)
+   - holt `latest` via `curl` + JSON-Parsing
    - lädt `<version>.zip` via `curl`
    - löscht alle alten Files (außer sich selbst + ZIP)
-   - entpackt mit `tar -xf` (Win10+ built-in)
+   - entpackt (`tar -xf` auf Windows, `unzip` auf Mac/Linux — beide
+     OS-built-in)
 4. Mitarbeiter klickt anschließend in `chrome://extensions/` auf Reload
 
 Spart das manuelle Entpacken + Reinkopieren. Weiterhin manuell ist nur der
