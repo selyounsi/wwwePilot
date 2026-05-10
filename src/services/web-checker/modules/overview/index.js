@@ -1,5 +1,14 @@
 export const overlay = null
 
+export const claude = {
+  title: 'Hinweis erklärt',
+  systemPrompt:
+    'You are a senior web QA engineer. The user found a page-level issue (meta tags, lang, charset, etc.). ' +
+    'Reply in German, briefly:\n' +
+    '1. Why this matters for the page (SEO, social previews, accessibility).\n' +
+    '2. CONCRETE FIX in 1-2 sentences + a code snippet in a fenced ```html block if applicable.',
+}
+
 export default async function check() {
   const t = window.__t
 

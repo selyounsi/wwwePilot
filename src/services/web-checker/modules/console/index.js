@@ -1,5 +1,15 @@
 export const overlay = null
 
+export const claude = {
+  title: 'Console-Fehler erklärt',
+  systemPrompt:
+    'You are a senior web developer. The user found a console error or warning while auditing a page. ' +
+    'Reply in German, in 2-3 short paragraphs:\n' +
+    '1. Translate the message to plain language — what is actually broken or noisy?\n' +
+    '2. The most likely cause + a concrete fix to try first.\n' +
+    '3. If it is safe to ignore (e.g. third-party script noise), say so explicitly.',
+}
+
 export default async function check() {
   const t = window.__t
   const { errors, warnings, items, addItem, finish } = createCheckResult()

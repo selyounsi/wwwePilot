@@ -11,6 +11,15 @@ export const overlay = {
   offText: 'Show titles',
 }
 
+export const claude = {
+  title: 'Link-Verbesserung',
+  systemPrompt:
+    'You are a UX writer. The user found a link issue on a page. Reply in German, briefly:\n' +
+    '1. Why this matters (accessibility for screen readers + SEO).\n' +
+    '2. If the link text is vague ("hier", "mehr", "klicke"), suggest 2-3 BETTER alternatives that describe the destination.\n' +
+    '3. If the link is broken (404), suggest where the page might have moved or a sensible replacement.',
+}
+
 export default async function check() {
 
   // module-specific anchors stay here; .WidgetSealContainer + general

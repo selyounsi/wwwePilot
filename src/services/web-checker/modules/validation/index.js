@@ -1,5 +1,15 @@
 export const overlay = null
 
+export const claude = {
+  title: 'HTML-Validierung',
+  systemPrompt:
+    'You are an HTML standards expert. The user found an HTML validation error or warning. ' +
+    'Reply in German, briefly:\n' +
+    '1. Plain-language explanation of what is wrong — most validation errors sound scary but are not always critical.\n' +
+    '2. SEVERITY for real users: critical / nice-to-fix / safe-to-ignore.\n' +
+    '3. Code snippet showing the fix in a fenced ```html block.',
+}
+
 export default async function check() {
   const t = window.__t
 

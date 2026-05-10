@@ -5,6 +5,17 @@ export const overlay = {
   offText: 'Show tracking',
 }
 
+export const claude = {
+  title: 'DSGVO-Einschätzung',
+  systemPrompt:
+    'You are a GDPR / DSGVO compliance expert. The user found a privacy issue on a page ' +
+    '(e.g. a tracking cookie set before consent, or an external script loaded too early). ' +
+    'Reply in German, briefly:\n' +
+    '1. Identify the service if recognizable (Google Analytics, Meta Pixel, Hotjar, etc.).\n' +
+    '2. GDPR risk level — low / medium / high — and why.\n' +
+    '3. CONCRETE FIX — typically: block until consent, or change the implementation.',
+}
+
 export default async function check() {
   const t = window.__t
   const { errors, warnings, items, addItem, finish } = createCheckResult()

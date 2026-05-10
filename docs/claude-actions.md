@@ -120,6 +120,31 @@ Im jeweiligen `module.json`:
 Site-Bericht und Meta-Description sind feste Trigger an spezifischen
 View-Stellen und nicht via `actions` config-bar.
 
+### Per-Modul tailored System-Prompt
+
+Jedes Modul kann in seinem `index.js` einen `claude`-Export hinzufügen, der
+„Item erklären" auf die Domäne des Moduls zuspitzt — statt des generischen
+QA-Engineer-Prompts kriegt Claude einen Accessibility-, Contrast-,
+DSGVO- oder Schema.org-„Hut" aufgesetzt:
+
+```js
+export const claude = {
+  title: 'Kontrast-Vorschlag',
+  systemPrompt:
+    'You are a brand designer and accessibility expert. ' +
+    'Reply in German, suggest a hex color that passes WCAG AA …',
+  maxTokens: 1200,  // optional, default 800
+}
+```
+
+`useModuleSetup` zieht den Export durch zu `moduleOverlay.claude`, und
+`ModuleItem.vue` benutzt den Prompt + den Title für den Drawer. Fehlt der
+Export, gilt der Default-„senior web QA engineer"-Prompt.
+
+Verfügbare Module-Prompts: accessibility, console, contrast, headings, images,
+links, overview, performance, privacy, sitemap, spellcheck, structured-data,
+validation — alle im jeweiligen `modules/<id>/index.js`.
+
 ## Was Claude NICHT macht
 
 - Kein Streaming — alle Antworten sind one-shot.

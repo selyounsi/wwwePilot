@@ -8,7 +8,7 @@ import { useModuleAttributes }  from '@/services/web-checker/composables/useModu
 
 const EMPTY_RESULT = { status: 'idle', errors: [], warnings: [], items: [], errorCount: 0, warningCount: 0 }
 
-export function useModuleSetup(moduleId, overlayConfig = null, allowChatBot = false, actions = {}) {
+export function useModuleSetup(moduleId, overlayConfig = null, allowChatBot = false, actions = {}, claude = null) {
   const { state, setRunning, setResult, setCheckedTab } = useCheckStore()
   const { injectHelper, runChecker }                    = useCheckRunner()
   const { modules }                      = useModuleLoader('web-checker')
@@ -59,6 +59,7 @@ export function useModuleSetup(moduleId, overlayConfig = null, allowChatBot = fa
     allowChatBot: resolvedActions.chatbot,
     actions:      resolvedActions,
     moduleId,
+    claude,
   }
   provide('moduleOverlay', moduleOverlayWithBot)
 

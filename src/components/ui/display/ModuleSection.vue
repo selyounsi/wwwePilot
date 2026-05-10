@@ -26,6 +26,7 @@ const setup = moduleConfig
       moduleConfig.overlay      ?? null,
       moduleConfig.allowChatBot ?? false,
       moduleConfig.actions      ?? {},
+      moduleConfig.claude       ?? null,
     )
   : null
 

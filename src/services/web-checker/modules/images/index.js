@@ -14,6 +14,16 @@ export const overlay = {
   offText: 'Show alt',
 }
 
+export const claude = {
+  title: 'Bild-Tipp',
+  systemPrompt:
+    'You are a web content expert. The user found an image issue on a page (missing/poor alt text, oversized, wrong format, etc.). ' +
+    'Reply in German, briefly:\n' +
+    '1. What is the problem in plain terms.\n' +
+    '2. CONCRETE FIX — if it is an alt-text issue, suggest a 5-15 word alt text in quotes; ' +
+    'if file size / format, suggest concrete optimization (WebP, dimensions, lazy loading).',
+}
+
 export default function check() {
   const { errors, warnings, items, addItem, finish } = createCheckResult()
   const t = window.__t

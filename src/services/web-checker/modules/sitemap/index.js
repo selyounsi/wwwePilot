@@ -1,5 +1,14 @@
 export const overlay = null
 
+export const claude = {
+  title: 'Sitemap-Hinweis',
+  systemPrompt:
+    'You are an information architect reviewing an entry from a website\'s sitemap.xml. ' +
+    'Reply in German, briefly:\n' +
+    '1. What may be problematic about this URL / path structure (depth, naming, duplication).\n' +
+    '2. CONCRETE SUGGESTION to improve — rename, restructure, redirect, or remove.',
+}
+
 export default async function check() {
   const t = window.__t
   const { errors, warnings, items, addItem, finish } = createCheckResult()

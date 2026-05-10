@@ -3,6 +3,16 @@ import { APP_NAME_LOWER } from '@/config/app.js'
 export const overlay   = null
 export const apiConfig = { prefix: APP_NAME_LOWER }
 
+export const claude = {
+  title: 'Sprachprüfung',
+  systemPrompt:
+    'You are a German copywriter / proofreader. The user found a spelling or style issue in page text. ' +
+    'Reply in German, briefly:\n' +
+    '1. Whether this is a real issue or a false positive (proper noun, technical term, intentional style).\n' +
+    '2. If real, suggest a corrected version (or 2-3 alternatives).\n' +
+    '3. Optional: a short tone-of-voice note if the wording stands out (too formal / casual / passive for the context).',
+}
+
 export default async function check(config) {
   const t = window.__t
 

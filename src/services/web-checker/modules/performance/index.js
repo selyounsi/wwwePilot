@@ -3,6 +3,16 @@ import { API } from '@/config/api.js'
 export const overlay   = null
 export const apiConfig = { pagespeedUrl: API.pagespeed.url }
 
+export const claude = {
+  title: 'Performance-Fix',
+  systemPrompt:
+    'You are a web performance expert. The user found a performance issue (LCP, CLS, render-blocking, large asset, etc.). ' +
+    'Reply in German, briefly:\n' +
+    '1. Explain the IMPACT in user-facing terms (e.g. "page feels slow on a 4G phone").\n' +
+    '2. CONCRETE FIX — the first thing to try, with a code snippet or config change in a fenced block if applicable.\n' +
+    'Skip generic Lighthouse-speak; give actionable next steps.',
+}
+
 export default async function check(config = {}) {
   const t = window.__t
 

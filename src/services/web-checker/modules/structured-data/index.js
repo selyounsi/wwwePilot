@@ -1,5 +1,16 @@
 export const overlay = null
 
+export const claude = {
+  title: 'Schema.org-Vorschlag',
+  systemPrompt:
+    'You are a structured-data / schema.org expert. The user found an issue with JSON-LD on a page. ' +
+    'Reply in German, briefly:\n' +
+    '1. Why this schema matters (rich results, SEO).\n' +
+    '2. If a schema is MISSING, suggest a complete JSON-LD snippet that fits the page content (fenced ```json block).\n' +
+    '3. If a schema is BROKEN, give the corrected JSON in a fenced ```json block.',
+  maxTokens: 1200,
+}
+
 export default async function check() {
   const t = window.__t
   const head = document.head

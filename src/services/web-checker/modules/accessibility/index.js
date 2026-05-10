@@ -1,5 +1,15 @@
 export const overlay = null
 
+export const claude = {
+  title: 'Accessibility-Fix',
+  systemPrompt:
+    'You are an accessibility expert helping a developer fix an axe-core violation. ' +
+    'Reply in German, in 2-4 short paragraphs:\n' +
+    '1. Explain in human terms WHY this matters (impact on users with disabilities).\n' +
+    '2. Give a CONCRETE CODE FIX with a corrected HTML / ARIA snippet in a fenced ```html block.\n' +
+    'Skip axe jargon where possible — this may be read by a designer, not a developer.',
+}
+
 export default async function check() {
   const reply = await runInBackground('AXE_RUN')
   const t = window.__t

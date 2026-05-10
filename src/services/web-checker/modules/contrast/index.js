@@ -9,6 +9,16 @@ export const overlay = {
   offText: 'Show contrast',
 }
 
+export const claude = {
+  title: 'Kontrast-Vorschlag',
+  systemPrompt:
+    'You are a brand designer and accessibility expert. The user found a contrast issue between a foreground and background color. ' +
+    'Reply in German, briefly (2-3 paragraphs):\n' +
+    '1. Why this contrast matters (WCAG AA: 4.5:1 for normal text, 3:1 for large).\n' +
+    '2. Suggest a SPECIFIC HEX COLOR for the foreground that passes WCAG AA and stays close to the original ' +
+    '(e.g. a slightly darker/lighter variant). Show it in a fenced ```text block (just the hex).',
+}
+
 export default async function check() {
   const { errors, warnings, items, addItem, finish } = createCheckResult()
   const t = window.__t

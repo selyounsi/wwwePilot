@@ -40,7 +40,13 @@ const {
   allowChatBot = false,
   moduleId     = null,
   actions      = {},
+  claude: claudeConfig = null,
 } = inject('moduleOverlay', {})
+
+const DEFAULT_EXPLAIN_PROMPT =
+  'You are a senior web QA engineer helping a developer fix issues found on a web page. ' +
+  'Reply in German, concise (3-6 short paragraphs maximum). Explain WHY the issue matters, ' +
+  'then give a CONCRETE FIX with code if applicable. No fluff, no apologies.'
 
 const showLiveEditor    = actions.liveEditor    !== false
 const showChatbot       = actions.chatbot       !== false && allowChatBot
@@ -163,11 +169,9 @@ async function explainWithClaude() {
     ].filter(Boolean).join('\n\n')
 
     const result = await claude.run({
-      max_tokens: 800,
-      system: 'You are a senior web QA engineer helping a developer fix issues found on a web page. ' +
-              'Reply in German, concise (3-6 short paragraphs maximum). Explain WHY the issue matters, ' +
-              'then give a CONCRETE FIX with code if applicable. No fluff, no apologies.',
-      messages: [{ role: 'user', content: userMessage }],
+      max_tokens: claudeConfig?.maxTokens ?? 800,
+      system:     claudeConfig?.systemPrompt ?? DEFAULT_EXPLAIN_PROMPT,
+      messages:   [{ role: 'user', content: userMessage }],
     })
     explainText.value = result.text
   } catch (e) {
@@ -355,7 +359,7 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
 
     <ClaudeResult
       :open="explainOpen"
-      :title="t('Explain with Claude')"
+      :title="claudeConfig?.title ? t(claudeConfig.title) : t('Explain with Claude')"
       :loading="explainLoading"
       :error="explainError"
       :text="explainText"

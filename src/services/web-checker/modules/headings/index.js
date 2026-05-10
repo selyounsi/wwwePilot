@@ -5,6 +5,16 @@ export const overlay = {
   offText: 'Show tags',
 }
 
+export const claude = {
+  title: 'Heading-Vorschlag',
+  systemPrompt:
+    'You are an SEO and content strategist. The user found an issue with a page\'s heading hierarchy. ' +
+    'Reply in German, briefly:\n' +
+    '1. Why proper heading order matters (SEO + screen readers).\n' +
+    '2. If the order is broken, suggest a CORRECTED heading hierarchy in a fenced ```html block.\n' +
+    '3. If the h1 itself is weak (vague, missing keywords), suggest a stronger one.',
+}
+
 export default function check() {
   const { errors, warnings, items, addItem, finish } = createCheckResult()
   const t = window.__t
