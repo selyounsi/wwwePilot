@@ -157,6 +157,20 @@ Drei Eigenheiten die der Login-Code im Backend kompensieren muss:
 
 Wenn EverAuth diese drei Quirks irgendwann fixt, können entsprechende Workarounds raus.
 
+## Login-Fehler-UX
+
+Schlägt der Login fehl, kategorisiert [LoginView.vue](../src/views/LoginView.vue) den Fehler nach `chrome.runtime.lastError.message` bzw. der geworfenen Exception:
+
+| Kategorie | Auslöser | UI-Hinweis |
+|---|---|---|
+| `network` | Chromes „Authorization page could not be loaded" — Backend / OIDC-Provider unerreichbar | Card mit Ursachenliste: VPN nicht aktiv, Backend offline, Firewall |
+| `cancelled` | User hat das Login-Fenster geschlossen | Dezenter Hinweis, „Erneut versuchen" |
+| `denied` | OIDC-Provider hat den Login abgelehnt | Card, Hinweis Richtung IT |
+| `token-error` | Callback ohne Tokens / OIDC-Fehler | Card, IT-Eskalation |
+| `unknown` | Alles andere | Originale Error-Message |
+
+Die Karte zeigt nur bei `network` die Ursachenliste — bei den anderen Fällen ist die Ursache eindeutig genug.
+
 ## Wo welcher Code
 
 | Datei | Zweck |
