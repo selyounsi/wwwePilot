@@ -43,6 +43,8 @@
     "Click a module to see which pages are affected — then a page to open it in a new tab.": "Klicke auf ein Modul, um zu sehen welche Seiten betroffen sind — dann auf eine Seite, um sie im neuen Tab zu öffnen.",
     "By page": "Nach Seite",
     "By module": "Nach Modul",
+    "You are not on the checked page anymore.": "Du bist nicht mehr auf der geprüften Seite.",
+    "Open tab": "Tab öffnen",
     "1 page affected": "1 Seite betroffen",
     "{n} pages affected": "{n} Seiten betroffen",
     "Skipped — deselected before start": "Übersprungen — vor dem Start abgewählt",

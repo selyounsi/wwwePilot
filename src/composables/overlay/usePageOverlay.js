@@ -94,9 +94,19 @@ function buildOverlayScript() {
       return () => wins.forEach(w => { try { w.removeEventListener('scroll', updateFn) } catch {} })
     }
 
+    function rectOrParent(el) {
+      let cur = el
+      for (let i = 0; i < 4 && cur; i++) {
+        const r = cur.getBoundingClientRect()
+        if (r.width > 0 && r.height > 0) return r
+        cur = cur.parentElement
+      }
+      return el.getBoundingClientRect()
+    }
+
     function renderBadge(hit, item) {
       const { el, offsetX, offsetY } = hit
-      const rect = el.getBoundingClientRect()
+      const rect = rectOrParent(el)
 
       const absTop    = rect.top    + offsetY
       const absBottom = rect.bottom + offsetY
