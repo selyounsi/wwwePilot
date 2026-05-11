@@ -137,6 +137,19 @@ export default async function check() {
     { when: !!canonical,                                           type: 'success', title: t('Canonical tag present') },
   ])
 
+  const slug       = (location.pathname.replace(/\/+$/, '').split('/').pop() || '').trim()
+  const isHomepage = !slug || location.pathname === '/' || location.pathname === ''
+  const slugLen    = slug.length
+  add('url-slug', t('URL slug'),
+    isHomepage ? t('Homepage (/)') : slug, 'SEO', [
+    { when: isHomepage,                                            type: 'success', title: t('Homepage — no slug to check') },
+    { when: !isHomepage && /[A-Z]/.test(slug),                     type: 'warning', title: t('Slug contains uppercase letters — prefer lowercase') },
+    { when: !isHomepage && /[^a-z0-9\-_.]/i.test(slug),            type: 'warning', title: t('Slug contains unusual characters: "{slug}"', { slug }) },
+    { when: !isHomepage && /--/.test(slug),                        type: 'warning', title: t('Slug contains double hyphens — clean up') },
+    { when: !isHomepage && slugLen > 60,                           type: 'warning', title: t('Slug is very long ({len} chars) — keep under 60', { len: slugLen }) },
+    { when: !isHomepage,                                           type: 'success', title: t('Slug: "{slug}"', { slug }) },
+  ])
+
   const ogMissing = [!ogTitle && 'og:title', !ogDescription && 'og:description', !ogImage && 'og:image'].filter(Boolean)
   add('og-tags', 'Open Graph',
     ogMissing.length ? t('Missing: {fields}', { fields: ogMissing.join(', ') }) : 'title, description, image', 'SEO', [

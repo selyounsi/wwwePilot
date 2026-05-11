@@ -18,6 +18,11 @@
     "href=\"{href}\" — screen readers cannot label this link": "href=\"{href}\" — Screenreader können den Link nicht beschriften",
     "Missing title attribute": "Fehlendes title-Attribut",
     "Title identical to link text": "Title identisch mit Linktext",
+
+    "Email address exposed in plain mailto:": "E-Mail unmaskiert im mailto:",
+    "data-email is set but href reveals the address — spam bots can scrape it.": "data-email ist gesetzt, aber im href steht die Adresse im Klartext — Spam-Bots können sie auslesen.",
+    "Email correctly masked": "E-Mail korrekt maskiert",
+    "data-email present and href is obfuscated.": "data-email vorhanden und der href ist verschlüsselt.",
     "\"{title}\" — title should provide additional info": "\"{title}\" – title sollte zusätzliche Info liefern",
     "External link without target=\"_blank\"": "Externer Link ohne target=\"_blank\"",
     "Mailto without title": "Mailto ohne title",

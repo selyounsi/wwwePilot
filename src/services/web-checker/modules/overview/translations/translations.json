@@ -68,6 +68,16 @@
     "Suggested page title": "Vorgeschlagener Page-Title",
     "Generate Open Graph tags": "Open-Graph-Tags generieren",
     "Suggested Open Graph tags": "Vorgeschlagene Open-Graph-Tags",
+    "URL slug": "URL-Pfad",
+    "Homepage (/)": "Startseite (/)",
+    "Homepage — no slug to check": "Startseite — kein Pfad zu prüfen",
+    "Slug contains uppercase letters — prefer lowercase": "Pfad enthält Großbuchstaben — Kleinschreibung bevorzugen",
+    "Slug contains unusual characters: \"{slug}\"": "Pfad enthält ungewöhnliche Zeichen: \"{slug}\"",
+    "Slug contains double hyphens — clean up": "Pfad enthält doppelte Bindestriche — bereinigen",
+    "Slug is very long ({len} chars) — keep under 60": "Pfad sehr lang ({len} Zeichen) — unter 60 halten",
+    "Slug: \"{slug}\"": "Pfad: \"{slug}\"",
+    "Check slug for typos": "Pfad auf Tippfehler prüfen",
+    "Slug spell check": "Pfad-Rechtschreibprüfung",
     "Could not read the page content. Reopen the page and try again.": "Seiteninhalt konnte nicht gelesen werden. Seite neu öffnen und erneut versuchen."
   },
   "en": {}

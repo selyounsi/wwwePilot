@@ -72,6 +72,10 @@ export default async function check() {
     const isTel      = href.startsWith('tel:')
     const isAnchor   = href.startsWith('#')
 
+    const hasCmsEmailAttr   = a.hasAttribute('data-email')
+    const emailMasked       = hasCmsEmailAttr && !isMailto
+    const emailUnmasked     = hasCmsEmailAttr &&  isMailto
+
     const ariaLabel   = a.getAttribute('aria-label') ?? ''
     const imgAlt      = a.querySelector('img')?.getAttribute('alt') ?? ''
     const linkContent = text || imgAlt || ariaLabel
@@ -129,6 +133,18 @@ export default async function check() {
         type:        'warning',
         title:       isMailto ? t('Mailto without title') : t('Tel without title'),
         description: href,
+      },
+      {
+        when:        emailUnmasked,
+        type:        'warning',
+        title:       t('Email address exposed in plain mailto:'),
+        description: t('data-email is set but href reveals the address — spam bots can scrape it.'),
+      },
+      {
+        when:        emailMasked,
+        type:        'success',
+        title:       t('Email correctly masked'),
+        description: t('data-email present and href is obfuscated.'),
       },
       {
         when:        true,

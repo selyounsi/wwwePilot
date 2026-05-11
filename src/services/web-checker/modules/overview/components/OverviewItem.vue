@@ -32,6 +32,13 @@ const isOgTags = computed(() =>
   && (props.item.issues ?? []).some(i => i.type !== 'success')
 )
 
+const isUrlSlug = computed(() =>
+  props.item.id === 'url-slug'
+  && props.item.details
+  && !props.item.details.toString().startsWith('Homepage')
+  && !props.item.details.toString().startsWith('Startseite')
+)
+
 const descOpen    = ref(false)
 const descLoading = ref(false)
 const descText    = ref('')
@@ -46,6 +53,11 @@ const ogOpen    = ref(false)
 const ogLoading = ref(false)
 const ogText    = ref('')
 const ogError   = ref('')
+
+const slugOpen    = ref(false)
+const slugLoading = ref(false)
+const slugText    = ref('')
+const slugError   = ref('')
 
 async function fetchPageContext() {
   const tabId = checkStore.state.checkedTabId
@@ -135,6 +147,41 @@ async function generateMetaTitle() {
   }
 }
 
+async function checkSlugSpelling() {
+  slugOpen.value    = true
+  slugText.value    = ''
+  slugError.value   = ''
+  slugLoading.value = true
+  try {
+    const slug = props.item.details
+    const ctx  = await fetchPageContext()
+    if (!slug) throw new Error('No slug to check')
+
+    const userMessage = [
+      `URL slug: ${slug}`,
+      ctx?.title ? `Page title: ${ctx.title}` : null,
+      ctx?.h1    ? `H1: ${ctx.h1}`            : null,
+      ctx?.url   ? `Full URL: ${ctx.url}`     : null,
+    ].filter(Boolean).join('\n')
+
+    const result = await claude.run({
+      max_tokens: 200,
+      system: 'Du prüfst URL-Slugs auf Rechtschreibfehler. Der Slug wird mit "-" als Wort-Trenner. ' +
+              'Antworte auf Deutsch, sehr kurz:\n' +
+              '- Wenn KORREKT geschrieben: nur "✓ Korrekt geschrieben" zurückgeben.\n' +
+              '- Wenn TIPPFEHLER: "Tippfehler: <falsch> → <korrekt>" plus eine 1-Zeilen-Erklärung.\n' +
+              'Berücksichtige den Page-Title als Kontext (z.B. "leistungen" ist OK auf einer Leistungen-Seite). ' +
+              'Eigennamen (Firmen, Marken, Orte) NICHT als Fehler markieren. Keine Erklärungen wenn alles passt.',
+      messages: [{ role: 'user', content: userMessage }],
+    })
+    slugText.value = result.text.trim()
+  } catch (e) {
+    slugError.value = e.message || String(e)
+  } finally {
+    slugLoading.value = false
+  }
+}
+
 async function generateOgTags() {
   ogOpen.value    = true
   ogText.value    = ''
@@ -176,7 +223,7 @@ async function generateOgTags() {
 <template>
   <div>
     <ModuleItem :item="normalized" variant="box">
-      <template v-if="isMetaDesc || isMetaTitle || isOgTags" #expand>
+      <template v-if="isMetaDesc || isMetaTitle || isOgTags || isUrlSlug" #expand>
         <div class="bg-surface-soft border-t border-border/40 px-3 py-2.5 flex flex-col gap-2">
           <div
             v-for="issue in item.issues"
@@ -209,6 +256,14 @@ async function generateOgTags() {
             :loading="ogLoading"
             @click="generateOgTags"
           />
+          <ClaudeButton
+            v-if="isUrlSlug"
+            variant="pill"
+            :size="13"
+            :label="t('Check slug for typos')"
+            :loading="slugLoading"
+            @click="checkSlugSpelling"
+          />
         </div>
       </template>
     </ModuleItem>
@@ -236,6 +291,14 @@ async function generateOgTags() {
       :error="ogError"
       :text="ogText"
       @update:open="ogOpen = $event"
+    />
+    <ClaudeResult
+      :open="slugOpen"
+      :title="t('Slug spell check')"
+      :loading="slugLoading"
+      :error="slugError"
+      :text="slugText"
+      @update:open="slugOpen = $event"
     />
   </div>
 </template>
