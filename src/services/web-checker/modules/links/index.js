@@ -78,7 +78,7 @@ export default async function check() {
     const hasIcon     = !linkContent && hasVisualContent(a)
     const visibleText = linkContent || title || (hasIcon ? `(${t('Icon')})` : '')
 
-    const noText         = !linkContent && !hasIcon
+    const noText         = !linkContent && !hasIcon && !title
     const iconNoLabel    = hasIcon && !title && !ariaLabel
     const noTitle        = !title && !isAnchor && !hasIcon
     const noBlank        = isExternal && target !== '_blank'

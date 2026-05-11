@@ -101,7 +101,10 @@ export default function check() {
           const galleryEl = parentLink.closest('.cms-image')
           lightboxOk = !!(
             galleryEl?.classList.contains('lightbox-zoom-image') ||
-            galleryEl?.hasAttribute('data-lightbox-type')
+            galleryEl?.hasAttribute('data-lightbox-type') ||
+            parentLink.querySelector('img.lightbox-zoom-image') ||
+            parentLink.classList.contains('lightbox-zoom-image') ||
+            parentLink.closest('.modalGallery')
           )
         }
       }
@@ -132,7 +135,9 @@ export default function check() {
       const galleryEl  = link.closest('.cms-image')
       const lightboxOk = !!(
         galleryEl?.classList.contains('lightbox-zoom-image') ||
-        galleryEl?.hasAttribute('data-lightbox-type')
+        galleryEl?.hasAttribute('data-lightbox-type') ||
+        link.classList.contains('lightbox-zoom-image') ||
+        link.closest('.modalGallery')
       )
       const src  = link.href
       const name = hrefAttr.split('/').pop().split('?')[0] || 'Lightbox'

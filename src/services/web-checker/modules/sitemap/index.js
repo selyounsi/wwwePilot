@@ -37,7 +37,16 @@ export default async function check() {
     if (!linksByUrl.has(normalized)) linksByUrl.set(normalized, a)
   })
 
-  const linkedNotInSitemap = [...linkedUrls].filter(u => !sitemapUrls.has(u))
+  // Bewusst nicht in der Sitemap: die Sitemap-Übersichtsseite selbst,
+  // robots.txt, Impressum/DSE-typische Pfade fallen NICHT drunter weil
+  // die normal in der Sitemap stehen sollen.
+  const SITEMAP_META_PATHS = /\/(sitemap|sitemap\.x?html?|sitemap\.xml|robots\.txt)$/i
+
+  const linkedNotInSitemap = [...linkedUrls].filter(u => {
+    if (sitemapUrls.has(u)) return false
+    try { if (SITEMAP_META_PATHS.test(new URL(u).pathname)) return false } catch {}
+    return true
+  })
   const sitemapNotLinked   = [...sitemapUrls].filter(u => !linkedUrls.has(u))
   const both               = [...linkedUrls].filter(u => sitemapUrls.has(u))
 
