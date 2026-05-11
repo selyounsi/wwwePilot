@@ -210,6 +210,48 @@ const sortedQueue = computed(() =>
 const totalErrors   = computed(() => queue.value.reduce((s, r) => s + r.errorCount,   0))
 const totalWarnings = computed(() => queue.value.reduce((s, r) => s + r.warningCount, 0))
 
+const resultsView    = ref('pages')
+const expandedModules = reactive(new Set())
+function toggleModuleExpanded(id) {
+  if (expandedModules.has(id)) expandedModules.delete(id)
+  else                         expandedModules.add(id)
+}
+
+const moduleAggregate = computed(() => {
+  const out = {}
+  for (const url of store.state.urls) {
+    const mods = store.state.results[url]
+    if (!mods) continue
+    for (const [modId, r] of Object.entries(mods)) {
+      if (modId === '__page__' || r.status === 'skipped') continue
+      if (!out[modId]) {
+        const m = modules.find(mm => mm.id === modId)
+        out[modId] = {
+          id:           modId,
+          name:         m?.name ?? modId,
+          icon:         m?.icon,
+          errorCount:   0,
+          warningCount: 0,
+          affectedUrls: [],
+        }
+      }
+      const e = r.errorCount   ?? 0
+      const w = r.warningCount ?? 0
+      out[modId].errorCount   += e
+      out[modId].warningCount += w
+      if (e > 0 || w > 0) out[modId].affectedUrls.push({ url, errors: e, warnings: w })
+    }
+  }
+  for (const m of Object.values(out)) {
+    m.affectedUrls.sort((a, b) => b.errors - a.errors || b.warnings - a.warnings)
+  }
+  return Object.values(out).sort((a, b) => {
+    const ta = a.errorCount > 0 ? 0 : a.warningCount > 0 ? 1 : 2
+    const tb = b.errorCount > 0 ? 0 : b.warningCount > 0 ? 1 : 2
+    return ta - tb || b.errorCount - a.errorCount || b.warningCount - a.warningCount || a.name.localeCompare(b.name)
+  })
+})
+
 async function reloadSitemap() {
   if (!activeOrigin.value) return
   loadPreflight(activeOrigin.value)
@@ -602,7 +644,9 @@ async function buildReport() {
         </div>
 
         <p v-if="isDone" class="text-[11px] text-muted/70 px-1 leading-relaxed shrink-0">
-          {{ t('Click a page to open it in a new tab — the sidebar will then show the details like a single check.') }}
+          {{ resultsView === 'pages'
+            ? t('Click a page to open it in a new tab — the sidebar will then show the details like a single check.')
+            : t('Click a module to see which pages are affected — then a page to open it in a new tab.') }}
         </p>
 
         <ClaudeButton
@@ -614,7 +658,30 @@ async function buildReport() {
           @click="buildReport"
         />
 
-        <div class="flex flex-col gap-1.5 flex-1 min-h-0 overflow-y-auto">
+        <div v-if="isDone" class="flex gap-2 shrink-0">
+          <BaseButton
+            variant="pill-toggle"
+            icon="mdiFileTree"
+            :icon-size="13"
+            :active="resultsView === 'pages'"
+            class="flex-1"
+            @click="resultsView = 'pages'"
+          >
+            {{ t('By page') }}
+          </BaseButton>
+          <BaseButton
+            variant="pill-toggle"
+            icon="mdiViewModule"
+            :icon-size="13"
+            :active="resultsView === 'modules'"
+            class="flex-1"
+            @click="resultsView = 'modules'"
+          >
+            {{ t('By module') }}
+          </BaseButton>
+        </div>
+
+        <div v-if="resultsView === 'pages' || !isDone" class="flex flex-col gap-1.5 flex-1 min-h-0 overflow-y-auto">
           <button
             v-for="row in sortedQueue" :key="row.url"
             :disabled="row.status !== 'done' || navigatingUrl !== null"
@@ -668,6 +735,82 @@ async function buildReport() {
               name="mdiOpenInNew" :size="12" class="text-muted/50 shrink-0"
             />
           </button>
+        </div>
+
+        <div v-else class="flex flex-col gap-1.5 flex-1 min-h-0 overflow-y-auto">
+          <div v-for="mod in moduleAggregate" :key="mod.id" class="flex flex-col gap-1">
+            <button
+              :disabled="mod.affectedUrls.length === 0"
+              @click="toggleModuleExpanded(mod.id)"
+              class="border rounded-xl px-3 py-2.5 text-left flex items-center justify-between gap-2 transition-colors"
+              :class="mod.affectedUrls.length === 0
+                ? 'bg-surface-soft/40 border-border/40 cursor-default'
+                : 'bg-surface-soft border-border cursor-pointer hover:border-primary/40 hover:bg-surface-soft-hover'"
+            >
+              <div class="flex items-center gap-2 min-w-0 flex-1">
+                <span v-if="mod.errorCount > 0"
+                  class="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-error-soft text-error shrink-0 min-w-7 text-center"
+                >{{ mod.errorCount }} {{ t('Err') }}</span>
+                <span v-else-if="mod.warningCount > 0"
+                  class="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-alert-soft text-alert shrink-0 min-w-7 text-center"
+                >{{ mod.warningCount }} {{ t('Warn') }}</span>
+                <span v-else
+                  class="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-success-soft text-success shrink-0 min-w-7 text-center"
+                >✓</span>
+
+                <Icon v-if="mod.icon && mod.icon.startsWith('mdi')" :name="mod.icon" :size="13" class="text-muted/70 shrink-0" />
+                <div class="flex flex-col min-w-0 flex-1">
+                  <span class="text-xs text-light truncate">{{ mod.name }}</span>
+                  <span v-if="mod.affectedUrls.length > 0" class="text-[10px] text-muted/60 truncate">
+                    {{ mod.affectedUrls.length === 1
+                      ? t('1 page affected')
+                      : t('{n} pages affected', { n: mod.affectedUrls.length }) }}<span v-if="mod.errorCount > 0 && mod.warningCount > 0">
+                      · {{ mod.warningCount === 1
+                          ? t('+{count} warning',  { count: mod.warningCount })
+                          : t('+{count} warnings', { count: mod.warningCount }) }}</span>
+                  </span>
+                </div>
+              </div>
+
+              <Icon v-if="mod.affectedUrls.length > 0"
+                :name="expandedModules.has(mod.id) ? 'mdiChevronDown' : 'mdiChevronRight'"
+                :size="14" class="text-muted/60 shrink-0"
+              />
+            </button>
+
+            <div v-if="expandedModules.has(mod.id) && mod.affectedUrls.length > 0" class="flex flex-col gap-1 pl-3">
+              <button
+                v-for="entry in mod.affectedUrls" :key="entry.url"
+                :disabled="navigatingUrl !== null"
+                @click="openSinglePage(entry.url)"
+                class="border rounded-xl px-3 py-2 text-left flex items-center justify-between gap-2 transition-colors bg-surface-soft/60 border-border/60 cursor-pointer hover:border-primary/40 hover:bg-surface-soft-hover"
+                :class="navigatingUrl === entry.url && 'ring-2 ring-primary/60'"
+              >
+                <div class="flex items-center gap-2 min-w-0 flex-1">
+                  <span v-if="entry.errors > 0"
+                    class="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-error-soft text-error shrink-0 min-w-7 text-center"
+                  >{{ entry.errors }} {{ t('Err') }}</span>
+                  <span v-else
+                    class="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-alert-soft text-alert shrink-0 min-w-7 text-center"
+                  >{{ entry.warnings }} {{ t('Warn') }}</span>
+
+                  <div class="flex flex-col min-w-0 flex-1">
+                    <Tooltip :text="entry.url">
+                      <span class="text-xs text-light truncate">{{ pathOf(entry.url) }}</span>
+                    </Tooltip>
+                    <span v-if="entry.errors > 0 && entry.warnings > 0"
+                      class="text-[10px] text-muted/60 truncate"
+                    >{{ entry.warnings === 1
+                      ? t('+{count} warning',  { count: entry.warnings })
+                      : t('+{count} warnings', { count: entry.warnings }) }}</span>
+                  </div>
+                </div>
+
+                <LoadingSpinner v-if="navigatingUrl === entry.url" size="sm" class="shrink-0" />
+                <Icon v-else name="mdiOpenInNew" :size="12" class="text-muted/50 shrink-0" />
+              </button>
+            </div>
+          </div>
         </div>
       </template>
 
