@@ -98,10 +98,15 @@ API:
 | **Item erklären** | jeder ModuleItem mit Issue | `mdiAutoFix` | Modul, Page-URL, Element-Label, Issues, getrimmtes Element-HTML | German prose, 3–6 Absätze |
 | **Site-Bericht** | Site-Check-View nach Abschluss | `mdiAutoFix` (pill) | Aggregate pro Modul + Beispielseiten | Fazit + Top-Risiken + Next Steps |
 | **Alt-Text** | Image-Item, alle `<img>` | `mdiTagTextOutline` | Image-URL via Vision + Filename + ggf. aktueller Alt | 5–15 Wörter Alt-Text |
-| **Meta-Description** | Overview-Item `meta-desc` mit Issue | `mdiAutoFix` (pill) | Page-Title + H1 + Body-Text (3000 chars) | 120–160 Zeichen Meta-Description |
+| **Meta-Description** | Overview-Item `meta-desc` mit Issue | Pill | Page-Title + H1 + Body-Text (3000 chars) | 120–160 Zeichen Meta-Description |
+| **Page-Title** | Overview-Item `meta-title` mit Issue | Pill | wie Meta-Description | 30–60 Zeichen `<title>`-Wert |
+| **Open-Graph-Tags** | Overview-Item `og-tags` mit Issue | Pill | wie Meta-Description | drei `<meta property="og:*">`-Tags |
+| **H1-Generierung** | Headings-View (HeadingStats) | Pill | Page-URL + Title + Body-Text | 20–70 Zeichen H1-Vorschlag |
+| **ARIA-Label** | AxeItem mit name-missing Rule (`button-name`, `link-name`, `image-alt`, …) | `mdiTagTextOutline` | Rule-ID + Selector + Element-HTML | 2–8 Wörter ARIA-Label |
+| **DSGVO-Fix** | PrivacyItem mit Issue | `mdiAutoFix` | Service + Host + aktuelles Placement + Element-HTML + Consent-State | Problem-Satz + korrigiertes Snippet + Cookie-Banner-Text + DSE-Snippet |
 
-Alle vier verwenden `claude.run()` mit modulspezifischen System-Prompts auf
-Deutsch. Output wird vor Anzeige getrimmt + ggf. um Anführungszeichen
+Alle verwenden `claude.run()` mit auf den Output zugeschnittenen System-Prompts
+auf Deutsch. Output wird vor Anzeige getrimmt + ggf. um Anführungszeichen
 bereinigt.
 
 ### Per-Modul abschaltbar

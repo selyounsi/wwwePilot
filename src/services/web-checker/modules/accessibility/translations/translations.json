@@ -3,7 +3,10 @@
     "Accessibility (axe)": "Accessibility (axe)",
     "WCAG audit via axe-core": "WCAG-Audit via axe-core",
 
-    "[Manual review]": "[Manuelle Prüfung]"
+    "[Manual review]": "[Manuelle Prüfung]",
+
+    "Generate ARIA label": "ARIA-Label generieren",
+    "Suggested ARIA label": "Vorgeschlagenes ARIA-Label"
   },
   "en": {}
 }

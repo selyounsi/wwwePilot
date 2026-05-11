@@ -64,6 +64,10 @@
 
     "Generate description": "Beschreibung generieren",
     "Suggested meta description": "Vorgeschlagene Meta-Description",
+    "Generate page title": "Page-Title generieren",
+    "Suggested page title": "Vorgeschlagener Page-Title",
+    "Generate Open Graph tags": "Open-Graph-Tags generieren",
+    "Suggested Open Graph tags": "Vorgeschlagene Open-Graph-Tags",
     "Could not read the page content. Reopen the page and try again.": "Seiteninhalt konnte nicht gelesen werden. Seite neu öffnen und erneut versuchen."
   },
   "en": {}

@@ -30,7 +30,10 @@
     "Unknown service \"{service}\" — not in pCServiceTemplates": "Unbekannter Service \"{service}\" – nicht in pCServiceTemplates",
     "Service-Key ist deklariert aber im privacyControl-Config nicht definiert": "Service-Key ist deklariert aber im privacyControl-Config nicht definiert",
     "Type mismatch for \"{service}\"": "Type-Mismatch für \"{service}\"",
-    "Template erwartet {expected}, gefunden {found}": "Template erwartet {expected}, gefunden {found}"
+    "Template erwartet {expected}, gefunden {found}": "Template erwartet {expected}, gefunden {found}",
+
+    "Generate DSGVO fix": "DSGVO-Fix generieren",
+    "DSGVO fix + cookie banner + DSE snippet": "DSGVO-Fix + Cookie-Banner + DSE-Snippet"
   },
   "en": {}
 }

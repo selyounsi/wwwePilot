@@ -15,7 +15,12 @@
     "No H1 before this heading — hierarchy starts incorrectly": "Kein H1 vor diesem Heading – Hierarchie beginnt falsch",
     "Jump from H{from} to H{to}": "Sprung von H{from} auf H{to}",
     "H{level} was skipped": "H{level} wurde übersprungen",
-    "(empty)": "(leer)"
+    "(empty)": "(leer)",
+
+    "Generate missing H1": "Fehlende H1 generieren",
+    "Improve H1": "H1 verbessern",
+    "Suggested H1": "Vorgeschlagene H1",
+    "Could not read the page content. Reopen the page and try again.": "Seiteninhalt konnte nicht gelesen werden. Seite neu öffnen und erneut versuchen."
   },
   "en": {}
 }
