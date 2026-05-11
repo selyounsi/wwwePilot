@@ -73,8 +73,8 @@ export default async function check() {
     const isAnchor   = href.startsWith('#')
 
     const hasCmsEmailAttr   = a.hasAttribute('data-email')
-    const emailMasked       = hasCmsEmailAttr && !isMailto
-    const emailUnmasked     = hasCmsEmailAttr &&  isMailto
+    const emailMasked       = hasCmsEmailAttr
+    const emailUnmasked     = !hasCmsEmailAttr && isMailto
 
     const ariaLabel   = a.getAttribute('aria-label') ?? ''
     const imgAlt      = a.querySelector('img')?.getAttribute('alt') ?? ''
@@ -137,14 +137,14 @@ export default async function check() {
       {
         when:        emailUnmasked,
         type:        'warning',
-        title:       t('Email address exposed in plain mailto:'),
-        description: t('data-email is set but href reveals the address — spam bots can scrape it.'),
+        title:       t('Email address not masked'),
+        description: t('mailto: without data-email — the address is in the HTML for spam bots to scrape.'),
       },
       {
         when:        emailMasked,
         type:        'success',
         title:       t('Email correctly masked'),
-        description: t('data-email present and href is obfuscated.'),
+        description: t('data-email present — address is obfuscated by JS.'),
       },
       {
         when:        true,
