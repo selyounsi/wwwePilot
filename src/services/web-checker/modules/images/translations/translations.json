@@ -20,6 +20,7 @@
     "Missing alt attribute": "Fehlendes Alt-Attribut",
     "Alt text too short: \"{alt}\"": "Alt-Text zu kurz: \"{alt}\"",
     "Auto-generated alt text: \"{alt}\"": "Alt-Text automatisch gesetzt: \"{alt}\"",
+    "Alt text used on {n} images: \"{alt}\"": "Alt-Text auf {n} Bildern verwendet: \"{alt}\"",
     "Lightbox class missing (lightbox-zoom-image)": "Lightbox-Klasse fehlt (lightbox-zoom-image)",
     "Image upscaled: rendered {rw}×{rh}px, original {w}×{h}px": "Bild wird hochskaliert: {rw}×{rh}px gerendert, Original {w}×{h}px",
     "Image OK": "Bild korrekt",

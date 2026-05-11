@@ -52,8 +52,10 @@ export default async function check() {
 
   const head = document.head
 
+  const allLinks = Array.from(document.querySelectorAll('a'))
   linkedNotInSitemap.forEach((url, idx) => {
-    const el = linksByUrl.get(url) ?? head
+    const el        = linksByUrl.get(url) ?? head
+    const anchorIdx = el === head ? -1 : allLinks.indexOf(el)
     addItem(el, [
       {
         when:        true,
@@ -65,7 +67,9 @@ export default async function check() {
       url, name: url,
       kind: 'linked-only',
       visible: true,
-      _meta: { tag: 'A', idx: 0, text: url.split('/').slice(-2).join('/') },
+      _meta: anchorIdx >= 0
+        ? { tag: 'a', idx: anchorIdx, text: url.split('/').slice(-2).join('/') }
+        : { idx: 'linked-' + idx },
     })
   })
 

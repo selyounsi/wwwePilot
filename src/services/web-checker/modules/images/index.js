@@ -55,6 +55,12 @@ export default function check() {
     const processedLinks = new Set()
     const images         = Array.from(document.querySelectorAll('img'))
 
+    const altCounts = {}
+    images.forEach(img => {
+      const a = (img.getAttribute('alt') || '').trim()
+      if (a.length >= 3) altCounts[a] = (altCounts[a] || 0) + 1
+    })
+
     images.forEach((img, idx) => {
       const alt     = img.getAttribute('alt')
       const lazySrc = img.getAttribute('data-cms-src')
@@ -109,12 +115,16 @@ export default function check() {
         }
       }
 
+      const altTrimmed     = (alt ?? '').trim()
+      const duplicateAlt   = altTrimmed.length >= 3 && altCounts[altTrimmed] > 1
+
       addItem(img, [
         { when: broken,                                type: 'error',   title: t('Image cannot load') },
         { when: !!blacklistMatch,                      type: 'error',   title: t('Disallowed filename: "{name}"', { name: blacklistMatch }) },
         { when: alt === null,                          type: 'error',   title: t('Missing alt attribute') },
         { when: alt !== null && alt.trim().length < 3, type: 'warning', title: t('Alt text too short: "{alt}"', { alt }) },
         { when: isAutoAlt,                             type: 'error',   title: t('Auto-generated alt text: "{alt}"', { alt }) },
+        { when: duplicateAlt,                          type: 'warning', title: t('Alt text used on {n} images: "{alt}"', { n: altCounts[altTrimmed], alt: altTrimmed }) },
         { when: inLightbox && !lightboxOk,             type: 'error',   title: t('Lightbox class missing (lightbox-zoom-image)') },
         { when: isUpscaled,                            type: 'warning', title: t('Image upscaled: rendered {rw}×{rh}px, original {w}×{h}px', { rw: renderedWidth, rh: renderedHeight, w: width, h: height }) },
         { when: true,                                  type: 'success', title: t('Image OK') },
