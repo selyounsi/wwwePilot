@@ -55,7 +55,7 @@ export default function check() {
     const processedLinks = new Set()
     const images         = Array.from(document.querySelectorAll('img'))
 
-    images.forEach(img => {
+    images.forEach((img, idx) => {
       const alt     = img.getAttribute('alt')
       const lazySrc = img.getAttribute('data-cms-src')
                    || img.getAttribute('data-pic-cms-src')
@@ -118,14 +118,15 @@ export default function check() {
         { when: inLightbox && !lightboxOk,             type: 'error',   title: t('Lightbox class missing (lightbox-zoom-image)') },
         { when: isUpscaled,                            type: 'warning', title: t('Image upscaled: rendered {rw}×{rh}px, original {w}×{h}px', { rw: renderedWidth, rh: renderedHeight, w: width, h: height }) },
         { when: true,                                  type: 'success', title: t('Image OK') },
-      ], { src, name, alt, width, height, renderedWidth, renderedHeight, isVector, broken, isLazy, _meta: { src: rawSrc, name, alt } })
+      ], { src, name, alt, width, height, renderedWidth, renderedHeight, isVector, broken, isLazy, _meta: { src: rawSrc, name, alt, tag: 'img', idx } })
     })
 
     return processedLinks
   }
 
   function checkOrphanLightboxLinks(processedLinks) {
-    const links = Array.from(document.querySelectorAll('.cms-image a[href]'))
+    const allLinks = Array.from(document.querySelectorAll('a'))
+    const links    = Array.from(document.querySelectorAll('.cms-image a[href]'))
 
     links.forEach(link => {
       if (processedLinks.has(link)) return
@@ -146,7 +147,7 @@ export default function check() {
       addItem(link, [
         { when: !lightboxOk, type: 'error',   title: t('Lightbox class missing (lightbox-zoom-image)') },
         { when: lightboxOk,  type: 'success', title: t('Lightbox correctly configured') },
-      ], { src, name, alt, width: 0, height: 0, broken: false, isLightbox: true, _meta: { src, name, alt: null } })
+      ], { src, name, alt, width: 0, height: 0, broken: false, isLightbox: true, _meta: { src, name, alt: null, tag: 'a', idx: allLinks.indexOf(link) } })
     })
   }
 
