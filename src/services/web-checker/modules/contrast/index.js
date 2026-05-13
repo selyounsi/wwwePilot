@@ -101,6 +101,10 @@ export default async function check() {
     return { r, g, b }
   }
 
+  // returns true if some ancestor has a bg-image that's not covered by a
+  // near-opaque solid bg-color between the element and the image. 0.92 is
+  // the cutoff — anything more transparent shows enough of the image
+  // through that the css-only estimate becomes unreliable.
   function hasBgImageInTree(el) {
     let node = el
     while (node && node !== document.documentElement) {
@@ -111,7 +115,7 @@ export default async function check() {
         if (s.backgroundImage && s.backgroundImage !== 'none') return true
       }
       const bg = parseColor(own.backgroundColor)
-      if (bg && bg.a >= 1) return false
+      if (bg && bg.a >= 0.92) return false
       node = node.parentElement
     }
     return false
@@ -131,6 +135,20 @@ export default async function check() {
     if (parseFloat(style.textIndent) < -100) return false
     if (!fgColor || fgColor.a === 0) return false
     return true
+  }
+
+  // common screen-reader-only patterns that the visibility check above misses:
+  // 1×1 clipped boxes, absolutely positioned off-screen, clip-path:inset(50%).
+  function isScreenReaderOnly(el, style) {
+    const rect = el.getBoundingClientRect()
+    if (rect.width <= 1 && rect.height <= 1) return true
+    if (style.clipPath && /inset\(\s*50%/.test(style.clipPath)) return true
+    if (style.clip && /rect\(\s*0(px)?\s*,?\s*0(px)?\s*,?\s*0(px)?\s*,?\s*0(px)?/.test(style.clip)) return true
+    // pushed far off-screen via absolute positioning (left: -9999px etc.)
+    if (style.position === 'absolute' || style.position === 'fixed') {
+      if (rect.right < 0 || rect.left > window.innerWidth + 50) return true
+    }
+    return false
   }
 
   function getPseudoFg(el) {
@@ -158,6 +176,8 @@ export default async function check() {
     let   fontSize    = parseFloat(style.fontSize)
     let   fontWeight  = parseInt(style.fontWeight)
     let   pseudoFg    = false
+
+    if (isScreenReaderOnly(el, style)) continue
 
     if (!isTextVisible(style, fgColor)) {
       const pseudo = getPseudoFg(el)
@@ -208,7 +228,14 @@ export default async function check() {
     if (c.onBgImage) {
       const rect = c.el.getBoundingClientRect()
       if (isInViewport(rect)) {
-        c.sampleRect = { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
+        // for small elements (likely icons) sample a ring around the rect so
+        // we hit the actual bg, not the glyph pixels. larger rects keep the
+        // existing inside-sampling.
+        const small = rect.width < 40 && rect.height < 40
+        c.sampleRect = small
+          ? { x: rect.x - 20, y: rect.y - 20, width: rect.width + 40, height: rect.height + 40,
+              excludeRect: { x: rect.x - 2, y: rect.y - 2, width: rect.width + 4, height: rect.height + 4 } }
+          : { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
         toSample.push(c)
       } else {
         c.offScreen = true
@@ -220,8 +247,9 @@ export default async function check() {
     const reply = await runInBackground('CONTRAST_SAMPLE_BG', {
       viewportWidth: window.innerWidth,
       targets: toSample.map(c => ({
-        rect: c.sampleRect,
-        fg:   premultiply(c.fgColor, c.cssBg),
+        rect:        c.sampleRect,
+        excludeRect: c.sampleRect.excludeRect ?? null,
+        fg:          premultiply(c.fgColor, c.cssBg),
       })),
     })
     const sampled = reply?.colors ?? []

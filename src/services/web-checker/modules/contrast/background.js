@@ -2,6 +2,8 @@ export const type = 'CONTRAST_SAMPLE_BG'
 
 // captures the visible tab and samples each rect, excluding pixels close to
 // the text colour so we get the real background under the glyphs.
+// when excludeRect is set, samples only the ring outside it (used for small
+// icons where the inside of the rect is mostly the icon glyph).
 export async function handle(msg, sendResponse) {
   try {
     const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: 'png' })
@@ -23,19 +25,30 @@ export async function handle(msg, sendResponse) {
 
         const data = ctx.getImageData(x, y, w, h).data
         const fg   = target.fg
-        let r = 0, g = 0, b = 0, count = 0
 
-        // Sample every Nth pixel to keep it fast on large rects
+        // pixel positions to skip — used for ring-mode around small icons
+        const exX1 = target.excludeRect ? Math.floor(target.excludeRect.x * dpr) - x : -1
+        const exY1 = target.excludeRect ? Math.floor(target.excludeRect.y * dpr) - y : -1
+        const exX2 = target.excludeRect ? exX1 + Math.floor(target.excludeRect.width  * dpr) : -1
+        const exY2 = target.excludeRect ? exY1 + Math.floor(target.excludeRect.height * dpr) : -1
+        const hasExclude = target.excludeRect != null
+
+        let r = 0, g = 0, b = 0, count = 0
         const step = Math.max(1, Math.floor(Math.sqrt(data.length / 4 / 5000)))
-        for (let i = 0; i < data.length; i += 4 * step) {
-          if (data[i + 3] < 128) continue
-          const pr = data[i], pg = data[i + 1], pb = data[i + 2]
-          const dist = Math.sqrt((pr - fg.r) ** 2 + (pg - fg.g) ** 2 + (pb - fg.b) ** 2)
-          if (dist < 60) continue // skip pixels close to text colour
-          r += pr; g += pg; b += pb; count++
+
+        for (let py = 0; py < h; py += step) {
+          for (let px = 0; px < w; px += step) {
+            if (hasExclude && px >= exX1 && px < exX2 && py >= exY1 && py < exY2) continue
+            const i = (py * w + px) * 4
+            if (data[i + 3] < 128) continue
+            const pr = data[i], pg = data[i + 1], pb = data[i + 2]
+            const dist = Math.sqrt((pr - fg.r) ** 2 + (pg - fg.g) ** 2 + (pb - fg.b) ** 2)
+            if (dist < 60) continue
+            r += pr; g += pg; b += pb; count++
+          }
         }
 
-        if (count === 0) return null
+        if (count < 20) return null
         return { r: Math.round(r / count), g: Math.round(g / count), b: Math.round(b / count) }
       } catch { return null }
     })
