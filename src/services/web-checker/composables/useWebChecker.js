@@ -5,12 +5,14 @@ import { useCheckRunner }     from '@/services/web-checker/composables/useCheckR
 import { useSiteCheckStore }  from '@/services/web-checker/composables/useSiteCheckStore.js'
 import { detectLiveEditor }   from '@/composables/liveEditor/useLiveEditorDetector.js'
 import { moduleAppliesTo }    from '@/services/web-checker/composables/useUrlFilter.js'
+import { useCheckRun }        from '@/composables/useCheckRun.js'
 
 export function useWebChecker() {
   const { modules }                                                         = useModuleLoader('web-checker')
   const { state, setRunning, setResult, setSkipped, setCheckedTab, reset } = useCheckStore()
   const { injectHelper, runChecker }                                        = useCheckRunner()
   const siteCheckStore                                                      = useSiteCheckStore()
+  const checkRun                                                            = useCheckRun()
 
   const isChecking = ref(false)
   const tabStatus  = ref('unchecked')
@@ -91,8 +93,14 @@ export function useWebChecker() {
       else setSkipped(mod.id, 'URL-Filter')
     }
 
+    let origin = null
+    try { origin = new URL(tab.url).origin } catch {}
+    if (origin) await checkRun.start({ kind: 'single-page', origin })
+
     applicable.forEach(mod => setRunning(mod.id))
     await Promise.all(applicable.map(mod => runModule(tab.id, tab.url, mod)))
+
+    if (origin) checkRun.finish()
 
     setCheckedTab(tab)
     tabStatus.value  = 'current'

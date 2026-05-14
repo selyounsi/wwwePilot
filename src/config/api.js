@@ -33,6 +33,12 @@ export const API = {
   activity: {
     url: `${BACKEND}/api/activity`,
   },
+  runs: {
+    url: `${BACKEND}/api/runs`,
+  },
+  notes: {
+    url: `${BACKEND}/api/notes`,
+  },
   admin: {
     url: `${BACKEND}/api/admin`,
   },

@@ -2,11 +2,13 @@ import { useModuleLoader }   from '@/composables/loaders/useModuleLoader.js'
 import { useCheckRunner }    from './useCheckRunner.js'
 import { moduleAppliesTo }   from './useUrlFilter.js'
 import { useSiteCheckStore } from './useSiteCheckStore.js'
+import { useCheckRun }       from '@/composables/useCheckRun.js'
 
 export function useSiteCheck() {
   const { modules }                  = useModuleLoader('web-checker')
   const { injectHelper, runChecker } = useCheckRunner()
   const store                        = useSiteCheckStore()
+  const checkRun                     = useCheckRun()
 
   async function loadPreflight(origin, sitemapUrl) {
     store.startFetching(origin)
@@ -43,6 +45,9 @@ export function useSiteCheck() {
     }
 
     store.startRunning()
+
+    const origin = (() => { try { return new URL(selectedUrls[0]).origin } catch { return null } })()
+    if (origin) await checkRun.start({ kind: 'site-wide', origin, pagesCount: selectedUrls.length })
 
     const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true })
     const checkTab = await chrome.tabs.create({
@@ -110,6 +115,7 @@ export function useSiteCheck() {
       chrome.tabs.onRemoved.removeListener(onTabRemoved)
       try { await chrome.tabs.remove(checkTab.id) } catch {}
       store.setCheckTabId(null)
+      if (origin) checkRun.finish()
       if (store.state.status !== 'error') store.finish()
     }
   }

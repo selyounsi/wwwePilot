@@ -3,6 +3,7 @@ import { useWebCheckerSettings } from './useWebCheckerSettings.js'
 import { useWebCheckerConfig }   from './useWebCheckerConfig.js'
 import { useRunHistory }         from './useRunHistory.js'
 import { useActivityLog }        from '@/composables/useActivityLog.js'
+import { useCheckRun }           from '@/composables/useCheckRun.js'
 import { getAllModuleSettings }  from '@/composables/settings/useModuleSettings.js'
 
 export function useCheckRunner() {
@@ -11,6 +12,7 @@ export function useCheckRunner() {
   const { state: configState }       = useWebCheckerConfig()
   const { record: recordHistory }    = useRunHistory()
   const { record: recordActivity }   = useActivityLog()
+  const checkRun                     = useCheckRun()
 
   async function injectHelper(tabId) {
     const translations    = getTable()
@@ -217,13 +219,15 @@ export function useCheckRunner() {
       const origin = tab?.url ? new URL(tab.url).origin : null
       const result = res?.[0]?.result
       if (origin && result) {
-        recordHistory(origin, mod.id, result)
-        recordActivity('web_check.module', origin, {
+        const summary = {
           moduleId:     mod.id,
           errorCount:   result.errorCount   ?? 0,
           warningCount: result.warningCount ?? 0,
           durationMs:   Date.now() - startedAt,
-        })
+        }
+        recordHistory(origin, mod.id, result)
+        recordActivity('web_check.module', origin, summary)
+        checkRun.recordModule(summary)
       }
     } catch {}
     return res

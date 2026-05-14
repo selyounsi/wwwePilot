@@ -27,6 +27,10 @@ const { t } = useI18n()
 function pathOf(url) { try { return new URL(url).pathname } catch { return url } }
 const checkedShort = computed(() => pathOf(checkStore.state.checkedUrl ?? ''))
 
+function originOf(url) { try { return new URL(url).origin } catch { return null } }
+const checkedOrigin = computed(() => originOf(checkStore.state.checkedUrl ?? ''))
+const checkedPath   = computed(() => pathOf(checkStore.state.checkedUrl ?? ''))
+
 const tabMismatch = computed(() => {
   if (!checkStore.state.checkedTabId || !checkStore.state.checkedUrl) return false
   if (!activeTabId.value) return false
@@ -87,6 +91,13 @@ async function switchToCheckedTab() {
     </div>
 
     <ModuleSection :moduleId="moduleId" :label="label" :defaultFilter="defaultFilter" v-slot="{ result, raw }">
+      <SiteNotesBanner
+        v-if="checkedOrigin && result && result.status !== 'idle' && result.status !== 'running'"
+        :origin="checkedOrigin"
+        :scope-path="checkedPath"
+        :module-id="moduleId"
+      />
+
       <template v-if="!result || result.status === 'idle'">
         <EmptyState>{{ emptyMessage }}</EmptyState>
       </template>
