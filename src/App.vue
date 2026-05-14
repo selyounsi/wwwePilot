@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, onErrorCaptured, watch, nextTick } from 'vue'
+import { onMounted, onUnmounted, onErrorCaptured, watch, nextTick, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useModuleLoader } from '@/composables/loaders/useModuleLoader.js'
 import { useTabWatcher }   from '@/services/web-checker/composables/useTabWatcher.js'
@@ -12,6 +12,11 @@ const { modules } = useModuleLoader('web-checker')
 const { start, stop } = useTabWatcher(modules)
 const toast = useToast()
 const { t } = useI18n()
+
+// The admin tab opens index.html#/admin in a regular browser tab. Side-panel-
+// specific wiring (tab watcher for overlay badges, port to background) doesn't
+// apply there.
+const isAdminContext = computed(() => route.fullPath.startsWith('/admin'))
 
 let port
 const onOverlayClick = (msg) => {
@@ -32,12 +37,14 @@ watch(() => route.fullPath, () => {
 }, { immediate: true })
 
 onMounted(() => {
+  if (isAdminContext.value) return
   start()
   port = chrome.runtime.connect({ name: 'sidebar' })
   chrome.runtime.onMessage.addListener(onOverlayClick)
 })
 
 onUnmounted(() => {
+  if (isAdminContext.value) return
   stop()
   port?.disconnect()
   chrome.runtime.onMessage.removeListener(onOverlayClick)

@@ -7,6 +7,7 @@ import { useUiSettings }    from '@/composables/settings/useUiSettings.js'
 import { useAuth }          from '@/composables/auth/useAuth.js'
 import { apiJson }          from '@/composables/auth/apiClient.js'
 import { useToast }         from '@/composables/useToast.js'
+import { usePermissions }   from '@/composables/usePermissions.js'
 import { API }              from '@/config/api.js'
 
 const router = useRouter()
@@ -20,7 +21,13 @@ const {
   incrementZoom, decrementZoom, resetZoom,
 } = useUiSettings()
 const { state: authState, logout } = useAuth()
+const { canAccessAdmin } = usePermissions()
 const toast = useToast()
+
+function openAdminTab() {
+  const url = chrome.runtime.getURL('index.html') + '#/admin'
+  chrome.tabs.create({ url, active: true })
+}
 
 async function onLogout() {
   await logout()
@@ -275,7 +282,15 @@ const servicesWithSettings = computed(() => {
             </template>
           </div>
 
-          <div class="px-3 py-3">
+          <div class="px-3 py-3 flex flex-col gap-2">
+            <BaseButton
+              v-if="canAccessAdmin"
+              icon="mdiShieldCrownOutline"
+              :icon-size="14"
+              @click="openAdminTab"
+            >
+              {{ t('Open admin area') }}
+            </BaseButton>
             <BaseButton variant="ghost" @click="onLogout">
               {{ t('Sign out') }}
             </BaseButton>

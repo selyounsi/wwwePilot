@@ -5,6 +5,7 @@ import { useServiceLoader } from '@/composables/loaders/useServiceLoader.js'
 import { useI18n }          from '@/composables/i18n/useI18n.js'
 import { useAuth }          from '@/composables/auth/useAuth.js'
 import { useToast }         from '@/composables/useToast.js'
+import { usePermissions }   from '@/composables/usePermissions.js'
 import { useExtensionVersion } from '@/composables/useExtensionVersion.js'
 import { APP_NAME } from '@/config/app.js'
 
@@ -12,8 +13,15 @@ const router = useRouter()
 const { services } = useServiceLoader()
 const { t, lang }  = useI18n()
 const { state: authState, logout } = useAuth()
+const { canAccessAdmin } = usePermissions()
 const toast = useToast()
 const { state: versionState, hasUpdate } = useExtensionVersion()
+
+function openAdminTab() {
+  close()
+  const url = chrome.runtime.getURL('index.html') + '#/admin'
+  chrome.tabs.create({ url, active: true })
+}
 
 const open = ref(false)
 function close()  { open.value = false }
@@ -116,8 +124,19 @@ const displayName = computed(() => {
             </button>
 
             <button
+              v-if="canAccessAdmin"
+              @click="openAdminTab"
+              class="mt-3 flex items-center gap-3 px-4 py-2.5 hover:bg-primary/10 transition-colors text-left border-t border-border/40 group"
+            >
+              <Icon name="mdiShieldCrownOutline" :size="15" class="text-primary shrink-0" />
+              <span class="text-xs text-primary flex-1 font-semibold">{{ t('Open admin area') }}</span>
+              <Icon name="mdiOpenInNew" :size="12" class="text-primary/60 shrink-0" />
+            </button>
+
+            <button
               @click="go('/settings')"
-              class="mt-3 flex items-center gap-3 px-4 py-2.5 hover:bg-surface-soft-hover transition-colors text-left border-t border-border/40"
+              class="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-soft-hover transition-colors text-left"
+              :class="!canAccessAdmin && 'mt-3 border-t border-border/40'"
             >
               <Icon name="mdiCog" :size="15" class="text-muted shrink-0" />
               <span class="text-xs text-light flex-1">{{ t('Settings') }}</span>

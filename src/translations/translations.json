@@ -72,6 +72,9 @@
     "OIDC permissions": "OIDC-Berechtigungen",
     "Superadmin (alle)": "Superadmin (alle)",
     "Fetched at {time}": "Geladen am {time}",
+    "Could not load details": "Details konnten nicht geladen werden",
+    "Create": "Erstellen",
+    "Delete": "Löschen",
 
     "My favorites": "Meine Favoriten",
     "Add to favorites": "Zu Favoriten hinzufügen",

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "{{VITE_APP_NAME}}",
-  "version": "0.0.33",
+  "version": "0.0.36",
   "action": {
     "default_icon": {
       "192": "icons/android-chrome-192x192.png",

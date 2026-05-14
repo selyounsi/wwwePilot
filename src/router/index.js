@@ -6,6 +6,7 @@ import DashboardView from '../views/DashboardView.vue'
 import SettingsView  from '../views/SettingsView.vue'
 import UpdatesView   from '../views/UpdatesView.vue'
 import LoginView     from '../views/LoginView.vue'
+import { adminRoutes } from '@/admin/routes.js'
 
 const { services } = useServiceLoader()
 
@@ -110,18 +111,27 @@ const router = createRouter({
     { path: '/',         name: 'dashboard', component: DashboardView },
     { path: '/settings', name: 'settings',  component: SettingsView,  meta: { settingsRoot: true } },
     { path: '/updates',  name: 'updates',   component: UpdatesView },
+    ...adminRoutes,
     ...serviceRoutes,
   ],
 })
 
 router.beforeEach((to) => {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, state } = useAuth()
   if (to.meta.public) {
     if (isAuthenticated.value && to.name === 'login') return { path: '/' }
     return true
   }
   if (!isAuthenticated.value) {
     return { name: 'login', query: to.fullPath !== '/' ? { redirect: to.fullPath } : undefined }
+  }
+  // Permission gates: matched via meta.requiresPermission on parent or leaf.
+  const required = to.matched.map(r => r.meta?.requiresPermission).filter(Boolean)
+  if (required.length) {
+    const u     = state.user
+    const perms = u?.appPermissions ?? []
+    const ok    = u?.isSuperAdmin === true || perms.includes('*') || required.every(p => perms.includes(p))
+    if (!ok) return { path: '/' }
   }
   return true
 })

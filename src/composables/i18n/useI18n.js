@@ -7,6 +7,7 @@ const lang = ref('en')
 
 const allFiles = {
   ...import.meta.glob('@/translations/translations.json',                          { eager: true }),
+  ...import.meta.glob('@/admin/translations/translations.json',                    { eager: true }),
   ...import.meta.glob('@/services/*/translations/translations.json',               { eager: true }),
   ...import.meta.glob('@/services/*/modules/*/translations/translations.json',     { eager: true }),
 }
