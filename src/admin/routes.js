@@ -1,4 +1,5 @@
 import AdminLayout   from './views/AdminLayout.vue'
+import DashboardView from './views/DashboardView.vue'
 import UsersView     from './views/UsersView.vue'
 import RolesView     from './views/RolesView.vue'
 import ActivityView  from './views/ActivityView.vue'
@@ -16,7 +17,8 @@ export const adminRoutes = [
     component: AdminLayout,
     meta:      { requiresPermission: 'admin.access', layout: 'admin' },
     children:  [
-      { path: '',          redirect: '/admin/activity' },
+      { path: '',          redirect: '/admin/dashboard' },
+      { path: 'dashboard', name: 'admin-dashboard', component: DashboardView, meta: { requiresPermission: 'admin.activity.read' } },
       { path: 'users',     name: 'admin-users',     component: UsersView,     meta: { requiresPermission: 'admin.users.read' } },
       { path: 'roles',     name: 'admin-roles',     component: RolesView,     meta: { requiresPermission: 'admin.users.read' } },
       { path: 'activity',  name: 'admin-activity',  component: ActivityView,  meta: { requiresPermission: 'admin.activity.read' } },

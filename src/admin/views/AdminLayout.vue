@@ -17,6 +17,7 @@ const {
 } = usePermissions()
 
 const navItems = computed(() => [
+  { key: 'dashboard', name: t('Dashboard'),         icon: 'mdiViewDashboardOutline',   path: '/admin/dashboard', show: canReadActivity.value },
   { key: 'users',     name: t('Users'),             icon: 'mdiAccountMultipleOutline', path: '/admin/users',     show: canReadUsers.value },
   { key: 'roles',     name: t('Roles'),             icon: 'mdiShieldKeyOutline',       path: '/admin/roles',     show: canReadUsers.value },
   { key: 'activity',  name: t('Activity'),          icon: 'mdiPulse',                  path: '/admin/activity',  show: canReadActivity.value },
