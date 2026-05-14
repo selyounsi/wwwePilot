@@ -1,6 +1,7 @@
 import AdminLayout      from './views/AdminLayout.vue'
 import DashboardView    from './views/DashboardView.vue'
 import UsersView        from './views/UsersView.vue'
+import UserDetailView   from './views/UserDetailView.vue'
 import RolesView        from './views/RolesView.vue'
 import RunsView         from './views/RunsView.vue'
 import RunDetailView    from './views/RunDetailView.vue'
@@ -24,6 +25,7 @@ export const adminRoutes = [
       { path: '',                redirect: '/admin/dashboard' },
       { path: 'dashboard',       name: 'admin-dashboard',    component: DashboardView,    meta: { requiresPermission: 'admin.activity.read' } },
       { path: 'users',           name: 'admin-users',        component: UsersView,        meta: { requiresPermission: 'admin.users.read' } },
+      { path: 'users/:id',       name: 'admin-user-detail',  component: UserDetailView,   meta: { requiresPermission: 'admin.users.read' } },
       { path: 'roles',           name: 'admin-roles',        component: RolesView,        meta: { requiresPermission: 'admin.users.read' } },
       { path: 'runs',            name: 'admin-runs',         component: RunsView,         meta: { requiresPermission: 'admin.activity.read' } },
       { path: 'runs/:id',        name: 'admin-run-detail',   component: RunDetailView,    meta: { requiresPermission: 'admin.activity.read' } },

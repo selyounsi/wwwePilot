@@ -1,11 +1,13 @@
 <script setup>
 import { onMounted, ref, computed } from 'vue'
+import { useRouter }      from 'vue-router'
 import { useI18n }        from '@/composables/i18n/useI18n.js'
 import { useToast }       from '@/composables/useToast.js'
 import { usePermissions } from '@/composables/usePermissions.js'
 import { useAdminUsers }  from '@/admin/composables/useAdminUsers.js'
 import { useAdminRoles }  from '@/admin/composables/useAdminRoles.js'
 
+const router = useRouter()
 const { t } = useI18n()
 const toast = useToast()
 const { state: usersState, fetchAll: fetchUsers, setRoles, suspend, unsuspend } = useAdminUsers()
@@ -82,6 +84,11 @@ function relative(ts) {
   if (d < 30)     return t('{n} d ago', { n: d })
   return new Date(ts).toLocaleDateString()
 }
+
+function openUser(id) {
+  if (editingId.value === id) return  // editing in-place, don't navigate
+  router.push({ name: 'admin-user-detail', params: { id } })
+}
 </script>
 
 <template>
@@ -123,7 +130,8 @@ function relative(ts) {
         <tbody>
           <tr
             v-for="u in filteredUsers" :key="u.id"
-            class="border-t border-border/40 hover:bg-surface-soft-hover"
+            @click="openUser(u.id)"
+            class="border-t border-border/40 hover:bg-surface-soft-hover cursor-pointer"
           >
             <td class="px-4 py-3">
               <div class="flex items-center gap-3">
@@ -175,7 +183,7 @@ function relative(ts) {
               >{{ t('Active') }}</span>
             </td>
 
-            <td class="px-4 py-3 text-right whitespace-nowrap">
+            <td class="px-4 py-3 text-right whitespace-nowrap" @click.stop>
               <div class="inline-flex gap-1">
                 <template v-if="editingId === u.id">
                   <BaseButton variant="pill" @click="editingId = null">{{ t('Cancel') }}</BaseButton>

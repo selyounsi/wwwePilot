@@ -42,6 +42,25 @@ async function unsuspend(userId) {
   if (idx >= 0) state.users[idx] = { ...state.users[idx], suspendedAt: null }
 }
 
+async function fetchDetails(userId) {
+  return apiJson(`${API.admin.url}/users/${userId}/details`)
+}
+
+async function updateUser(userId, patch) {
+  return apiJson(`${API.admin.url}/users/${userId}`, {
+    method: 'PATCH',
+    body:   JSON.stringify(patch),
+  })
+}
+
+async function remove(userId, email) {
+  await apiJson(`${API.admin.url}/users/${userId}`, {
+    method: 'DELETE',
+    body:   JSON.stringify({ confirm: email }),
+  })
+  state.users = state.users.filter(u => u.id !== userId)
+}
+
 export function useAdminUsers() {
-  return { state, fetchAll, setRoles, suspend, unsuspend }
+  return { state, fetchAll, setRoles, suspend, unsuspend, fetchDetails, updateUser, remove }
 }
