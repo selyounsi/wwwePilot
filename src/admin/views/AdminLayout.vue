@@ -13,13 +13,15 @@ const {
   canReadUsers,
   canReadActivity,
   canReadAudit,
+  canWriteSelectors,
 } = usePermissions()
 
 const navItems = computed(() => [
-  { key: 'users',    name: t('Users'),    icon: 'mdiAccountMultipleOutline',   path: '/admin/users',    show: canReadUsers.value },
-  { key: 'roles',    name: t('Roles'),    icon: 'mdiShieldKeyOutline',         path: '/admin/roles',    show: canReadUsers.value },
-  { key: 'activity', name: t('Activity'), icon: 'mdiPulse',                    path: '/admin/activity', show: canReadActivity.value },
-  { key: 'audit',    name: t('Audit'),    icon: 'mdiHistory',                  path: '/admin/audit',    show: canReadAudit.value },
+  { key: 'users',     name: t('Users'),             icon: 'mdiAccountMultipleOutline', path: '/admin/users',     show: canReadUsers.value },
+  { key: 'roles',     name: t('Roles'),             icon: 'mdiShieldKeyOutline',       path: '/admin/roles',     show: canReadUsers.value },
+  { key: 'activity',  name: t('Activity'),          icon: 'mdiPulse',                  path: '/admin/activity',  show: canReadActivity.value },
+  { key: 'selectors', name: t('Ignore selectors'),  icon: 'mdiFilterVariant',          path: '/admin/selectors', show: canWriteSelectors.value },
+  { key: 'audit',     name: t('Audit'),             icon: 'mdiHistory',                path: '/admin/audit',     show: canReadAudit.value },
 ].filter(i => i.show))
 
 const isActive = (path) => route.path === path || route.path.startsWith(path + '/')
