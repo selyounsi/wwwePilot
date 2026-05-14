@@ -197,7 +197,6 @@
     "{n} warnings": "{n} Warnungen",
     "OK": "OK",
     "No issues found.": "Keine Probleme gefunden.",
-    "No detail payload — this module ran before issue capture was enabled.": "Keine Details — dieser Modul-Lauf war vor der Aktivierung der Issue-Erfassung.",
     "Started": "Gestartet",
     "Finished": "Abgeschlossen",
     "Total errors": "Fehler gesamt",

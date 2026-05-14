@@ -215,11 +215,8 @@ async function onDelete() {
             </ul>
           </div>
         </div>
-        <div v-else-if="m.error_count === 0 && m.warning_count === 0" class="px-4 py-3 text-sm text-muted">
+        <div v-else class="px-4 py-3 text-sm text-muted">
           {{ t('No issues found.') }}
-        </div>
-        <div v-else class="px-4 py-3 text-sm text-muted/60 italic">
-          {{ t('No detail payload — this module ran before issue capture was enabled.') }}
         </div>
       </section>
     </div>
