@@ -67,6 +67,10 @@
     "Display name": "Anzeigename",
     "Company": "Firma",
     "Permissions": "Berechtigungen",
+    "Superadmin": "Superadmin",
+    "App permissions": "App-Berechtigungen",
+    "OIDC permissions": "OIDC-Berechtigungen",
+    "Superadmin (alle)": "Superadmin (alle)",
     "Fetched at {time}": "Geladen am {time}",
 
     "My favorites": "Meine Favoriten",

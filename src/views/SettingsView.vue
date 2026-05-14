@@ -63,19 +63,27 @@ async function copyValue(value) {
   }
 }
 
+function formatAppPermissions(perms) {
+  if (!Array.isArray(perms) || perms.length === 0) return null
+  if (perms.includes('*')) return t('Superadmin (alle)')
+  return perms.join(', ')
+}
+
 const detailRows = computed(() => {
   const u = detailsData.value
   if (!u) return []
   const rows = [
-    { key: 'id',            label: t('User ID'),       value: u.id,            copyable: true },
-    { key: 'username',      label: t('Username'),      value: u.username,      copyable: true },
-    { key: 'email',         label: t('Email'),         value: u.email,         copyable: true },
-    { key: 'emailVerified', label: t('Email verified'), value: u.emailVerified === true ? t('Yes') : t('No') },
-    { key: 'firstName',     label: t('First name'),    value: u.firstName },
-    { key: 'lastName',      label: t('Last name'),     value: u.lastName },
-    { key: 'displayName',   label: t('Display name'),  value: u.displayName },
-    { key: 'companyName',   label: t('Company'),       value: u.companyName },
-    { key: 'permissions',   label: t('Permissions'),   value: u.permissions?.length ? u.permissions.join(', ') : null },
+    { key: 'id',              label: t('User ID'),         value: u.id,            copyable: true },
+    { key: 'username',        label: t('Username'),        value: u.username,      copyable: true },
+    { key: 'email',           label: t('Email'),           value: u.email,         copyable: true },
+    { key: 'emailVerified',   label: t('Email verified'),  value: u.emailVerified === true ? t('Yes') : t('No') },
+    { key: 'firstName',       label: t('First name'),      value: u.firstName },
+    { key: 'lastName',        label: t('Last name'),       value: u.lastName },
+    { key: 'displayName',     label: t('Display name'),    value: u.displayName },
+    { key: 'companyName',     label: t('Company'),         value: u.companyName },
+    { key: 'isSuperAdmin',    label: t('Superadmin'),      value: u.isSuperAdmin === true ? t('Yes') : t('No') },
+    { key: 'appPermissions',  label: t('App permissions'), value: formatAppPermissions(u.appPermissions) },
+    { key: 'oidcPermissions', label: t('OIDC permissions'), value: u.permissions?.length ? u.permissions.join(', ') : null },
   ]
   return rows.filter(r => r.value !== null && r.value !== undefined && r.value !== '')
 })
