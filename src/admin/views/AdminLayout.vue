@@ -14,7 +14,10 @@ const {
   canReadActivity,
   canReadAudit,
   canWriteSelectors,
+  has,
 } = usePermissions()
+
+const canWriteFeatures = computed(() => has('admin.features.write'))
 
 const navItems = computed(() => [
   { key: 'dashboard', name: t('Dashboard'),         icon: 'mdiViewDashboardOutline',   path: '/admin/dashboard', show: canReadActivity.value },
@@ -22,6 +25,7 @@ const navItems = computed(() => [
   { key: 'roles',     name: t('Roles'),             icon: 'mdiShieldKeyOutline',       path: '/admin/roles',     show: canReadUsers.value },
   { key: 'activity',  name: t('Activity'),          icon: 'mdiPulse',                  path: '/admin/activity',  show: canReadActivity.value },
   { key: 'selectors', name: t('Ignore selectors'),  icon: 'mdiFilterVariant',          path: '/admin/selectors', show: canWriteSelectors.value },
+  { key: 'flags',     name: t('Feature flags'),     icon: 'mdiToggleSwitchOutline',    path: '/admin/flags',     show: canWriteFeatures.value },
   { key: 'audit',     name: t('Audit'),             icon: 'mdiHistory',                path: '/admin/audit',     show: canReadAudit.value },
 ].filter(i => i.show))
 

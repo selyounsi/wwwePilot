@@ -119,7 +119,17 @@
     "Warnings": "Warnungen",
     "Most active users (30d)": "Aktivste User (30 T.)",
     "Events": "Events",
-    "Checks": "Checks"
+    "Checks": "Checks",
+
+    "Feature flags": "Feature-Flags",
+    "Turn services and modules on/off without releasing the extension. Changes propagate within 5 minutes.": "Services und Module an/aus schalten ohne Extension-Release. Änderungen wirken innerhalb von 5 Minuten.",
+    "Services (top-level)": "Services (Top-Level)",
+    "Web-checker modules": "Web-Checker Module",
+    "Chatbot providers": "Chatbot-Provider",
+    "{n} of {m} enabled": "{n} von {m} aktiv",
+    "Enabled \"{key}\"": "„{key}\" aktiviert",
+    "Disabled \"{key}\"": "„{key}\" deaktiviert",
+    "changed": "geändert"
   },
   "en": {}
 }

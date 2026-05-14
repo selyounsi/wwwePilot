@@ -1,10 +1,11 @@
-import AdminLayout   from './views/AdminLayout.vue'
-import DashboardView from './views/DashboardView.vue'
-import UsersView     from './views/UsersView.vue'
-import RolesView     from './views/RolesView.vue'
-import ActivityView  from './views/ActivityView.vue'
-import AuditView     from './views/AuditView.vue'
-import SelectorsView from './views/SelectorsView.vue'
+import AdminLayout      from './views/AdminLayout.vue'
+import DashboardView    from './views/DashboardView.vue'
+import UsersView        from './views/UsersView.vue'
+import RolesView        from './views/RolesView.vue'
+import ActivityView     from './views/ActivityView.vue'
+import AuditView        from './views/AuditView.vue'
+import SelectorsView    from './views/SelectorsView.vue'
+import FeatureFlagsView from './views/FeatureFlagsView.vue'
 
 /**
  * Admin route group. Mounted at /admin/* by the main router. Permission gating
@@ -23,6 +24,7 @@ export const adminRoutes = [
       { path: 'roles',     name: 'admin-roles',     component: RolesView,     meta: { requiresPermission: 'admin.users.read' } },
       { path: 'activity',  name: 'admin-activity',  component: ActivityView,  meta: { requiresPermission: 'admin.activity.read' } },
       { path: 'selectors', name: 'admin-selectors', component: SelectorsView, meta: { requiresPermission: 'admin.selectors.write' } },
+      { path: 'flags',     name: 'admin-flags',     component: FeatureFlagsView, meta: { requiresPermission: 'admin.features.write' } },
       { path: 'audit',     name: 'admin-audit',     component: AuditView,     meta: { requiresPermission: 'admin.audit.read' } },
     ],
   },
