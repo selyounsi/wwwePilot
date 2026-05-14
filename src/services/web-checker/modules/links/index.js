@@ -22,14 +22,10 @@ export const claude = {
 
 export default async function check() {
 
-  // module-specific anchors stay here; .WidgetSealContainer + general
-  // third-party widgets live in Settings → window.__ignoreSelectors
+  const moduleCfg = window.__webCheckerConfig?.modules?.links ?? {}
   const IGNORE_SELECTORS = [
-    '[href="#content"]',
-    '[href="#back-to-top"]',
-    '[href="/sitemap"]',
-    '.cms-logo',
-    ...(window.__ignoreSelectors ?? []),
+    ...(moduleCfg.ignoreSelectors ?? []),
+    ...(window.__ignoreSelectors  ?? []),
   ]
 
   const { errors, warnings, items, addItem, finish } = createCheckResult()

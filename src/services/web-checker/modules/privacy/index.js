@@ -23,23 +23,13 @@ export default async function check() {
   const templates = window.pCServiceTemplates ?? {}
   const pcVersion = window.privacyControl?.version ?? window.PrivacyControl?.version ?? null
 
-  const HOST_TO_SERVICE = [
-    [/(^|\.)google\.com$/i,                 'googlemaps', url => /\/maps\//.test(url)],
-    [/(^|\.)youtube(-nocookie)?\.com$/i,    'youtube',    () => true],
-    [/(^|\.)youtu\.be$/i,                   'youtube',    () => true],
-    [/(^|\.)autoscout24\.(de|com|at|ch)$/i, 'autoscout',  () => true],
-    [/(^|\.)mobile\.de$/i,                  'mobilede',   () => true],
-    [/(^|\.)immobilienscout24\.de$/i,       'immoscout',  () => true],
-    [/(^|\.)curator\.io$/i,                 'curator',    () => true],
-    [/(^|\.)googletagmanager\.com$/i,       'gtag_gtm',   url => /\/gtm\.js/.test(url)],
-    [/(^|\.)googletagmanager\.com$/i,       'gtag_g',     url => /\/gtag\/js/.test(url)],
-    [/(^|\.)google-analytics\.com$/i,       'gtag_g',     () => true],
-    [/(^|\.)googleadservices\.com$/i,       'gtag_aw',    () => true],
-    [/(^|\.)googlesyndication\.com$/i,      'gtag_aw',    () => true],
-    [/(^|\.)doubleclick\.net$/i,            'gtag_aw',    () => true],
-  ]
-
-  const IGNORED_HOST_PATTERNS = [/meinebewertungen/i]
+  const cfg = window.__webCheckerConfig?.modules?.privacy ?? {}
+  const HOST_TO_SERVICE = (cfg.trackerHosts ?? []).map(t => ({
+    rx:        new RegExp(t.pattern, t.flags || ''),
+    service:   t.service,
+    predicate: t.urlContains ? (url => url.includes(t.urlContains)) : (() => true),
+  }))
+  const IGNORED_HOST_PATTERNS = (cfg.ignoredHostPatterns ?? []).map(p => new RegExp(p.pattern, p.flags || ''))
 
   function classifyHost(url) {
     let host = ''
@@ -47,8 +37,8 @@ export default async function check() {
     if (!host) return null
     if (host === location.hostname) return { host, service: null, sameOrigin: true }
     if (IGNORED_HOST_PATTERNS.some(rx => rx.test(host) || rx.test(url))) return null
-    for (const [rx, service, predicate] of HOST_TO_SERVICE) {
-      if (rx.test(host) && predicate(url)) return { host, service, sameOrigin: false }
+    for (const t of HOST_TO_SERVICE) {
+      if (t.rx.test(host) && t.predicate(url)) return { host, service: t.service, sameOrigin: false }
     }
     return { host, service: null, sameOrigin: false }
   }

@@ -13,11 +13,10 @@ export const claude = {
 export default async function check() {
   const t = window.__t
 
-  // module-specific exclusions stay here; .WidgetSealContainer + general
-  // third-party widgets live in Settings → window.__ignoreSelectors
+  const moduleCfg = window.__webCheckerConfig?.modules?.validation ?? {}
   const IGNORE_SELECTORS = [
-    '#cookie-banner',
-    ...(window.__ignoreSelectors ?? []),
+    ...(moduleCfg.ignoreSelectors ?? []),
+    ...(window.__ignoreSelectors  ?? []),
   ]
 
   const IGNORE_RULES = [

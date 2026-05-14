@@ -1,25 +1,28 @@
 import { useI18n }                from '@/composables/i18n/useI18n.js'
 import { useWebCheckerSettings } from './useWebCheckerSettings.js'
+import { useWebCheckerConfig }   from './useWebCheckerConfig.js'
 import { useRunHistory }         from './useRunHistory.js'
 import { getAllModuleSettings }  from '@/composables/settings/useModuleSettings.js'
 
 export function useCheckRunner() {
   const { getTable }                 = useI18n()
   const { effectiveIgnoreSelectors } = useWebCheckerSettings()
+  const { state: configState }       = useWebCheckerConfig()
   const { record: recordHistory }    = useRunHistory()
 
   async function injectHelper(tabId) {
     const translations    = getTable()
     const ignoreSelectors = [...effectiveIgnoreSelectors.value]
     const moduleSettings  = getAllModuleSettings()
+    const backendConfig   = configState.config
     const pageSnap        = await snapshotPageWindow(tabId)
     await chrome.scripting.executeScript({
       target: { tabId },
-      func: (translations, ignoreSelectors, moduleSettings, pageWindow, pageConsent) => {
-        // always update translations + settings so language / ignore changes propagate
-        window.__translations    = translations
-        window.__ignoreSelectors = ignoreSelectors
-        window.__moduleSettings  = moduleSettings
+      func: (translations, ignoreSelectors, moduleSettings, backendConfig, pageWindow, pageConsent) => {
+        window.__translations      = translations
+        window.__ignoreSelectors   = ignoreSelectors
+        window.__moduleSettings    = moduleSettings
+        window.__webCheckerConfig  = backendConfig
 
         function detectCms() {
           const html          = document.documentElement
@@ -166,7 +169,7 @@ export function useCheckRunner() {
           return { errors, warnings, items, addItem, finish }
         }
       },
-      args: [translations, ignoreSelectors, moduleSettings, pageSnap.window, pageSnap.consent],
+      args: [translations, ignoreSelectors, moduleSettings, backendConfig, pageSnap.window, pageSnap.consent],
     })
   }
 

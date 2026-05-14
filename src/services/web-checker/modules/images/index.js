@@ -54,7 +54,10 @@ export default function check() {
   }
 
   function checkImages() {
-    const BLACKLIST      = ['shutterstock', 'gettyimages', 'istock', 'screenshot', 'depositphotos', 'adobe-stock', 'dreamstime']
+    const cfg            = window.__webCheckerConfig?.modules?.images ?? {}
+    const BLACKLIST      = cfg.blacklistFilenames ?? []
+    const LIGHTBOX       = cfg.lightboxPatterns   ?? { ancestorClasses: [], elementClasses: [], dataAttrs: [] }
+    const AUTO_ALT_RX    = (cfg.autoAltPatterns ?? []).map(p => new RegExp(p.pattern, p.flags || ''))
     const processedLinks = new Set()
     const images         = Array.from(document.querySelectorAll('img')).filter(img => !isIgnored(img))
 
@@ -95,9 +98,7 @@ export default function check() {
       const nameNorm  = nameWithoutExt.toLowerCase().replace(/[-_\s]/g, '')
       const isAutoAlt = alt !== null && (
         altNorm === nameNorm
-        || /^[a-z0-9_-]{10,}$/.test(alt.trim())
-        || /[a-f0-9]{8,}/i.test(alt)
-        || /(resized|large|small|medium|_x[12]_)/i.test(alt)
+        || AUTO_ALT_RX.some(rx => rx.test(alt))
       )
 
       let inLightbox = false, lightboxOk = true
@@ -109,11 +110,11 @@ export default function check() {
           processedLinks.add(parentLink)
           const galleryEl = parentLink.closest('.cms-image')
           lightboxOk = !!(
-            galleryEl?.classList.contains('lightbox-zoom-image') ||
-            galleryEl?.hasAttribute('data-lightbox-type') ||
-            parentLink.querySelector('img.lightbox-zoom-image') ||
-            parentLink.classList.contains('lightbox-zoom-image') ||
-            parentLink.closest('.modalGallery')
+            LIGHTBOX.elementClasses.some(c => galleryEl?.classList.contains(c)) ||
+            LIGHTBOX.dataAttrs.some(a => galleryEl?.hasAttribute(a)) ||
+            LIGHTBOX.elementClasses.some(c => parentLink.querySelector(`img.${c}`)) ||
+            LIGHTBOX.elementClasses.some(c => parentLink.classList.contains(c)) ||
+            LIGHTBOX.ancestorClasses.some(c => parentLink.closest(`.${c}`))
           )
         }
       }
@@ -138,6 +139,8 @@ export default function check() {
   }
 
   function checkOrphanLightboxLinks(processedLinks) {
+    const cfg      = window.__webCheckerConfig?.modules?.images ?? {}
+    const LIGHTBOX = cfg.lightboxPatterns ?? { ancestorClasses: [], elementClasses: [], dataAttrs: [] }
     const allLinks = Array.from(document.querySelectorAll('a'))
     const links    = Array.from(document.querySelectorAll('.cms-image a[href]')).filter(l => !isIgnored(l))
 
@@ -148,10 +151,10 @@ export default function check() {
 
       const galleryEl  = link.closest('.cms-image')
       const lightboxOk = !!(
-        galleryEl?.classList.contains('lightbox-zoom-image') ||
-        galleryEl?.hasAttribute('data-lightbox-type') ||
-        link.classList.contains('lightbox-zoom-image') ||
-        link.closest('.modalGallery')
+        LIGHTBOX.elementClasses.some(c => galleryEl?.classList.contains(c)) ||
+        LIGHTBOX.dataAttrs.some(a => galleryEl?.hasAttribute(a)) ||
+        LIGHTBOX.elementClasses.some(c => link.classList.contains(c)) ||
+        LIGHTBOX.ancestorClasses.some(c => link.closest(`.${c}`))
       )
       const src  = link.href
       const name = hrefAttr.split('/').pop().split('?')[0] || 'Lightbox'

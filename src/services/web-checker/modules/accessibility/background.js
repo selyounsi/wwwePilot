@@ -1,15 +1,16 @@
 export const type = 'AXE_RUN'
 
-// Rules already covered by other modules — disabled to avoid duplicate findings.
-const DISABLED_RULES = [
-  'color-contrast',         // contrast module (with pixel sampling)
-  'image-alt',              // images module
-  'link-name',              // links module
-  'heading-order',          // headings module
-  'empty-heading',          // headings module
-  'html-has-lang',          // overview module
-  'meta-viewport',          // overview module
-  'document-title',         // overview module (meta-title)
+// Fallback if the backend config didn't load. Kept tight on purpose —
+// the live list lives in _apps/backend/src/config/web-checker/modules/accessibility.js.
+const FALLBACK_DISABLED_RULES = [
+  'color-contrast',
+  'image-alt',
+  'link-name',
+  'heading-order',
+  'empty-heading',
+  'html-has-lang',
+  'meta-viewport',
+  'document-title',
 ]
 
 async function loadGermanLocale() {
@@ -37,11 +38,13 @@ export async function handle(msg, sendResponse, sender) {
 
     const [res] = await chrome.scripting.executeScript({
       target: { tabId },
-      func: async (disabledRules, locale) => {
+      func: async (fallbackDisabled, locale) => {
         if (!window.axe) return { error: 'axe-core konnte nicht geladen werden' }
         if (locale) {
           try { window.axe.configure({ locale }) } catch (e) { console.warn('[axe] locale failed', e) }
         }
+        const backendDisabled = window.__webCheckerConfig?.modules?.accessibility?.disabledRules
+        const disabledRules   = Array.isArray(backendDisabled) ? backendDisabled : fallbackDisabled
         const rules = Object.fromEntries(disabledRules.map(id => [id, { enabled: false }]))
         const exclude = (window.__ignoreSelectors ?? [])
           .filter(sel => { try { document.querySelector(sel); return true } catch { return false } })
@@ -70,7 +73,7 @@ export async function handle(msg, sendResponse, sender) {
           incomplete: results.incomplete.map(map),
         }
       },
-      args: [DISABLED_RULES, locale],
+      args: [FALLBACK_DISABLED_RULES, locale],
     })
 
     sendResponse(res?.result ?? { error: 'Keine Antwort von axe' })

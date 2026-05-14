@@ -1,6 +1,6 @@
 import { reactive, computed } from 'vue'
 import { createSettingsStore } from '@/composables/settings/createSettingsStore.js'
-import { useIgnoreSelectors } from './useIgnoreSelectors.js'
+import { useWebCheckerConfig } from './useWebCheckerConfig.js'
 
 const STORAGE_KEY = 'wp-web-checker-settings'
 
@@ -11,10 +11,10 @@ const state = reactive({
   showSearch:       false,
 })
 
-const { state: ignoreState } = useIgnoreSelectors()
+const { ignoreSelectors } = useWebCheckerConfig()
 
 const effectiveIgnoreSelectors = computed(() => [
-  ...ignoreState.selectors.filter(s => !state.disabledBuiltins.includes(s)),
+  ...ignoreSelectors.value.filter(s => !state.disabledBuiltins.includes(s)),
   ...state.customSelectors,
 ])
 
@@ -70,7 +70,7 @@ export function useWebCheckerSettings() {
     const trimmed = sel.trim()
     if (!trimmed) return
     if (state.customSelectors.includes(trimmed)) return
-    if (ignoreState.selectors.includes(trimmed)) return
+    if (ignoreSelectors.value.includes(trimmed)) return
     state.customSelectors.push(trimmed)
   }
 
@@ -102,7 +102,7 @@ export function useWebCheckerSettings() {
 
   return {
     state,
-    builtins: computed(() => ignoreState.selectors),
+    builtins: ignoreSelectors,
     effectiveIgnoreSelectors,
     addCustomSelector, removeCustomSelector,
     isBuiltinEnabled, toggleBuiltin,
