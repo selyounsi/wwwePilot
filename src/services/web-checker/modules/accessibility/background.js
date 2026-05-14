@@ -43,7 +43,11 @@ export async function handle(msg, sendResponse, sender) {
           try { window.axe.configure({ locale }) } catch (e) { console.warn('[axe] locale failed', e) }
         }
         const rules = Object.fromEntries(disabledRules.map(id => [id, { enabled: false }]))
-        const results = await window.axe.run(document, {
+        const exclude = (window.__ignoreSelectors ?? [])
+          .filter(sel => { try { document.querySelector(sel); return true } catch { return false } })
+          .map(sel => [sel])
+        const context = exclude.length ? { exclude } : document
+        const results = await window.axe.run(context, {
           resultTypes: ['violations', 'incomplete'],
           rules,
         })

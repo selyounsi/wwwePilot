@@ -19,8 +19,11 @@ export default function check() {
   const { errors, warnings, items, addItem, finish } = createCheckResult()
   const t = window.__t
 
-  const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'))
-  const h1s      = document.querySelectorAll('h1')
+  const IGNORE_SELECTORS = window.__ignoreSelectors ?? []
+  const isIgnored = (el) => IGNORE_SELECTORS.some(sel => { try { return !!el.closest(sel) } catch { return false } })
+
+  const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6')).filter(el => !isIgnored(el))
+  const h1s      = Array.from(document.querySelectorAll('h1')).filter(el => !isIgnored(el))
 
   if (h1s.length === 0) errors.push({ message: t('No H1 tag found') })
 

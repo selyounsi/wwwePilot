@@ -163,7 +163,11 @@ export default async function check() {
   }
 
   const TAGS = 'h1,h2,h3,h4,h5,h6,p,a,span,li,td,th,label,button,figcaption,blockquote,small,b,strong'
+  const IGNORE_SELECTORS = window.__ignoreSelectors ?? []
+  const isIgnored = (el) => IGNORE_SELECTORS.some(sel => { try { return !!el.closest(sel) } catch { return false } })
+
   const textEls = Array.from(document.querySelectorAll(TAGS)).filter(el => {
+    if (isIgnored(el)) return false
     const text = (el.innerText || el.textContent || '').trim()
     if (!text) return false
     return Array.from(el.childNodes).some(n => n.nodeType === 3 && n.textContent.trim())
@@ -202,6 +206,7 @@ export default async function check() {
 
   const inputs = document.querySelectorAll('input[placeholder], textarea[placeholder]')
   inputs.forEach(input => {
+    if (isIgnored(input)) return
     const placeholder = input.getAttribute('placeholder')
     if (!placeholder) return
     const phStyle = window.getComputedStyle(input, '::placeholder')

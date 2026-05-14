@@ -154,9 +154,12 @@ export default async function check() {
     ], extra)
   }
 
-  document.querySelectorAll('iframe').forEach(el => evaluate(el, 'iframe', iframeMasked))
-  document.querySelectorAll('script[src], script[data-src]').forEach(el => evaluate(el, 'script', scriptMasked))
-  document.querySelectorAll('img[src], img[data-src]').forEach(el => evaluate(el, 'image',  imgMasked))
+  const IGNORE_SELECTORS = window.__ignoreSelectors ?? []
+  const isIgnored = (el) => IGNORE_SELECTORS.some(sel => { try { return !!el.closest(sel) } catch { return false } })
+
+  document.querySelectorAll('iframe').forEach(el => { if (!isIgnored(el)) evaluate(el, 'iframe', iframeMasked) })
+  document.querySelectorAll('script[src], script[data-src]').forEach(el => { if (!isIgnored(el)) evaluate(el, 'script', scriptMasked) })
+  document.querySelectorAll('img[src], img[data-src]').forEach(el => { if (!isIgnored(el)) evaluate(el, 'image',  imgMasked) })
 
   const anyUnmasked = items.some(i => i.kind && !i.masked && !i.consent)
   if (anyUnmasked && !window.cms?.hasPrivacyControl) {

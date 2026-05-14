@@ -24,9 +24,13 @@ export default async function check() {
               .filter(Boolean),
   )
 
+  const IGNORE_SELECTORS = window.__ignoreSelectors ?? []
+  const isIgnored = (el) => IGNORE_SELECTORS.some(sel => { try { return !!el.closest(sel) } catch { return false } })
+
   const linkedUrls = new Set()
   const linksByUrl = new Map()
   document.querySelectorAll('a[href]').forEach(a => {
+    if (isIgnored(a)) return
     const href = a.getAttribute('href') ?? ''
     if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) return
     let url

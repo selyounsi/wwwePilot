@@ -27,16 +27,27 @@ export default async function check(config) {
     parent.normalize()
   })
 
-  const text = document.body.innerText?.trim()
+  // strip ignored selectors from a body clone before extracting text. avoids
+  // spellchecking cookie banners / 3rd-party widgets that the user has marked
+  // as out of scope.
+  const IGNORE_SELECTORS = window.__ignoreSelectors ?? []
+  const bodyClone = document.body.cloneNode(true)
+  for (const sel of IGNORE_SELECTORS) {
+    try { bodyClone.querySelectorAll(sel).forEach(el => el.remove()) } catch {}
+  }
+  const text = bodyClone.innerText?.trim()
   if (!text) {
     return { errors: [{ message: t('No text found') }], warnings: [], errorCount: 1, warningCount: 0, items: [] }
   }
 
-  const images = Array.from(document.querySelectorAll('img')).map(img => ({
-    alt:   img.getAttribute('alt')   ?? '',
-    src:   img.getAttribute('src')   ?? img.getAttribute('data-src') ?? '',
-    title: img.getAttribute('title') ?? '',
-  }))
+  const isIgnored = (el) => IGNORE_SELECTORS.some(sel => { try { return !!el.closest(sel) } catch { return false } })
+  const images = Array.from(document.querySelectorAll('img'))
+    .filter(img => !isIgnored(img))
+    .map(img => ({
+      alt:   img.getAttribute('alt')   ?? '',
+      src:   img.getAttribute('src')   ?? img.getAttribute('data-src') ?? '',
+      title: img.getAttribute('title') ?? '',
+    }))
 
   const domain   = location.hostname
   const language = document.documentElement.lang?.slice(0, 5) || 'de-DE'

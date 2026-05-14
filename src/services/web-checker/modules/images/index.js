@@ -29,9 +29,12 @@ export default function check() {
   const t = window.__t
   const IMAGE_EXTS = /\.(gif|jpe?g|png|webp|svg|bmp|mp4)(\?.*)?$/i
 
+  const IGNORE_SELECTORS = window.__ignoreSelectors ?? []
+  const isIgnored = (el) => IGNORE_SELECTORS.some(sel => { try { return !!el.closest(sel) } catch { return false } })
+
   function checkBackgroundImages() {
-    const bgEls  = Array.from(document.querySelectorAll('[style*="background-image"]')).filter(el => el.tagName !== 'IMG')
-    const cmsEls = Array.from(document.querySelectorAll('[data-cms-src]:not(img)'))
+    const bgEls  = Array.from(document.querySelectorAll('[style*="background-image"]')).filter(el => el.tagName !== 'IMG' && !isIgnored(el))
+    const cmsEls = Array.from(document.querySelectorAll('[data-cms-src]:not(img)')).filter(el => !isIgnored(el))
     const seen   = new Set()
     const all    = [...bgEls, ...cmsEls].filter(el => seen.has(el) ? false : (seen.add(el), true))
 
@@ -53,7 +56,7 @@ export default function check() {
   function checkImages() {
     const BLACKLIST      = ['shutterstock', 'gettyimages', 'istock', 'screenshot', 'depositphotos', 'adobe-stock', 'dreamstime']
     const processedLinks = new Set()
-    const images         = Array.from(document.querySelectorAll('img'))
+    const images         = Array.from(document.querySelectorAll('img')).filter(img => !isIgnored(img))
 
     const altCounts = {}
     images.forEach(img => {
@@ -136,7 +139,7 @@ export default function check() {
 
   function checkOrphanLightboxLinks(processedLinks) {
     const allLinks = Array.from(document.querySelectorAll('a'))
-    const links    = Array.from(document.querySelectorAll('.cms-image a[href]'))
+    const links    = Array.from(document.querySelectorAll('.cms-image a[href]')).filter(l => !isIgnored(l))
 
     links.forEach(link => {
       if (processedLinks.has(link)) return
