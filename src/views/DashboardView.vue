@@ -21,8 +21,7 @@ const { state: versionState, hasUpdate } = useExtensionVersion()
 const runHistory = useRunHistory()
 
 const greeting = computed(() => {
-  const u = authState.user
-  const first = u?.firstName || u?.username || u?.name?.split(' ')[0] || ''
+  const first = authState.user?.firstName
   return first ? t('Hi, {name}!', { name: first }) : t('Choose a service')
 })
 

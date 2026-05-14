@@ -68,8 +68,8 @@ async function onLogin() {
   error.value = null
   try {
     const user = await login()
-    const greeting = user?.firstName || user?.username || user?.email || ''
-    toast.success(greeting ? t('Hi, {name}!', { name: greeting }) : t('Signed in'))
+    const first = user?.firstName
+    toast.success(first ? t('Hi, {name}!', { name: first }) : t('Signed in'))
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
     router.replace(redirect)
   } catch (e) {

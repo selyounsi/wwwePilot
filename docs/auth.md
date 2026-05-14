@@ -142,6 +142,38 @@ Extension  fängt Tokens via launchWebAuthFlow ab,
 
 Die App-JWTs (Access + Refresh) sind **eigene** Tokens des Backends, nicht die vom Provider. So bleibt die Extension unabhängig von der Provider-Session — Refresh läuft komplett über das Backend, ohne den User nochmal an EverAuth zu schicken.
 
+## User-Felder im JWT
+
+Beim Callback ([backend/routes/auth.js](../../backend/_apps/backend/src/routes/auth.js)) wird das User-Objekt aus zwei Quellen zusammengebaut:
+
+1. **OIDC `userinfo`** (`/oidc/userinfo`) — `sub`, `email`, `email_verified`, `preferred_username`, `given_name`, `family_name`, `name`, `groups`, `roles`, `permissions`.
+2. **EverAuth `users/info`** (`/api/v1/users/info?ids=<sub>`) — top-up für `firstName`, `lastName`, `displayName`, `companyName`.
+
+Daraus entsteht:
+
+| Feld | Quelle | Hinweis |
+|---|---|---|
+| `id` | `claims.sub` | UUIDv4, stabil über Sessions |
+| `email` / `emailVerified` | userinfo | `email_verified` als Boolean |
+| `name` | userinfo / users-info | Anzeige-Default, nie leer |
+| `firstName` / `lastName` | userinfo (`given_name`/`family_name`), fallback users-info | für Greeting + Avatar |
+| `displayName` | users-info | offizieller Anzeigename |
+| `companyName` | users-info | für Multi-Mandanten-Erkennung |
+| `username` | `preferred_username` | technischer Login-Name (z.B. `s.elyounsi`) |
+| `groups` / `roles` / `permissions` | userinfo | Arrays |
+| `fetchedAt` | Backend | UNIX-ms beim Login |
+
+Das gesamte Objekt wird in den Access- und Refresh-JWTs eingebettet (`signAccess`/`signRefresh` spreaden den User), damit `requireAuth` und `/api/auth/me-extended` ohne weiteren Provider-Roundtrip antworten können.
+
+### Endpunkte
+
+- `GET /api/auth/me` — schmale Variante (id, email, name) für Backwards-Compat.
+- `GET /api/auth/me-extended` — alle Felder aus dem JWT. Wird im Side-Panel-Settings durch das Info-Icon im Konto-Bereich getriggert ([SettingsView.vue](../src/views/SettingsView.vue)).
+
+### Greeting
+
+Im Side Panel wird nur der **`firstName`** als Begrüßung verwendet ([DashboardView.vue](../src/views/DashboardView.vue), [LoginView.vue](../src/views/LoginView.vue)). Fehlt der Vorname (z.B. weil weder `given_name` aus OIDC noch `firstName` aus `users/info` gesetzt sind), greift der generische Fallback `t('Choose a service')` bzw. `t('Signed in')` — keine Fallbacks auf `username`/`email`, weil die als Greeting hässlich wirken (`Hallo, s.elyounsi!`).
+
 ## EverAuth-spezifische Quirks
 
 Drei Eigenheiten die der Login-Code im Backend kompensieren muss:
