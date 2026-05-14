@@ -176,27 +176,33 @@ function relative(ts) {
             </td>
 
             <td class="px-4 py-3 text-right whitespace-nowrap">
-              <template v-if="editingId === u.id">
-                <BaseButton variant="ghost" class="text-xs! py-1.5! mr-1!" @click="editingId = null">{{ t('Cancel') }}</BaseButton>
-                <BaseButton class="text-xs! py-1.5!" @click="saveRoles">{{ t('Save') }}</BaseButton>
-              </template>
-              <template v-else-if="canWriteUsers && !u.isSuperAdmin">
-                <BaseButton variant="ghost" class="text-xs! py-1.5! mr-1!" @click="startEditRoles(u)">
-                  {{ t('Edit roles') }}
-                </BaseButton>
-                <BaseButton
-                  v-if="u.suspendedAt"
-                  variant="ghost"
-                  class="text-xs! py-1.5!"
-                  @click="onUnsuspend(u)"
-                >{{ t('Reactivate') }}</BaseButton>
-                <BaseButton
-                  v-else
-                  variant="ghost"
-                  class="text-xs! py-1.5! text-error!"
-                  @click="onSuspend(u)"
-                >{{ t('Suspend') }}</BaseButton>
-              </template>
+              <div class="inline-flex gap-1">
+                <template v-if="editingId === u.id">
+                  <BaseButton variant="pill" @click="editingId = null">{{ t('Cancel') }}</BaseButton>
+                  <BaseButton variant="pill" class="bg-primary! border-primary! text-black/80!" @click="saveRoles">{{ t('Save') }}</BaseButton>
+                </template>
+                <template v-else-if="canWriteUsers && !u.isSuperAdmin">
+                  <BaseButton variant="pill" icon="mdiAccountEdit" :icon-size="11" @click="startEditRoles(u)">
+                    {{ t('Edit roles') }}
+                  </BaseButton>
+                  <BaseButton
+                    v-if="u.suspendedAt"
+                    variant="pill"
+                    icon="mdiAccountCheck"
+                    :icon-size="11"
+                    class="text-success! border-success/30! hover:bg-success/10!"
+                    @click="onUnsuspend(u)"
+                  >{{ t('Reactivate') }}</BaseButton>
+                  <BaseButton
+                    v-else
+                    variant="pill"
+                    icon="mdiAccountCancel"
+                    :icon-size="11"
+                    class="text-error! border-error/30! hover:bg-error/10!"
+                    @click="onSuspend(u)"
+                  >{{ t('Suspend') }}</BaseButton>
+                </template>
+              </div>
             </td>
           </tr>
         </tbody>

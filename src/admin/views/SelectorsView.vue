@@ -106,8 +106,7 @@ async function saveNote(sel) {
           {{ t('CSS selectors that web-checker modules skip. Live-editable — no extension release needed.') }}
         </p>
       </div>
-      <BaseButton variant="ghost" class="text-xs! py-1.5!" @click="onReset">
-        <Icon name="mdiRefresh" :size="13" />
+      <BaseButton variant="pill" icon="mdiRefresh" :icon-size="13" @click="onReset">
         {{ t('Re-seed defaults for this scope') }}
       </BaseButton>
     </header>

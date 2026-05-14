@@ -115,7 +115,10 @@ export function useSiteCheck() {
       chrome.tabs.onRemoved.removeListener(onTabRemoved)
       try { await chrome.tabs.remove(checkTab.id) } catch {}
       store.setCheckTabId(null)
-      if (origin) checkRun.finish()
+      if (origin) {
+        if (store.state.cancelled) checkRun.cancel()
+        else                       checkRun.finish()
+      }
       if (store.state.status !== 'error') store.finish()
     }
   }

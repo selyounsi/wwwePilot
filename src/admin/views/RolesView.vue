@@ -77,8 +77,7 @@ async function createRole() {
           {{ t('{n} roles, {p} permissions in catalog', { n: state.roles.length, p: state.permissions.length }) }}
         </p>
       </div>
-      <BaseButton v-if="canWriteRoles" @click="creating = true">
-        <Icon name="mdiPlus" :size="14" />
+      <BaseButton v-if="canWriteRoles" variant="pill" icon="mdiPlus" :icon-size="13" @click="creating = true">
         {{ t('New role') }}
       </BaseButton>
     </header>
@@ -125,10 +124,10 @@ async function createRole() {
           >{{ p.id }}</button>
         </div>
         <div class="flex justify-end gap-2">
-          <BaseButton variant="ghost" @click="creating = false; newDraft = { id: '', name: '', description: '', permissions: [] }">
+          <BaseButton variant="pill" @click="creating = false; newDraft = { id: '', name: '', description: '', permissions: [] }">
             {{ t('Cancel') }}
           </BaseButton>
-          <BaseButton @click="createRole">{{ t('Create') }}</BaseButton>
+          <BaseButton variant="pill" class="bg-primary! border-primary! text-black/80!" @click="createRole">{{ t('Create') }}</BaseButton>
         </div>
       </div>
 
@@ -163,15 +162,17 @@ async function createRole() {
 
           <div class="flex gap-1 shrink-0" v-if="canWriteRoles">
             <template v-if="editingId === role.id">
-              <BaseButton variant="ghost" class="text-xs! py-1.5!" @click="editingId = null">{{ t('Cancel') }}</BaseButton>
-              <BaseButton class="text-xs! py-1.5!" @click="save(role)">{{ t('Save') }}</BaseButton>
+              <BaseButton variant="pill" @click="editingId = null">{{ t('Cancel') }}</BaseButton>
+              <BaseButton variant="pill" class="bg-primary! border-primary! text-black/80!" @click="save(role)">{{ t('Save') }}</BaseButton>
             </template>
             <template v-else>
-              <BaseButton variant="ghost" class="text-xs! py-1.5!" @click="startEdit(role)">{{ t('Edit') }}</BaseButton>
+              <BaseButton variant="pill" icon="mdiPencil" :icon-size="11" @click="startEdit(role)">{{ t('Edit') }}</BaseButton>
               <BaseButton
                 v-if="!role.system"
-                variant="ghost"
-                class="text-xs! py-1.5! text-error!"
+                variant="pill"
+                icon="mdiDelete"
+                :icon-size="11"
+                class="text-error! border-error/30! hover:bg-error/10!"
                 @click="onDelete(role)"
               >{{ t('Delete') }}</BaseButton>
             </template>

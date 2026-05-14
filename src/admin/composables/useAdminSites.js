@@ -40,6 +40,14 @@ async function fetchDetail(origin) {
   }
 }
 
+async function purge(origin) {
+  await apiJson(`${API.admin.url}/sites/${encodeURIComponent(origin)}`, {
+    method: 'DELETE',
+    body:   JSON.stringify({ confirm: origin }),
+  })
+  state.sites = state.sites.filter(s => s.origin !== origin)
+}
+
 export function useAdminSites() {
-  return { state, detailState, fetchAll, fetchDetail }
+  return { state, detailState, fetchAll, fetchDetail, purge }
 }

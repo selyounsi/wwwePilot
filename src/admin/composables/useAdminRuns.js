@@ -42,6 +42,18 @@ async function loadMore(filters = {}) {
   state.hasMore = data.hasMore ?? false
 }
 
+async function fetchDetail(id) {
+  return apiJson(`${API.admin.url}/runs/${id}`)
+}
+
+async function remove(id) {
+  await apiJson(`${API.admin.url}/runs/${id}`, {
+    method: 'DELETE',
+    body:   JSON.stringify({ confirm: id }),
+  })
+  state.runs = state.runs.filter(r => r.id !== id)
+}
+
 export function useAdminRuns() {
-  return { state, fetchAll, loadMore }
+  return { state, fetchAll, loadMore, fetchDetail, remove }
 }

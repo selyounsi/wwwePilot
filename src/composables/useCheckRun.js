@@ -31,12 +31,12 @@ async function start({ kind, origin, pagesCount = 1 }) {
   return id
 }
 
-function recordModule({ moduleId, errorCount, warningCount, durationMs }) {
+function recordModule({ moduleId, errorCount, warningCount, durationMs, issues }) {
   const run = state.currentRun
   if (!run) return
   apiFetch(`${API.runs.url}/${run.id}/module`, {
     method: 'POST',
-    body:   JSON.stringify({ moduleId, errorCount, warningCount, durationMs }),
+    body:   JSON.stringify({ moduleId, errorCount, warningCount, durationMs, issues }),
   }).catch(e => console.warn('[run] recordModule failed:', e.message))
 }
 
@@ -48,6 +48,14 @@ function finish() {
   state.currentRun = null
 }
 
+function cancel() {
+  const run = state.currentRun
+  if (!run) return
+  apiFetch(`${API.runs.url}/${run.id}/cancel`, { method: 'POST' })
+    .catch(e => console.warn('[run] cancel failed:', e.message))
+  state.currentRun = null
+}
+
 export function useCheckRun() {
-  return { state, start, recordModule, finish }
+  return { state, start, recordModule, finish, cancel }
 }

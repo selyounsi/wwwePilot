@@ -1,15 +1,17 @@
 <script setup>
 import { onMounted, ref } from 'vue'
+import { useRouter }     from 'vue-router'
 import { useI18n }       from '@/composables/i18n/useI18n.js'
 import { useAdminRuns }  from '@/admin/composables/useAdminRuns.js'
 
+const router = useRouter()
 const { t } = useI18n()
 const { state, fetchAll, loadMore } = useAdminRuns()
 
 const filterUser   = ref('')
 const filterOrigin = ref('')
 const filterKind   = ref('')
-const expandedId   = ref(null)
+const filterStatus = ref('')
 
 onMounted(() => fetchAll({ limit: 50 }))
 
@@ -18,6 +20,7 @@ function applyFilter() {
   if (filterUser.value)   f.user   = filterUser.value
   if (filterOrigin.value) f.origin = filterOrigin.value
   if (filterKind.value)   f.kind   = filterKind.value
+  if (filterStatus.value) f.status = filterStatus.value
   fetchAll(f)
 }
 
@@ -38,6 +41,29 @@ function duration(r) {
   if (ms < 1000) return `${ms}ms`
   if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`
   return `${Math.round(ms / 60_000)}min`
+}
+
+function statusColor(s) {
+  switch (s) {
+    case 'running':   return 'bg-primary/15 text-primary'
+    case 'finished':  return 'bg-success/15 text-success'
+    case 'cancelled': return 'bg-alert/15  text-alert'
+    case 'aborted':   return 'bg-error/15  text-error'
+    default:          return 'bg-surface   text-light'
+  }
+}
+function statusLabel(s) {
+  switch (s) {
+    case 'running':   return t('Running')
+    case 'finished':  return t('Finished')
+    case 'cancelled': return t('Cancelled')
+    case 'aborted':   return t('Aborted')
+    default:          return s
+  }
+}
+
+function openRun(id) {
+  router.push({ name: 'admin-run-detail', params: { id } })
 }
 </script>
 
@@ -67,7 +93,14 @@ function duration(r) {
           <option value="single-page">{{ t('Single-page') }}</option>
           <option value="site-wide">{{ t('Site-wide') }}</option>
         </select>
-        <BaseButton class="text-xs! py-1.5!" @click="applyFilter">{{ t('Apply') }}</BaseButton>
+        <select v-model="filterStatus" class="bg-surface border border-border rounded px-2 py-1.5 text-xs">
+          <option value="">{{ t('All statuses') }}</option>
+          <option value="running">{{ t('Running') }}</option>
+          <option value="finished">{{ t('Finished') }}</option>
+          <option value="cancelled">{{ t('Cancelled') }}</option>
+          <option value="aborted">{{ t('Aborted') }}</option>
+        </select>
+        <BaseButton variant="pill" class="bg-primary! border-primary! text-black/80!" @click="applyFilter">{{ t('Apply') }}</BaseButton>
       </div>
 
       <div v-if="state.loading" class="flex items-center justify-center py-12">
@@ -80,73 +113,49 @@ function duration(r) {
         <table class="w-full text-sm">
           <thead class="text-xs uppercase tracking-wide text-muted">
             <tr>
-              <th class="w-6"></th>
-              <th class="text-left px-2 py-2 font-medium">{{ t('When') }}</th>
-              <th class="text-left px-2 py-2 font-medium">{{ t('User') }}</th>
-              <th class="text-left px-2 py-2 font-medium">{{ t('Kind') }}</th>
-              <th class="text-left px-2 py-2 font-medium">{{ t('Origin') }}</th>
-              <th class="text-right px-2 py-2 font-medium">{{ t('Pages') }}</th>
-              <th class="text-right px-2 py-2 font-medium">{{ t('Modules') }}</th>
-              <th class="text-right px-2 py-2 font-medium">{{ t('Errors') }}</th>
-              <th class="text-right px-2 py-2 font-medium">{{ t('Warnings') }}</th>
-              <th class="text-right px-2 py-2 font-medium">{{ t('Duration') }}</th>
+              <th class="text-left px-3 py-2 font-medium">{{ t('When') }}</th>
+              <th class="text-left px-3 py-2 font-medium">{{ t('User') }}</th>
+              <th class="text-left px-3 py-2 font-medium">{{ t('Kind') }}</th>
+              <th class="text-left px-3 py-2 font-medium">{{ t('Status') }}</th>
+              <th class="text-left px-3 py-2 font-medium">{{ t('Origin') }}</th>
+              <th class="text-right px-3 py-2 font-medium">{{ t('Pages') }}</th>
+              <th class="text-right px-3 py-2 font-medium">{{ t('Modules') }}</th>
+              <th class="text-right px-3 py-2 font-medium">{{ t('Errors') }}</th>
+              <th class="text-right px-3 py-2 font-medium">{{ t('Warnings') }}</th>
+              <th class="text-right px-3 py-2 font-medium">{{ t('Duration') }}</th>
             </tr>
           </thead>
           <tbody>
-            <template v-for="r in state.runs" :key="r.id">
-              <tr class="border-t border-border/40 hover:bg-surface-soft-hover">
-                <td class="px-2 py-2 text-center">
-                  <button
-                    v-if="(r.modules ?? []).length"
-                    @click="expandedId = expandedId === r.id ? null : r.id"
-                    class="text-muted hover:text-light"
-                  >
-                    <Icon :name="expandedId === r.id ? 'mdiChevronDown' : 'mdiChevronRight'" :size="14" />
-                  </button>
-                </td>
-                <td class="px-2 py-2 text-[11px] text-muted whitespace-nowrap tabular-nums">{{ formatTime(r.started_at) }}</td>
-                <td class="px-2 py-2 text-[11px]">{{ userLabel(r) }}</td>
-                <td class="px-2 py-2">
-                  <span
-                    class="text-[10px] px-1.5 py-0.5 rounded"
-                    :class="r.kind === 'site-wide' ? 'bg-primary/15 text-primary' : 'bg-surface text-light'"
-                  >{{ r.kind === 'site-wide' ? t('Site-wide') : t('Single') }}</span>
-                </td>
-                <td class="px-2 py-2 text-[11px] max-w-[200px] truncate" :title="r.origin">{{ shortHost(r.origin) }}</td>
-                <td class="px-2 py-2 text-[11px] text-right tabular-nums">{{ r.pages_count }}</td>
-                <td class="px-2 py-2 text-[11px] text-right tabular-nums">{{ (r.modules ?? []).length }}</td>
-                <td class="px-2 py-2 text-[11px] text-right tabular-nums" :class="r.total_errors > 0 && 'text-error'">{{ r.total_errors }}</td>
-                <td class="px-2 py-2 text-[11px] text-right tabular-nums text-muted">{{ r.total_warnings }}</td>
-                <td class="px-2 py-2 text-[11px] text-right text-muted">{{ duration(r) }}</td>
-              </tr>
-              <tr v-if="expandedId === r.id" class="bg-surface">
-                <td colspan="10" class="px-6 py-3">
-                  <table class="w-full text-xs">
-                    <thead class="text-[10px] uppercase tracking-wide text-muted/60">
-                      <tr>
-                        <th class="text-left font-medium pb-1">{{ t('Module') }}</th>
-                        <th class="text-right font-medium pb-1">{{ t('Errors') }}</th>
-                        <th class="text-right font-medium pb-1">{{ t('Warnings') }}</th>
-                        <th class="text-right font-medium pb-1">{{ t('Duration') }}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="m in (r.modules ?? [])" :key="m.moduleId" class="border-t border-border/20">
-                        <td class="py-1"><code class="text-[10px]">{{ m.moduleId }}</code></td>
-                        <td class="py-1 text-right tabular-nums" :class="m.errorCount > 0 && 'text-error'">{{ m.errorCount }}</td>
-                        <td class="py-1 text-right tabular-nums text-muted">{{ m.warningCount }}</td>
-                        <td class="py-1 text-right tabular-nums text-muted">{{ m.durationMs ?? '—' }}ms</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </td>
-              </tr>
-            </template>
+            <tr
+              v-for="r in state.runs" :key="r.id"
+              @click="openRun(r.id)"
+              class="border-t border-border/40 hover:bg-surface-soft-hover cursor-pointer"
+            >
+              <td class="px-3 py-2 text-[11px] text-muted whitespace-nowrap tabular-nums">{{ formatTime(r.started_at) }}</td>
+              <td class="px-3 py-2 text-[11px]">{{ userLabel(r) }}</td>
+              <td class="px-3 py-2">
+                <span
+                  class="text-[10px] px-1.5 py-0.5 rounded"
+                  :class="r.kind === 'site-wide' ? 'bg-primary/15 text-primary' : 'bg-surface text-light'"
+                >{{ r.kind === 'site-wide' ? t('Site-wide') : t('Single') }}</span>
+              </td>
+              <td class="px-3 py-2">
+                <span class="text-[10px] px-1.5 py-0.5 rounded" :class="statusColor(r.status)">
+                  {{ statusLabel(r.status) }}
+                </span>
+              </td>
+              <td class="px-3 py-2 text-[11px] max-w-50 truncate" :title="r.origin">{{ shortHost(r.origin) }}</td>
+              <td class="px-3 py-2 text-[11px] text-right tabular-nums">{{ r.pages_count }}</td>
+              <td class="px-3 py-2 text-[11px] text-right tabular-nums">{{ (r.modules ?? []).length }}</td>
+              <td class="px-3 py-2 text-[11px] text-right tabular-nums" :class="r.total_errors > 0 && 'text-error'">{{ r.total_errors }}</td>
+              <td class="px-3 py-2 text-[11px] text-right tabular-nums text-muted">{{ r.total_warnings }}</td>
+              <td class="px-3 py-2 text-[11px] text-right text-muted">{{ duration(r) }}</td>
+            </tr>
           </tbody>
         </table>
         <p v-if="!state.runs.length" class="text-center text-muted py-8 text-sm">{{ t('No runs yet.') }}</p>
         <div v-else-if="state.hasMore" class="px-4 py-3 text-center border-t border-border/40">
-          <BaseButton variant="ghost" class="text-xs! py-1.5!" @click="loadMore">{{ t('Load more') }}</BaseButton>
+          <BaseButton variant="pill" @click="loadMore">{{ t('Load more') }}</BaseButton>
         </div>
       </div>
     </section>

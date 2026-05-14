@@ -5,13 +5,15 @@ import { useI18n }       from '@/composables/i18n/useI18n.js'
 import { useToast }      from '@/composables/useToast.js'
 import { useAdminSites } from '@/admin/composables/useAdminSites.js'
 import { useSiteNotes }  from '@/composables/useSiteNotes.js'
+import { usePermissions } from '@/composables/usePermissions.js'
 
 const router = useRouter()
 const route  = useRoute()
 const { t } = useI18n()
 const toast = useToast()
-const { detailState, fetchDetail } = useAdminSites()
+const { detailState, fetchDetail, purge } = useAdminSites()
 const { createNote, updateNote, deleteNote, ensureLoaded } = useSiteNotes()
+const { canWriteUsers } = usePermissions()
 
 const origin = computed(() => decodeURIComponent(String(route.params.origin ?? '')))
 
@@ -82,18 +84,64 @@ async function onDelete(note) {
 function shortHost() {
   try { return new URL(origin.value).host } catch { return origin.value }
 }
+
+function statusColor(s) {
+  switch (s) {
+    case 'running':   return 'bg-primary/15 text-primary'
+    case 'finished':  return 'bg-success/15 text-success'
+    case 'cancelled': return 'bg-alert/15  text-alert'
+    case 'aborted':   return 'bg-error/15  text-error'
+    default:          return 'bg-surface   text-light'
+  }
+}
+function statusLabel(s) {
+  switch (s) {
+    case 'running':   return t('Running')
+    case 'finished':  return t('Finished')
+    case 'cancelled': return t('Cancelled')
+    case 'aborted':   return t('Aborted')
+    default:          return s
+  }
+}
+
+function openRun(id) {
+  router.push({ name: 'admin-run-detail', params: { id } })
+}
+
+async function onPurgeSite() {
+  const typed = prompt(t('Purging deletes ALL runs, notes and events for "{o}". Type the full origin to confirm:', { o: origin.value }))
+  if (typed !== origin.value) {
+    if (typed !== null) toast.error(t('Confirmation did not match — nothing deleted.'))
+    return
+  }
+  try {
+    const r = await purge(origin.value)
+    toast.success(t('Site purged ({n} runs, {m} notes)', { n: r?.runs_deleted ?? 0, m: r?.notes_deleted ?? 0 }))
+    router.replace({ name: 'admin-sites' })
+  } catch (e) { toast.error(e.message) }
+}
 </script>
 
 <template>
   <div class="p-6">
     <header class="mb-6 flex items-center gap-3">
-      <BaseButton variant="ghost" icon="mdiArrowLeft" :icon-size="14" class="text-xs! py-1.5!" @click="router.back()">
+      <BaseButton variant="pill" icon="mdiArrowLeft" :icon-size="13" @click="router.back()">
         {{ t('Back') }}
       </BaseButton>
-      <div>
-        <h2 class="text-xl font-bold">{{ shortHost() }}</h2>
-        <p class="text-[11px] text-muted font-mono">{{ origin }}</p>
+      <div class="flex-1 min-w-0">
+        <h2 class="text-xl font-bold truncate">{{ shortHost() }}</h2>
+        <p class="text-[11px] text-muted font-mono truncate">{{ origin }}</p>
       </div>
+      <BaseButton
+        v-if="canWriteUsers"
+        variant="pill"
+        icon="mdiDeleteSweep"
+        :icon-size="13"
+        class="text-error! border-error/30! hover:bg-error/10!"
+        @click="onPurgeSite"
+      >
+        {{ t('Purge site') }}
+      </BaseButton>
     </header>
 
     <div v-if="detailState.loading" class="flex items-center justify-center py-12">
@@ -127,8 +175,7 @@ function shortHost() {
       <section class="bg-surface-soft border border-border rounded-xl">
         <header class="px-4 py-3 border-b border-border/60 flex items-center justify-between">
           <h3 class="font-semibold text-sm">{{ t('Notes') }} ({{ activeNotes.length }})</h3>
-          <BaseButton v-if="!adding" class="text-xs! py-1.5!" @click="adding = true">
-            <Icon name="mdiPlus" :size="13" />
+          <BaseButton v-if="!adding" variant="pill" icon="mdiPlus" :icon-size="13" @click="adding = true">
             {{ t('Add note') }}
           </BaseButton>
         </header>
@@ -153,10 +200,10 @@ function shortHost() {
             />
           </div>
           <div class="mt-2 flex justify-end gap-2">
-            <BaseButton variant="ghost" class="text-xs! py-1.5!" @click="adding = false; draft = { content: '', scopePath: '', moduleId: '' }">
+            <BaseButton variant="pill" @click="adding = false; draft = { content: '', scopePath: '', moduleId: '' }">
               {{ t('Cancel') }}
             </BaseButton>
-            <BaseButton class="text-xs! py-1.5!" @click="onAdd">{{ t('Save') }}</BaseButton>
+            <BaseButton variant="pill" class="bg-primary! border-primary! text-black/80!" @click="onAdd">{{ t('Save') }}</BaseButton>
           </div>
         </div>
 
@@ -192,13 +239,18 @@ function shortHost() {
               <th class="text-left px-4 py-2 font-medium">{{ t('When') }}</th>
               <th class="text-left px-4 py-2 font-medium">{{ t('User') }}</th>
               <th class="text-left px-4 py-2 font-medium">{{ t('Kind') }}</th>
+              <th class="text-left px-4 py-2 font-medium">{{ t('Status') }}</th>
               <th class="text-right px-4 py-2 font-medium">{{ t('Pages') }}</th>
               <th class="text-right px-4 py-2 font-medium">{{ t('Errors') }}</th>
               <th class="text-right px-4 py-2 font-medium">{{ t('Warnings') }}</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="r in detailState.detail.runs" :key="r.id" class="border-t border-border/30">
+            <tr
+              v-for="r in detailState.detail.runs" :key="r.id"
+              @click="openRun(r.id)"
+              class="border-t border-border/30 hover:bg-surface-soft-hover cursor-pointer"
+            >
               <td class="px-4 py-2 text-[11px] text-muted whitespace-nowrap tabular-nums">{{ formatTime(r.started_at) }}</td>
               <td class="px-4 py-2 text-[11px]">{{ userLabel(r) }}</td>
               <td class="px-4 py-2">
@@ -206,6 +258,11 @@ function shortHost() {
                   class="text-[10px] px-1.5 py-0.5 rounded"
                   :class="r.kind === 'site-wide' ? 'bg-primary/15 text-primary' : 'bg-surface text-light'"
                 >{{ r.kind === 'site-wide' ? t('Site-wide') : t('Single') }}</span>
+              </td>
+              <td class="px-4 py-2">
+                <span class="text-[10px] px-1.5 py-0.5 rounded" :class="statusColor(r.status)">
+                  {{ statusLabel(r.status) }}
+                </span>
               </td>
               <td class="px-4 py-2 text-[11px] text-right tabular-nums">{{ r.pages_count }}</td>
               <td class="px-4 py-2 text-[11px] text-right tabular-nums" :class="r.total_errors > 0 && 'text-error'">{{ r.total_errors }}</td>

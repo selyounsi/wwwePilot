@@ -174,7 +174,34 @@
     "Delete this note?": "Diese Notiz löschen?",
     "{n} active note(s) for this site": "{n} aktive Notiz(en) für diese Site",
     "Add a note for this site…": "Notiz für diese Site hinzufügen…",
-    "Add a note for this site": "Notiz für diese Site hinzufügen"
+    "Add a note for this site": "Notiz für diese Site hinzufügen",
+
+    "Check run details": "Prüfungs-Lauf Details",
+    "Delete run": "Lauf löschen",
+    "Delete site": "Site löschen",
+    "Purge site": "Site komplett löschen",
+    "Run deleted": "Lauf gelöscht",
+    "Site purged ({n} runs, {m} notes)": "Site geleert ({n} Läufe, {m} Notizen)",
+    "Type the run-ID short code \"{code}\" to confirm deletion. This is permanent.": "Tippe den Lauf-ID-Kurzcode „{code}\" ein, um die Löschung zu bestätigen. Unwiderruflich.",
+    "Purging deletes ALL runs, notes and events for \"{o}\". Type the full origin to confirm:": "Beim Leeren werden ALLE Läufe, Notizen und Events für „{o}\" gelöscht. Tippe die volle Origin-URL zur Bestätigung ein:",
+    "Confirmation did not match — nothing deleted.": "Bestätigung stimmte nicht überein — nichts gelöscht.",
+
+    "Running": "Läuft",
+    "Finished": "Abgeschlossen",
+    "Cancelled": "Abgebrochen",
+    "Aborted": "Abgebrochen (Timeout)",
+    "All statuses": "Alle Status",
+
+    "{n} pages": "{n} Seiten",
+    "{n} errors": "{n} Fehler",
+    "{n} warnings": "{n} Warnungen",
+    "OK": "OK",
+    "No issues found.": "Keine Probleme gefunden.",
+    "No detail payload — this module ran before issue capture was enabled.": "Keine Details — dieser Modul-Lauf war vor der Aktivierung der Issue-Erfassung.",
+    "Started": "Gestartet",
+    "Finished": "Abgeschlossen",
+    "Total errors": "Fehler gesamt",
+    "Total warnings": "Warnungen gesamt"
   },
   "en": {}
 }

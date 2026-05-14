@@ -227,7 +227,13 @@ export function useCheckRunner() {
         }
         recordHistory(origin, mod.id, result)
         recordActivity('web_check.module', origin, summary)
-        checkRun.recordModule(summary)
+        checkRun.recordModule({
+          ...summary,
+          issues: {
+            errors:   result.errors   ?? [],
+            warnings: result.warnings ?? [],
+          },
+        })
       }
     } catch {}
     return res
