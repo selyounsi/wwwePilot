@@ -2,6 +2,7 @@ import { useI18n }                from '@/composables/i18n/useI18n.js'
 import { useWebCheckerSettings } from './useWebCheckerSettings.js'
 import { useWebCheckerConfig }   from './useWebCheckerConfig.js'
 import { useRunHistory }         from './useRunHistory.js'
+import { useActivityLog }        from '@/composables/useActivityLog.js'
 import { getAllModuleSettings }  from '@/composables/settings/useModuleSettings.js'
 
 export function useCheckRunner() {
@@ -9,12 +10,16 @@ export function useCheckRunner() {
   const { effectiveIgnoreSelectors } = useWebCheckerSettings()
   const { state: configState }       = useWebCheckerConfig()
   const { record: recordHistory }    = useRunHistory()
+  const { record: recordActivity }   = useActivityLog()
 
   async function injectHelper(tabId) {
     const translations    = getTable()
     const ignoreSelectors = [...effectiveIgnoreSelectors.value]
     const moduleSettings  = getAllModuleSettings()
-    const backendConfig   = configState.config
+    // Strip Vue's reactive proxy. structuredClone (used by chrome.scripting
+    // executeScript args) can flatten nested arrays inside proxies into
+    // numeric-keyed objects, breaking modules that call .map/.filter on them.
+    const backendConfig   = JSON.parse(JSON.stringify(configState.config))
     const pageSnap        = await snapshotPageWindow(tabId)
     await chrome.scripting.executeScript({
       target: { tabId },
@@ -201,16 +206,25 @@ export function useCheckRunner() {
   }
 
   async function runChecker(tabId, mod) {
+    const startedAt = Date.now()
     const res = await chrome.scripting.executeScript({
       target: { tabId },
       func:   mod.checker,
       args:   mod.apiConfig ? [mod.apiConfig] : [],
     })
     try {
-      const tab = await chrome.tabs.get(tabId)
+      const tab    = await chrome.tabs.get(tabId)
       const origin = tab?.url ? new URL(tab.url).origin : null
       const result = res?.[0]?.result
-      if (origin && result) recordHistory(origin, mod.id, result)
+      if (origin && result) {
+        recordHistory(origin, mod.id, result)
+        recordActivity('web_check.module', origin, {
+          moduleId:     mod.id,
+          errorCount:   result.errorCount   ?? 0,
+          warningCount: result.warningCount ?? 0,
+          durationMs:   Date.now() - startedAt,
+        })
+      }
     } catch {}
     return res
   }

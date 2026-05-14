@@ -30,4 +30,10 @@ export const API = {
   version: {
     url: `${BACKEND}/api/version`,
   },
+  activity: {
+    url: `${BACKEND}/api/activity`,
+  },
+  admin: {
+    url: `${BACKEND}/api/admin`,
+  },
 }
