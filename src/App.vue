@@ -68,5 +68,6 @@ window.addEventListener('unhandledrejection', (e) => {
   <div class="h-full">
     <RouterView />
     <ToastContainer />
+    <ReportDialog />
   </div>
 </template>

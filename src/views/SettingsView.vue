@@ -8,6 +8,7 @@ import { useAuth }          from '@/composables/auth/useAuth.js'
 import { apiJson }          from '@/composables/auth/apiClient.js'
 import { useToast }         from '@/composables/useToast.js'
 import { usePermissions }   from '@/composables/usePermissions.js'
+import { useReports }       from '@/composables/useReports.js'
 import { API }              from '@/config/api.js'
 
 const router = useRouter()
@@ -22,11 +23,16 @@ const {
 } = useUiSettings()
 const { state: authState, logout } = useAuth()
 const { canAccessAdmin } = usePermissions()
+const { openDialog: openReportDialog } = useReports()
 const toast = useToast()
 
 function openAdminTab() {
   const url = chrome.runtime.getURL('index.html') + '#/admin'
   chrome.tabs.create({ url, active: true })
+}
+
+function reportBug() {
+  openReportDialog({ scope: 'app' })
 }
 
 async function onLogout() {
@@ -295,6 +301,23 @@ const servicesWithSettings = computed(() => {
               {{ t('Sign out') }}
             </BaseButton>
           </div>
+        </div>
+      </section>
+
+      <section class="flex flex-col gap-2">
+        <SectionLabel>{{ t('Help') }}</SectionLabel>
+        <div class="bg-surface-soft border border-border rounded-xl overflow-hidden">
+          <button
+            @click="reportBug"
+            class="w-full flex items-center gap-3 px-3 py-3 hover:bg-surface-soft-hover transition-colors text-left"
+          >
+            <Icon name="mdiBugOutline" :size="16" class="text-primary shrink-0" />
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium text-light">{{ t('Report a bug or send feedback') }}</div>
+              <div class="text-[11px] text-muted">{{ t('Admins receive your report and can comment back.') }}</div>
+            </div>
+            <Icon name="mdiChevronRight" :size="14" class="text-muted/40 shrink-0" />
+          </button>
         </div>
       </section>
 

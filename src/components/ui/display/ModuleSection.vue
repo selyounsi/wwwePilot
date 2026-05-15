@@ -8,6 +8,7 @@ import { useCheckStore }    from '@/services/web-checker/composables/useCheckSto
 import { useChat }          from '@/services/chatbot/composables/useChat.js'
 import { useI18n }          from '@/composables/i18n/useI18n.js'
 import { useWebCheckerSettings } from '@/services/web-checker/composables/useWebCheckerSettings.js'
+import { useReports }       from '@/composables/useReports.js'
 
 const props = defineProps({
   label:         { type: String, required: true },
@@ -88,6 +89,19 @@ const issueCount = computed(() => {
   const items = rawResult.value?.items ?? []
   return items.reduce((n, item) => n + (item.issues?.filter(i => i.type !== 'success').length ?? 0), 0)
 })
+
+const { openDialog: openReportDialog } = useReports()
+function reportModule() {
+  const origin = (() => { try { return new URL(checkStore.state.checkedUrl ?? '').origin } catch { return null } })()
+  const pathName = (() => { try { return new URL(checkStore.state.checkedUrl ?? '').pathname } catch { return null } })()
+  openReportDialog({
+    scope:     'module',
+    moduleId:  props.moduleId,
+    origin,
+    scopePath: pathName,
+    title:     `[${props.moduleId}] `,
+  })
+}
 const ignoredCount = computed(() => filteredResult.value?.ignoredCount ?? 0)
 
 const router    = useRouter()
@@ -160,6 +174,15 @@ function clusterInChat() {
           :active="overlayActive"
           class="shrink-0"
           @click="toggle"
+        />
+        <BaseButton
+          v-if="moduleId"
+          variant="square-sm"
+          icon="mdiBugOutline"
+          :icon-size="14"
+          :tooltip="t('Report an issue with this module')"
+          class="shrink-0"
+          @click="reportModule"
         />
       </div>
     </div>

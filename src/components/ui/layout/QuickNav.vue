@@ -154,6 +154,13 @@ const displayName = computed(() => {
                 <span v-if="hasUpdate" class="w-1.5 h-1.5 rounded-full bg-alert" />
               </span>
             </button>
+            <button
+              @click="go('/reports')"
+              class="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-soft-hover transition-colors text-left"
+            >
+              <Icon name="mdiBugOutline" :size="15" class="text-muted shrink-0" />
+              <span class="text-xs text-light flex-1">{{ t('Reports & feedback') }}</span>
+            </button>
           </nav>
 
           <button

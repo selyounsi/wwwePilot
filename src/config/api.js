@@ -39,6 +39,9 @@ export const API = {
   notes: {
     url: `${BACKEND}/api/notes`,
   },
+  reports: {
+    url: `${BACKEND}/api/reports`,
+  },
   admin: {
     url: `${BACKEND}/api/admin`,
   },

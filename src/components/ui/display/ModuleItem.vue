@@ -304,6 +304,7 @@ const dotColor    = { error: 'bg-error',        warning: 'bg-alert',         suc
             :tooltip="ignoreNote ? t('Restore hint') + ' — ' + ignoreNote : t('Restore hint')"
             @click.stop="unignoreItem"
           />
+          <ReportItemButton v-if="moduleId" :module-id="moduleId" :item="item" />
           <slot name="trailing" />
         </div>
       </div>

@@ -1,11 +1,8 @@
 /**
- * Stable identifier for an "issue location" within a module run. The hash is
- * scoped to (module, element-identifier, severity-bucket) — multiple issues
- * on the same element of the same severity collapse into one note target.
- *
- * Recipe deliberately ignores i18n'd messages so notes survive translation
- * changes. It does use the element's `_meta` (tag+idx or selector) and falls
- * back to href/src for items that don't carry meta.
+ * Stable identifier for a specific finding. The hash mixes module + element
+ * + issue type + issue message so the same element flagged with two
+ * different problems gets two different hashes — admins can then track
+ * each finding independently.
  */
 async function sha256Hex(str) {
   const buf  = new TextEncoder().encode(str)
@@ -22,14 +19,10 @@ function elementKey(item) {
   return 'unknown'
 }
 
-function topSeverity(item) {
-  const types = (item?.issues ?? []).map(i => i.type)
-  if (types.includes('error'))   return 'error'
-  if (types.includes('warning')) return 'warning'
-  return 'info'
-}
-
-export async function computeIssueHash(moduleId, item) {
-  const key = `${moduleId}|${topSeverity(item)}|${elementKey(item)}`
+/** Hash for one specific issue (error / warning) on one item. */
+export async function computeIssueHash(moduleId, item, issue) {
+  const type    = issue?.type    ?? 'info'
+  const message = issue?.message ?? ''
+  const key     = `${moduleId}|${type}|${elementKey(item)}|${message}`
   return sha256Hex(key)
 }

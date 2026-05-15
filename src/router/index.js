@@ -6,6 +6,7 @@ import DashboardView from '../views/DashboardView.vue'
 import SettingsView  from '../views/SettingsView.vue'
 import UpdatesView   from '../views/UpdatesView.vue'
 import LoginView     from '../views/LoginView.vue'
+import ReportsView   from '../views/ReportsView.vue'
 import { adminRoutes } from '@/admin/routes.js'
 
 const { services } = useServiceLoader()
@@ -111,6 +112,7 @@ const router = createRouter({
     { path: '/',         name: 'dashboard', component: DashboardView },
     { path: '/settings', name: 'settings',  component: SettingsView,  meta: { settingsRoot: true } },
     { path: '/updates',  name: 'updates',   component: UpdatesView },
+    { path: '/reports',  name: 'reports',   component: ReportsView },
     ...adminRoutes,
     ...serviceRoutes,
   ],
