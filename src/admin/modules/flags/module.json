@@ -1,0 +1,13 @@
+{
+  "key":        "flags",
+  "enabled":    true,
+  "permission": "admin.features.write",
+  "nav": {
+    "order": 70,
+    "icon":  "mdiToggleSwitchOutline",
+    "label": "Feature flags"
+  },
+  "routes": [
+    { "path": "flags", "name": "admin-flags", "view": "Index" }
+  ]
+}

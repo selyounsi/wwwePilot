@@ -1,0 +1,13 @@
+{
+  "key":        "audit",
+  "enabled":    true,
+  "permission": "admin.audit.read",
+  "nav": {
+    "order": 90,
+    "icon":  "mdiHistory",
+    "label": "Audit"
+  },
+  "routes": [
+    { "path": "audit", "name": "admin-audit", "view": "Index" }
+  ]
+}

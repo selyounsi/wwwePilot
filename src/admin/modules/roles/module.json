@@ -1,0 +1,13 @@
+{
+  "key":        "roles",
+  "enabled":    true,
+  "permission": "admin.users.read",
+  "nav": {
+    "order": 50,
+    "icon":  "mdiShieldKeyOutline",
+    "label": "Roles"
+  },
+  "routes": [
+    { "path": "roles", "name": "admin-roles", "view": "Index" }
+  ]
+}

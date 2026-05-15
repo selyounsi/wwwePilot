@@ -1,0 +1,13 @@
+{
+  "key":        "system",
+  "enabled":    true,
+  "permission": "admin.users.write",
+  "nav": {
+    "order": 100,
+    "icon":  "mdiServerOutline",
+    "label": "System"
+  },
+  "routes": [
+    { "path": "system", "name": "admin-system", "view": "Index" }
+  ]
+}

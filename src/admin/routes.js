@@ -1,20 +1,65 @@
-import AdminLayout      from './views/AdminLayout.vue'
-import DashboardView    from './views/DashboardView.vue'
-import UsersView        from './views/UsersView.vue'
-import UserDetailView   from './views/UserDetailView.vue'
-import RolesView        from './views/RolesView.vue'
-import RunsView         from './views/RunsView.vue'
-import RunDetailView    from './views/RunDetailView.vue'
-import SitesView        from './views/SitesView.vue'
-import SiteDetailView   from './views/SiteDetailView.vue'
-import AuditView        from './views/AuditView.vue'
-import SelectorsView    from './views/SelectorsView.vue'
-import FeatureFlagsView from './views/FeatureFlagsView.vue'
+import AdminLayout from './AdminLayout.vue'
+
+// Each module is a black box described by its `module.json`:
+//   {
+//     "key":        "<unique>",
+//     "enabled":    true,           ← false hides the whole module
+//     "permission": "<default>",    ← used as fallback for nav + routes
+//     "nav":        { order, icon, label, badge? },
+//     "routes":     [ { path, name, view, permission? } ]
+//   }
+//
+// Views are resolved by convention: `view: "Index"` maps to
+// `modules/<key>/views/Index.vue`. Adding a module = drop a folder with
+// `module.json` + `views/` and it's picked up on the next build.
+const configs = Object.entries(import.meta.glob('./modules/*/module.json', { eager: true }))
+const views   = import.meta.glob('./modules/*/views/*.vue',                  { eager: true })
+
+const moduleRoutes = []
+const navItems     = []
+
+for (const [cfgPath, mod] of configs) {
+  const conf = mod.default ?? mod
+  if (conf.enabled === false) continue
+
+  const baseDir = cfgPath.replace(/\/module\.json$/, '')
+  for (const r of conf.routes ?? []) {
+    const viewModule = views[`${baseDir}/views/${r.view}.vue`]
+    if (!viewModule) {
+      console.warn(`[admin] missing view "${r.view}" for module "${conf.key}" (expected ${baseDir}/views/${r.view}.vue)`)
+      continue
+    }
+    moduleRoutes.push({
+      path:      r.path,
+      name:      r.name,
+      component: viewModule.default,
+      meta:      { requiresPermission: r.permission ?? conf.permission },
+    })
+  }
+
+  if (conf.nav) {
+    const firstRoute = conf.routes?.[0]?.path
+    navItems.push({
+      key:        conf.key,
+      path:       firstRoute ? `/admin/${firstRoute}` : `/admin/${conf.key}`,
+      icon:       conf.nav.icon,
+      label:      conf.nav.label,
+      order:      conf.nav.order ?? 999,
+      badge:      conf.nav.badge ?? null,
+      permission: conf.nav.permission ?? conf.permission,
+    })
+  }
+}
+
+/**
+ * Sidebar nav metadata, sorted by `nav.order`. Filtering by permission and
+ * resolving badges happens in `AdminLayout.vue`.
+ */
+export const adminNav = navItems.sort((a, b) => a.order - b.order)
 
 /**
  * Admin route group. Mounted at /admin/* by the main router. Permission gating
- * is meta-driven so the global beforeEach can enforce uniformly — no per-route
- * guard duplication here.
+ * is meta-driven so the global beforeEach can enforce uniformly.
  */
 export const adminRoutes = [
   {
@@ -22,18 +67,8 @@ export const adminRoutes = [
     component: AdminLayout,
     meta:      { requiresPermission: 'admin.access', layout: 'admin' },
     children:  [
-      { path: '',                redirect: '/admin/dashboard' },
-      { path: 'dashboard',       name: 'admin-dashboard',    component: DashboardView,    meta: { requiresPermission: 'admin.activity.read' } },
-      { path: 'users',           name: 'admin-users',        component: UsersView,        meta: { requiresPermission: 'admin.users.read' } },
-      { path: 'users/:id',       name: 'admin-user-detail',  component: UserDetailView,   meta: { requiresPermission: 'admin.users.read' } },
-      { path: 'roles',           name: 'admin-roles',        component: RolesView,        meta: { requiresPermission: 'admin.users.read' } },
-      { path: 'runs',            name: 'admin-runs',         component: RunsView,         meta: { requiresPermission: 'admin.activity.read' } },
-      { path: 'runs/:id',        name: 'admin-run-detail',   component: RunDetailView,    meta: { requiresPermission: 'admin.activity.read' } },
-      { path: 'sites',           name: 'admin-sites',        component: SitesView,        meta: { requiresPermission: 'admin.activity.read' } },
-      { path: 'sites/:origin',   name: 'admin-site-detail',  component: SiteDetailView,   meta: { requiresPermission: 'admin.activity.read' } },
-      { path: 'selectors',       name: 'admin-selectors',    component: SelectorsView,    meta: { requiresPermission: 'admin.selectors.write' } },
-      { path: 'flags',           name: 'admin-flags',        component: FeatureFlagsView, meta: { requiresPermission: 'admin.features.write' } },
-      { path: 'audit',           name: 'admin-audit',        component: AuditView,        meta: { requiresPermission: 'admin.audit.read' } },
+      { path: '', redirect: '/admin/dashboard' },
+      ...moduleRoutes,
     ],
   },
 ]

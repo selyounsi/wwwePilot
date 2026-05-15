@@ -1,0 +1,14 @@
+{
+  "key":        "users",
+  "enabled":    true,
+  "permission": "admin.users.read",
+  "nav": {
+    "order": 40,
+    "icon":  "mdiAccountMultipleOutline",
+    "label": "Users"
+  },
+  "routes": [
+    { "path": "users",     "name": "admin-users",       "view": "Index" },
+    { "path": "users/:id", "name": "admin-user-detail", "view": "UserDetail" }
+  ]
+}

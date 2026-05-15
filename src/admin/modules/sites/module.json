@@ -1,0 +1,14 @@
+{
+  "key":        "sites",
+  "enabled":    true,
+  "permission": "admin.activity.read",
+  "nav": {
+    "order": 20,
+    "icon":  "mdiWebSync",
+    "label": "Sites"
+  },
+  "routes": [
+    { "path": "sites",         "name": "admin-sites",       "view": "Index" },
+    { "path": "sites/:origin", "name": "admin-site-detail", "view": "SiteDetail" }
+  ]
+}

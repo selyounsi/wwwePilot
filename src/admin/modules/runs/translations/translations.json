@@ -1,0 +1,36 @@
+{
+  "de": {
+    "Check runs":                                                  "Prüfungs-Läufe",
+    "One row per \"Prüfen\"-click. Expand to see per-module breakdown.": "Eine Zeile pro „Prüfen\"-Klick. Aufklappen für Modul-Details.",
+    "Origin (e.g. https://example.com)":                           "Origin (z.B. https://example.com)",
+    "All kinds":                                                   "Alle Arten",
+    "Single-page":                                                 "Einzelseite",
+    "Site-wide":                                                   "Komplett-Site",
+    "Single":                                                      "Einzel",
+    "Kind":                                                        "Art",
+    "Pages":                                                       "Seiten",
+    "Modules":                                                     "Module",
+    "Duration":                                                    "Dauer",
+    "No runs yet.":                                                "Noch keine Runs.",
+
+    "Running":                                                     "Läuft",
+    "Finished":                                                    "Abgeschlossen",
+    "Cancelled":                                                   "Abgebrochen",
+    "Aborted":                                                     "Abgebrochen (Timeout)",
+
+    "{n} pages":                                                   "{n} Seiten",
+    "{n} errors":                                                  "{n} Fehler",
+    "{n} warnings":                                                "{n} Warnungen",
+    "OK":                                                          "OK",
+    "No issues found.":                                            "Keine Probleme gefunden.",
+    "Started":                                                     "Gestartet",
+    "Total errors":                                                "Fehler gesamt",
+    "Total warnings":                                              "Warnungen gesamt",
+
+    "Check run details":                                           "Prüfungs-Lauf Details",
+    "Delete run":                                                  "Lauf löschen",
+    "Run deleted":                                                 "Lauf gelöscht",
+    "Type the run-ID short code \"{code}\" to confirm deletion. This is permanent.": "Tippe den Lauf-ID-Kurzcode „{code}\" ein, um die Löschung zu bestätigen. Unwiderruflich."
+  },
+  "en": {}
+}

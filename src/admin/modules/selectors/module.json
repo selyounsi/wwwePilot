@@ -1,0 +1,13 @@
+{
+  "key":        "selectors",
+  "enabled":    true,
+  "permission": "admin.selectors.write",
+  "nav": {
+    "order": 60,
+    "icon":  "mdiFilterVariant",
+    "label": "Ignore selectors"
+  },
+  "routes": [
+    { "path": "selectors", "name": "admin-selectors", "view": "Index" }
+  ]
+}

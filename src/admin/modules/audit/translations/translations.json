@@ -1,0 +1,28 @@
+{
+  "de": {
+    "Audit":                                                       "Audit",
+    "Admin audit":                                                 "Admin-Audit",
+    "Append-only trail of state-changing admin actions. Read-only.": "Unveränderlicher Verlauf aller Admin-Aktionen mit Zustandsänderung. Nur-Lese.",
+    "Actor":                                                       "Aktor",
+    "Action":                                                      "Aktion",
+    "Target / Payload":                                            "Ziel / Payload",
+    "No audit events yet.":                                        "Noch keine Audit-Events.",
+
+    "Activity":                                                    "Aktivität",
+    "Live feed + aggregates. Web-checker runs, logins, chatbot calls.": "Live-Feed + Aggregate. Web-Checker-Runs, Logins, Chatbot-Aufrufe.",
+    "Event counts ({n} days)":                                     "Event-Anzahl ({n} Tage)",
+    "Last 24h":                                                    "Letzte 24 Std.",
+    "No events in range.":                                         "Keine Events im Zeitraum.",
+    "User-ID":                                                     "Benutzer-ID",
+    "Type (e.g. web_check.module)":                                "Typ (z.B. web_check.module)",
+    "Time":                                                        "Zeit",
+    "Target":                                                      "Ziel",
+    "Details":                                                     "Details",
+    "Load more":                                                   "Mehr laden",
+    "No events match the filter.":                                 "Keine Events entsprechen dem Filter.",
+    "stub login":                                                  "Stub-Login",
+    "OIDC login":                                                  "OIDC-Login",
+    "logout":                                                      "Abmeldung"
+  },
+  "en": {}
+}

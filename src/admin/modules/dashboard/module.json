@@ -1,0 +1,13 @@
+{
+  "key":        "dashboard",
+  "enabled":    true,
+  "permission": "admin.activity.read",
+  "nav": {
+    "order": 10,
+    "icon":  "mdiViewDashboardOutline",
+    "label": "Dashboard"
+  },
+  "routes": [
+    { "path": "dashboard", "name": "admin-dashboard", "view": "Index" }
+  ]
+}

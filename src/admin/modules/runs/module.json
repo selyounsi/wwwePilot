@@ -1,0 +1,14 @@
+{
+  "key":        "runs",
+  "enabled":    true,
+  "permission": "admin.activity.read",
+  "nav": {
+    "order": 30,
+    "icon":  "mdiPlayCircleOutline",
+    "label": "Check runs"
+  },
+  "routes": [
+    { "path": "runs",     "name": "admin-runs",       "view": "Index" },
+    { "path": "runs/:id", "name": "admin-run-detail", "view": "RunDetail" }
+  ]
+}

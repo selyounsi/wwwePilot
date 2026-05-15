@@ -1,0 +1,26 @@
+{
+  "de": {
+    "Open admin area":     "Admin-Bereich öffnen",
+    "Admin":               "Admin",
+    "Backend":             "Backend",
+    "Close admin tab":     "Admin-Tab schließen",
+    "Back":                "Zurück",
+    "Apply":               "Anwenden",
+    "Cancel":              "Abbrechen",
+    "Save":                "Speichern",
+    "Edit":                "Bearbeiten",
+    "Delete":              "Löschen",
+    "Confirm":             "Bestätigen",
+    "Status":              "Status",
+    "Active":              "Aktiv",
+    "Suspended":           "Gesperrt",
+    "All statuses":        "Alle Status",
+    "User":                "Benutzer",
+    "When":                "Wann",
+    "none":                "keine",
+    "of":                  "von",
+    "Type":                "Typ",
+    "Module":              "Modul"
+  },
+  "en": {}
+}

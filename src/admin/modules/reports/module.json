@@ -1,0 +1,15 @@
+{
+  "key":        "reports",
+  "enabled":    true,
+  "permission": "admin.reports.read",
+  "nav": {
+    "order": 80,
+    "icon":  "mdiBugOutline",
+    "label": "Reports",
+    "badge": "openReports"
+  },
+  "routes": [
+    { "path": "reports",     "name": "admin-reports",       "view": "Index" },
+    { "path": "reports/:id", "name": "admin-report-detail", "view": "ReportDetail" }
+  ]
+}

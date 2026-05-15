@@ -1,0 +1,46 @@
+{
+  "de": {
+    "Sites":                                                       "Sites",
+    "Per-domain aggregate over check runs.":                       "Aggregat pro Domain über alle Prüfungs-Läufe.",
+    "Last 7 days":                                                 "Letzte 7 Tage",
+    "Last 30 days":                                                "Letzte 30 Tage",
+    "Last 90 days":                                                "Letzte 90 Tage",
+    "Last year":                                                   "Letztes Jahr",
+    "All time":                                                    "Gesamtzeit",
+    "No sites checked in this range.":                             "Keine Sites in diesem Zeitraum geprüft.",
+    "Origin":                                                      "Origin",
+    "Runs":                                                        "Runs",
+    "Errors":                                                      "Fehler",
+    "Warnings":                                                    "Warnungen",
+    "Notes":                                                       "Notizen",
+    "Last run":                                                    "Letzter Lauf",
+
+    "Total runs":                                                  "Läufe gesamt",
+    "Unique users":                                                "Unique User",
+    "Errors (sum)":                                                "Fehler (Summe)",
+    "Warnings (sum)":                                              "Warnungen (Summe)",
+    "Add note":                                                    "Notiz hinzufügen",
+    "Note content…":                                               "Notiz-Inhalt…",
+    "Path (optional, e.g. /about)":                                "Pfad (optional, z.B. /about)",
+    "Module (optional)":                                           "Modul (optional)",
+    "Recent runs":                                                 "Letzte Läufe",
+    "No active notes for this site.":                              "Keine aktiven Notizen für diese Site.",
+    "Resolved notes ({n})":                                        "Erledigte Notizen ({n})",
+    "resolved":                                                    "erledigt",
+    "Resolve":                                                     "Erledigen",
+    "Unresolve":                                                   "Wieder öffnen",
+
+    "Note saved":                                                  "Notiz gespeichert",
+    "Delete this note?":                                           "Diese Notiz löschen?",
+    "{n} active note(s) for this site":                            "{n} aktive Notiz(en) für diese Site",
+    "Add a note for this site…":                                   "Notiz für diese Site hinzufügen…",
+    "Add a note for this site":                                    "Notiz für diese Site hinzufügen",
+
+    "Delete site":                                                 "Site löschen",
+    "Purge site":                                                  "Site komplett löschen",
+    "Site purged ({n} runs, {m} notes)":                           "Site geleert ({n} Läufe, {m} Notizen)",
+    "Purging deletes ALL runs, notes and events for \"{o}\". Type the full origin to confirm:": "Beim Leeren werden ALLE Läufe, Notizen und Events für „{o}\" gelöscht. Tippe die volle Origin-URL zur Bestätigung ein:",
+    "Confirmation did not match — nothing deleted.":               "Bestätigung stimmte nicht überein — nichts gelöscht."
+  },
+  "en": {}
+}

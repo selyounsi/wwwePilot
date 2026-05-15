@@ -1,0 +1,17 @@
+{
+  "de": {
+    "New role":                                                    "Neue Rolle",
+    "System":                                                      "System",
+    "Role saved":                                                  "Rolle gespeichert",
+    "Role created":                                                "Rolle erstellt",
+    "Role deleted":                                                "Rolle gelöscht",
+    "Delete role {name}?":                                         "Rolle {name} löschen?",
+    "{n} roles, {p} permissions in catalog":                       "{n} Rollen, {p} Berechtigungen im Katalog",
+    "no permissions assigned":                                     "keine Berechtigungen zugewiesen",
+    "Display name":                                                "Anzeigename",
+    "Description (optional)":                                      "Beschreibung (optional)",
+    "slug-id (e.g. content-editor)":                               "slug-id (z.B. content-editor)",
+    "This is a system role — editing its permissions can lock other users out. Be careful.": "Das ist eine System-Rolle — wenn du ihre Berechtigungen änderst, kannst du andere Benutzer aussperren. Vorsicht."
+  },
+  "en": {}
+}
