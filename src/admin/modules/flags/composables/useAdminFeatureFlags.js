@@ -21,15 +21,24 @@ async function fetchAll() {
   }
 }
 
-async function setEnabled(key, enabled) {
+async function patch(key, body) {
   const { flag } = await apiJson(`${API.admin.url}/feature-flags/${encodeURIComponent(key)}`, {
     method: 'PATCH',
-    body:   JSON.stringify({ enabled }),
+    body:   JSON.stringify(body),
   })
   const i = state.flags.findIndex(f => f.key === key)
   if (i >= 0) state.flags[i] = flag
+  return flag
 }
 
+function setEnabled(key, enabled) { return patch(key, { enabled }) }
+
+/**
+ * Restrict (or unrestrict) a flag to specific role IDs. Pass `null` or
+ * `[]` to remove the gate so the flag applies to everyone.
+ */
+function setRoles(key, roles) { return patch(key, { roles }) }
+
 export function useAdminFeatureFlags() {
-  return { state, fetchAll, setEnabled }
+  return { state, fetchAll, setEnabled, setRoles }
 }

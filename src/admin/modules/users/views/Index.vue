@@ -6,6 +6,7 @@ import { useToast }       from '@/composables/useToast.js'
 import { usePermissions } from '@/composables/usePermissions.js'
 import { useAdminUsers } from '@/admin/modules/users/composables/useAdminUsers.js'
 import { useAdminRoles } from '@/admin/modules/roles/composables/useAdminRoles.js'
+import { useTableExport } from '@/admin/composables/useTableExport.js'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -89,6 +90,23 @@ function openUser(id) {
   if (editingId.value === id) return  // editing in-place, don't navigate
   router.push({ name: 'admin-user-detail', params: { id } })
 }
+
+const { exportCSV } = useTableExport()
+function downloadCSV() {
+  exportCSV({
+    rows:     filteredUsers.value,
+    filename: `users-${new Date().toISOString().slice(0, 10)}.csv`,
+    columns:  [
+      { key: 'email',       label: 'Email' },
+      { key: 'firstName',   label: 'First name' },
+      { key: 'lastName',    label: 'Last name' },
+      { key: 'roles',       label: 'Roles',     get: (u) => (u.roles ?? []).join('|') },
+      { key: 'suspendedAt', label: 'Suspended', get: (u) => u.suspendedAt ? 'yes' : 'no' },
+      { key: 'lastSeenAt',  label: 'Last seen' },
+      { key: 'firstLoginAt',label: 'First login' },
+    ],
+  })
+}
 </script>
 
 <template>
@@ -100,12 +118,21 @@ function openUser(id) {
           {{ t('{n} users — sorted by last activity', { n: usersState.users.length }) }}
         </p>
       </div>
-      <input
-        v-model="search"
-        type="search"
-        :placeholder="t('Search by email, name, company…')"
-        class="bg-surface-soft border border-border rounded-lg px-3 py-2 text-sm w-72 focus:outline-none focus:border-primary/60"
-      />
+      <div class="flex items-center gap-2">
+        <input
+          v-model="search"
+          type="search"
+          :placeholder="t('Search by email, name, company…')"
+          class="bg-surface-soft border border-border rounded-lg px-3 py-2 text-sm w-72 focus:outline-none focus:border-primary/60"
+        />
+        <BaseButton
+          variant="pill"
+          icon="mdiDownload"
+          :icon-size="13"
+          :tooltip="t('Export as CSV')"
+          @click="downloadCSV"
+        >CSV</BaseButton>
+      </div>
     </header>
 
     <div v-if="usersState.loading" class="flex items-center justify-center py-12">

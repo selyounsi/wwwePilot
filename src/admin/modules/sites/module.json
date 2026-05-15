@@ -3,7 +3,8 @@
   "enabled":    true,
   "permission": "admin.activity.read",
   "nav": {
-    "order": 20,
+    "group": "webchecker",
+    "order": 10,
     "icon":  "mdiWebSync",
     "label": "Sites"
   },

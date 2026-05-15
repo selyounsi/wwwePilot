@@ -1,12 +1,12 @@
 <script setup>
-import { computed, onMounted, onBeforeUnmount } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n }         from '@/composables/i18n/useI18n.js'
 import { useAuth }         from '@/composables/auth/useAuth.js'
 import { usePermissions }  from '@/composables/usePermissions.js'
 import { useAdminReports } from '@/admin/modules/reports/composables/useAdminReports.js'
 import { useAdminRoles }   from '@/admin/modules/roles/composables/useAdminRoles.js'
-import { adminNav }        from '@/admin/routes.js'
+import { adminNav, adminNavGroups } from '@/admin/routes.js'
 
 const router = useRouter()
 const route  = useRoute()
@@ -42,20 +42,84 @@ onBeforeUnmount(() => {
   if (pollTimer) clearInterval(pollTimer)
 })
 
-const navItems = computed(() => adminNav
-  .filter(n => !n.permission || has(n.permission))
-  .map(n => {
-    const badge = n.badge ? (badgeResolvers[n.badge]?.() ?? null) : null
-    return {
-      key:   n.key,
-      path:  n.path,
-      icon:  n.icon,
-      name:  t(n.label),
-      badge: badge > 0 ? badge : null,
+function decorate(n) {
+  const badge = n.badge ? (badgeResolvers[n.badge]?.() ?? null) : null
+  return {
+    key:   n.key,
+    path:  n.path,
+    icon:  n.icon,
+    name:  t(n.label),
+    badge: badge > 0 ? badge : null,
+  }
+}
+
+/**
+ * Sidebar render tree. Top-level items and groups share a single
+ * `order`-sorted list so a group can sit between two ungrouped items
+ * (e.g. "Roles" — Web-checker — "Feature flags"). Empty groups (no
+ * permitted children) are dropped.
+ */
+const navTree = computed(() => {
+  const filtered = adminNav.filter(n => !n.permission || has(n.permission))
+  const byGroup  = new Map()
+  const tree     = []
+
+  for (const item of filtered) {
+    if (item.group) {
+      if (!byGroup.has(item.group)) byGroup.set(item.group, [])
+      byGroup.get(item.group).push(item)
+    } else {
+      tree.push({ type: 'item', order: item.order, ...decorate(item) })
     }
-  }))
+  }
+
+  for (const [key, items] of byGroup.entries()) {
+    if (!items.length) continue
+    const meta = adminNavGroups[key] ?? { order: 500, label: key, icon: 'mdiFolderOutline' }
+    tree.push({
+      type:  'group',
+      key,
+      label: t(meta.label),
+      icon:  meta.icon,
+      order: meta.order,
+      items: items
+        .sort((a, b) => a.order - b.order)
+        .map(decorate),
+    })
+  }
+
+  return tree.sort((a, b) => a.order - b.order)
+})
 
 const isActive = (path) => route.path === path || route.path.startsWith(path + '/')
+
+// Group collapse state — persisted per-browser so the user's choice survives
+// reloads. Default: any group whose child matches the current route stays
+// expanded, others can be remembered as collapsed.
+const COLLAPSE_KEY = 'admin-nav-collapsed-groups'
+const collapsed = ref(loadCollapsed())
+function loadCollapsed() {
+  try { return new Set(JSON.parse(localStorage.getItem(COLLAPSE_KEY) ?? '[]')) }
+  catch { return new Set() }
+}
+function persistCollapsed() {
+  try { localStorage.setItem(COLLAPSE_KEY, JSON.stringify([...collapsed.value])) } catch {}
+}
+function toggleGroup(key) {
+  if (collapsed.value.has(key)) collapsed.value.delete(key)
+  else                          collapsed.value.add(key)
+  collapsed.value = new Set(collapsed.value)
+  persistCollapsed()
+}
+function isGroupOpen(group) {
+  if (collapsed.value.has(group.key)) return false
+  // Force-open when one of the children is active so a deep-linked URL
+  // doesn't land on a collapsed group.
+  return true
+}
+function isGroupActive(group) {
+  return group.items.some(i => isActive(i.path))
+}
 
 const version = chrome.runtime?.getManifest?.()?.version ?? ''
 
@@ -64,6 +128,11 @@ const version = chrome.runtime?.getManifest?.()?.version ?? ''
 // it in a script-setup function so the template just calls the function.
 function closeTab() {
   window.close()
+}
+
+const quickSwitcherRef = ref(null)
+function openQuickSwitcher() {
+  quickSwitcherRef.value?.open()
 }
 
 const displayName = computed(() => {
@@ -91,6 +160,7 @@ const roleLabels = computed(() => {
         <div class="flex items-center gap-2 mb-2">
           <Icon name="mdiShieldCrownOutline" :size="20" class="text-primary shrink-0" />
           <h1 class="text-lg font-bold leading-tight truncate flex-1">{{ t('Backend') }}</h1>
+          <AdminNotificationBell />
           <span v-if="version" class="text-[10px] font-mono text-muted/70 shrink-0">v{{ version }}</span>
         </div>
         <div class="flex items-center gap-2">
@@ -102,25 +172,78 @@ const roleLabels = computed(() => {
         </div>
       </div>
 
+      <button
+        class="mx-2 mt-3 mb-1 flex items-center gap-2 px-3 py-2 bg-surface border border-border rounded-lg text-left text-xs text-muted hover:bg-surface-soft-hover transition-colors"
+        @click="openQuickSwitcher"
+      >
+        <Icon name="mdiMagnify" :size="14" />
+        <span class="flex-1">{{ t('Search…') }}</span>
+        <kbd class="text-[9px] font-mono px-1 py-0.5 bg-background rounded border border-border">⌘K</kbd>
+      </button>
+
       <nav class="flex-1 px-2 py-3 overflow-y-auto min-h-0">
-        <button
-          v-for="item in navItems" :key="item.key"
-          @click="router.push(item.path)"
-          class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left"
-          :class="isActive(item.path)
-            ? 'bg-primary text-black/80 font-semibold'
-            : 'text-light hover:bg-surface-soft-hover'"
-        >
-          <Icon :name="item.icon" :size="16" />
-          <span class="text-sm flex-1">{{ item.name }}</span>
-          <span
-            v-if="item.badge"
-            class="text-[10px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full min-w-5 text-center"
-            :class="isActive(item.path)
-              ? 'bg-black/20 text-black/80'
-              : 'bg-error/20 text-error'"
-          >{{ item.badge }}</span>
-        </button>
+        <template v-for="node in navTree">
+          <!-- Top-level item -->
+          <button
+            v-if="node.type === 'item'"
+            :key="`item-${node.key}`"
+            @click="router.push(node.path)"
+            class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left"
+            :class="isActive(node.path)
+              ? 'bg-primary text-black/80 font-semibold'
+              : 'text-light hover:bg-surface-soft-hover'"
+          >
+            <Icon :name="node.icon" :size="16" />
+            <span class="text-sm flex-1">{{ node.name }}</span>
+            <span
+              v-if="node.badge"
+              class="text-[10px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full min-w-5 text-center"
+              :class="isActive(node.path)
+                ? 'bg-black/20 text-black/80'
+                : 'bg-error/20 text-error'"
+            >{{ node.badge }}</span>
+          </button>
+
+          <!-- Group with sub-items -->
+          <div v-else :key="`group-${node.key}`">
+            <button
+              @click="toggleGroup(node.key)"
+              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors"
+              :class="isGroupActive(node)
+                ? 'text-primary font-semibold'
+                : 'text-light hover:bg-surface-soft-hover'"
+            >
+              <Icon :name="node.icon" :size="16" />
+              <span class="text-sm flex-1">{{ node.label }}</span>
+              <Icon
+                :name="isGroupOpen(node) ? 'mdiChevronDown' : 'mdiChevronRight'"
+                :size="14"
+                class="opacity-60"
+              />
+            </button>
+
+            <div v-show="isGroupOpen(node)" class="pl-3 mt-0.5 space-y-0.5">
+              <button
+                v-for="sub in node.items" :key="sub.key"
+                @click="router.push(sub.path)"
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left"
+                :class="isActive(sub.path)
+                  ? 'bg-primary text-black/80 font-semibold'
+                  : 'text-light hover:bg-surface-soft-hover'"
+              >
+                <Icon :name="sub.icon" :size="14" />
+                <span class="text-sm flex-1">{{ sub.name }}</span>
+                <span
+                  v-if="sub.badge"
+                  class="text-[10px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full min-w-5 text-center"
+                  :class="isActive(sub.path)
+                    ? 'bg-black/20 text-black/80'
+                    : 'bg-error/20 text-error'"
+                >{{ sub.badge }}</span>
+              </button>
+            </div>
+          </div>
+        </template>
       </nav>
 
       <div class="px-3 py-3 border-t border-border shrink-0">
@@ -139,5 +262,7 @@ const roleLabels = computed(() => {
     <main class="flex-1 overflow-y-auto h-screen">
       <RouterView />
     </main>
+
+    <AdminQuickSwitcher ref="quickSwitcherRef" />
   </div>
 </template>

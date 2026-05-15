@@ -3,7 +3,8 @@
   "enabled":    true,
   "permission": "admin.activity.read",
   "nav": {
-    "order": 30,
+    "group": "webchecker",
+    "order": 20,
     "icon":  "mdiPlayCircleOutline",
     "label": "Check runs"
   },

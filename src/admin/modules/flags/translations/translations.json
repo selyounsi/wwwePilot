@@ -8,7 +8,16 @@
     "{n} of {m} enabled":                                          "{n} von {m} aktiv",
     "Enabled \"{key}\"":                                           "„{key}\" aktiviert",
     "Disabled \"{key}\"":                                          "„{key}\" deaktiviert",
-    "changed":                                                     "geändert"
+    "changed":                                                     "geändert",
+    "Turn services and modules on/off without releasing the extension. Per-flag role gating restricts who sees them. Changes propagate within 5 minutes.": "Services und Module an/aus schalten ohne Extension-Release. Pro Flag lässt sich auf bestimmte Rollen einschränken. Änderungen wirken innerhalb von 5 Minuten.",
+    "All roles":                                                   "Alle Rollen",
+    "{n} roles":                                                   "{n} Rollen",
+    "Restrict to roles":                                           "Auf Rollen beschränken",
+    "No roles loaded.":                                            "Keine Rollen geladen.",
+    "Flag applies to everyone.":                                   "Flag gilt für alle.",
+    "Flag only counts as enabled for users with one of these roles.": "Flag gilt nur für Benutzer mit einer dieser Rollen als aktiv.",
+    "No sub-modules registered for this service.":                 "Keine Sub-Module für diesen Service registriert.",
+    "Other flags":                                                 "Sonstige Flags"
   },
   "en": {}
 }

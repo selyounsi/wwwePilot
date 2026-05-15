@@ -3,6 +3,7 @@ import { onMounted, ref, computed } from 'vue'
 import { useRouter }     from 'vue-router'
 import { useI18n }       from '@/composables/i18n/useI18n.js'
 import { useAdminReports } from '@/admin/modules/reports/composables/useAdminReports.js'
+import { useTableExport }  from '@/admin/composables/useTableExport.js'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -26,6 +27,28 @@ function applyFilter() {
 async function toggleStats() {
   statsOpen.value = !statsOpen.value
   if (statsOpen.value && !state.stats) await fetchStats()
+}
+
+const { exportCSV } = useTableExport()
+function downloadCSV() {
+  exportCSV({
+    rows:     state.reports,
+    filename: `reports-${new Date().toISOString().slice(0, 10)}.csv`,
+    columns:  [
+      { key: 'id',          label: 'ID' },
+      { key: 'title',       label: 'Title' },
+      { key: 'status',      label: 'Status' },
+      { key: 'severity',    label: 'Severity' },
+      { key: 'category',    label: 'Category' },
+      { key: 'scope',       label: 'Scope' },
+      { key: 'module_id',   label: 'Module' },
+      { key: 'reporter',    label: 'Reporter', get: (r) => r.first_name && r.last_name ? `${r.first_name} ${r.last_name}` : (r.email ?? '') },
+      { key: 'assignee',    label: 'Assigned to', get: (r) => r.assignee_first_name && r.assignee_last_name ? `${r.assignee_first_name} ${r.assignee_last_name}` : (r.assignee_email ?? '') },
+      { key: 'created_at',  label: 'Created' },
+      { key: 'updated_at',  label: 'Updated' },
+      { key: 'comment_count', label: 'Comments' },
+    ],
+  })
 }
 
 function openReport(id) {
@@ -143,12 +166,21 @@ const inflowMax = computed(() => {
         <h2 class="text-xl font-bold">{{ t('Reports') }}</h2>
         <p class="text-xs text-muted mt-0.5">{{ t('User-submitted bug reports, feature requests and false-positive flags.') }}</p>
       </div>
-      <BaseButton
-        variant="pill"
-        :icon="statsOpen ? 'mdiChevronUp' : 'mdiChartBoxOutline'"
-        :icon-size="13"
-        @click="toggleStats"
-      >{{ statsOpen ? t('Hide stats') : t('Show stats') }}</BaseButton>
+      <div class="flex items-center gap-2">
+        <BaseButton
+          variant="pill"
+          :icon="statsOpen ? 'mdiChevronUp' : 'mdiChartBoxOutline'"
+          :icon-size="13"
+          @click="toggleStats"
+        >{{ statsOpen ? t('Hide stats') : t('Show stats') }}</BaseButton>
+        <BaseButton
+          variant="pill"
+          icon="mdiDownload"
+          :icon-size="13"
+          :tooltip="t('Export as CSV')"
+          @click="downloadCSV"
+        >CSV</BaseButton>
+      </div>
     </header>
 
     <section v-if="statsOpen && state.stats" class="bg-surface-soft border border-border rounded-xl p-4 mb-6 grid grid-cols-2 lg:grid-cols-4 gap-4">

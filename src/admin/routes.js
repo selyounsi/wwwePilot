@@ -46,6 +46,7 @@ for (const [cfgPath, mod] of configs) {
       label:      conf.nav.label,
       order:      conf.nav.order ?? 999,
       badge:      conf.nav.badge ?? null,
+      group:      conf.nav.group ?? null,
       permission: conf.nav.permission ?? conf.permission,
     })
   }
@@ -56,6 +57,16 @@ for (const [cfgPath, mod] of configs) {
  * resolving badges happens in `AdminLayout.vue`.
  */
 export const adminNav = navItems.sort((a, b) => a.order - b.order)
+
+/**
+ * Group metadata for collapsible sidebar sections. Position via `order`
+ * (interleaved with ungrouped items). Anything not listed here that a
+ * module references via `nav.group` falls back to a generic header.
+ */
+export const adminNavGroups = {
+  webchecker: { order: 25, icon: 'mdiSpiderWeb',         label: 'Web-checker' },
+  chatbot:    { order: 75, icon: 'mdiChatProcessingOutline', label: 'Chatbot' },
+}
 
 /**
  * Admin route group. Mounted at /admin/* by the main router. Permission gating

@@ -267,6 +267,9 @@ const oldestRefresh = computed(() => {
         </section>
       </div>
 
+      <!-- Activity stream -->
+      <AdminActivityStream :limit="25" />
+
       <!-- Top users -->
       <section v-if="state.topUsers.length" class="bg-surface-soft border border-border rounded-xl p-4">
         <h3 class="font-semibold text-sm mb-3">{{ t('Most active users (30d)') }}</h3>

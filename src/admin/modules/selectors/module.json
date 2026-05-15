@@ -3,7 +3,8 @@
   "enabled":    true,
   "permission": "admin.selectors.write",
   "nav": {
-    "order": 60,
+    "group": "webchecker",
+    "order": 30,
     "icon":  "mdiFilterVariant",
     "label": "Ignore selectors"
   },

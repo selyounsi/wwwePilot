@@ -2,7 +2,8 @@
 import { onMounted, ref } from 'vue'
 import { useRouter }     from 'vue-router'
 import { useI18n }       from '@/composables/i18n/useI18n.js'
-import { useAdminRuns } from '@/admin/modules/runs/composables/useAdminRuns.js'
+import { useAdminRuns }  from '@/admin/modules/runs/composables/useAdminRuns.js'
+import { useTableExport } from '@/admin/composables/useTableExport.js'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -22,6 +23,27 @@ function applyFilter() {
   if (filterKind.value)   f.kind   = filterKind.value
   if (filterStatus.value) f.status = filterStatus.value
   fetchAll(f)
+}
+
+const { exportCSV } = useTableExport()
+function downloadCSV() {
+  exportCSV({
+    rows:     state.runs,
+    filename: `runs-${new Date().toISOString().slice(0, 10)}.csv`,
+    columns:  [
+      { key: 'id',             label: 'ID' },
+      { key: 'origin',         label: 'Origin' },
+      { key: 'kind',           label: 'Kind' },
+      { key: 'status',         label: 'Status' },
+      { key: 'pages_count',    label: 'Pages' },
+      { key: 'total_errors',   label: 'Errors' },
+      { key: 'total_warnings', label: 'Warnings' },
+      { key: 'modules_run',    label: 'Modules', get: (r) => (r.modules_run ?? []).join('|') },
+      { key: 'user',           label: 'User', get: (r) => r.first_name && r.last_name ? `${r.first_name} ${r.last_name}` : (r.email ?? '') },
+      { key: 'started_at',     label: 'Started' },
+      { key: 'finished_at',    label: 'Finished' },
+    ],
+  })
 }
 
 function formatTime(ts) { return new Date(ts).toLocaleString() }
@@ -69,11 +91,20 @@ function openRun(id) {
 
 <template>
   <div class="p-6">
-    <header class="mb-6">
-      <h2 class="text-xl font-bold">{{ t('Check runs') }}</h2>
-      <p class="text-xs text-muted mt-0.5">
-        {{ t('One row per "Prüfen"-click. Expand to see per-module breakdown.') }}
-      </p>
+    <header class="mb-6 flex items-start justify-between gap-3">
+      <div>
+        <h2 class="text-xl font-bold">{{ t('Check runs') }}</h2>
+        <p class="text-xs text-muted mt-0.5">
+          {{ t('One row per "Prüfen"-click. Expand to see per-module breakdown.') }}
+        </p>
+      </div>
+      <BaseButton
+        variant="pill"
+        icon="mdiDownload"
+        :icon-size="13"
+        :tooltip="t('Export as CSV')"
+        @click="downloadCSV"
+      >CSV</BaseButton>
     </header>
 
     <section class="bg-surface-soft border border-border rounded-xl">
