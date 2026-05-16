@@ -1,0 +1,15 @@
+{
+  "key":        "spellcheck",
+  "enabled":    true,
+  "permission": "admin.spellcheck.read",
+  "nav": {
+    "group": "webchecker",
+    "order": 40,
+    "icon":  "mdiSpellcheck",
+    "label": "Spellcheck"
+  },
+  "routes": [
+    { "path": "spellcheck",            "name": "admin-spellcheck",     "view": "Index" },
+    { "path": "spellcheck/runs/:slug", "name": "admin-spellcheck-run", "view": "RunDetail" }
+  ]
+}
