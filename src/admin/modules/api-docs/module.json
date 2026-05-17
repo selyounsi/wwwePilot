@@ -1,0 +1,13 @@
+{
+  "key":        "api-docs",
+  "enabled":    true,
+  "permission": "admin.users.write",
+  "nav": {
+    "order": 95,
+    "icon":  "mdiCodeBracesBox",
+    "label": "API docs"
+  },
+  "routes": [
+    { "path": "api-docs", "name": "admin-api-docs", "view": "Index" }
+  ]
+}

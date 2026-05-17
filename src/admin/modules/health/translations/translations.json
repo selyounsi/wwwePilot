@@ -1,0 +1,21 @@
+{
+  "de": {
+    "Status":                                                                        "Status",
+    "Service status":                                                                "Service-Status",
+    "Health probes for upstream services. Probed every 60s, snapshot refreshes every 15s.": "Health-Probes für Upstream-Services. Geprüft alle 60s, Snapshot aktualisiert alle 15s.",
+    "Probed all services":                                                           "Alle Services probed",
+    "Refresh now":                                                                   "Jetzt aktualisieren",
+    "Probing…":                                                                      "Probt…",
+    "Healthy":                                                                       "Gesund",
+    "Failing":                                                                       "Ausgefallen",
+    "Skipped":                                                                       "Übersprungen",
+    "No probes registered.":                                                         "Keine Probes registriert.",
+    "Responding in {n} ms":                                                          "Antwort in {n} ms",
+    "Unknown error":                                                                 "Unbekannter Fehler",
+    "Not configured":                                                                "Nicht konfiguriert",
+    "Checked":                                                                       "Geprüft",
+    "{n}s ago":                                                                      "vor {n}s",
+    "Probe loop started {ts}":                                                       "Probe-Loop gestartet {ts}"
+  },
+  "en": {}
+}

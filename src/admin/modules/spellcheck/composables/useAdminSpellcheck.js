@@ -12,13 +12,27 @@ const state = reactive({
   lastResult:     null,        // last /check-site response (slug + summary)
   runs:           [],          // history rows for the active domain
   runDetail:      null,        // full upstream result for a single slug
+  overview:       [],          // cross-domain rollup
   loadingDomains: false,
   loadingDomain:  false,
   loadingRuns:    false,
   loadingDetail:  false,
+  loadingOverview:false,
   busy:           false,
   error:          null,
 })
+
+async function fetchOverview() {
+  state.loadingOverview = true
+  try {
+    const data = await apiJson(`${BASE}/overview`)
+    state.overview = data.overview ?? []
+  } catch (e) {
+    state.overview = []
+  } finally {
+    state.loadingOverview = false
+  }
+}
 
 async function fetchDomains() {
   state.loadingDomains = true
@@ -177,6 +191,7 @@ async function checkSite(domain, options = {}) {
 export function useAdminSpellcheck() {
   return {
     state,
+    fetchOverview,
     fetchDomains, fetchDomainData,
     fetchRuns, fetchRunDetail,
     discover,

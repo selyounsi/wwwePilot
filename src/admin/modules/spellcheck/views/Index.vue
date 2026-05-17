@@ -11,7 +11,7 @@ const { t } = useI18n()
 const toast = useToast()
 const { has } = usePermissions()
 const {
-  state, fetchDomains, fetchDomainData, fetchRuns,
+  state, fetchDomains, fetchDomainData, fetchRuns, fetchOverview,
   discover,
   addDictionaryWord, bulkAddDictionary, removeDictionaryWord,
   addIgnoredError, removeIgnoredError,
@@ -32,7 +32,12 @@ const optionsOpen   = ref(false)
 const optMaxPages   = ref('')
 const optLanguage   = ref('')
 
-onMounted(fetchDomains)
+const overviewOpen = ref(true)
+
+onMounted(() => {
+  fetchDomains()
+  fetchOverview()
+})
 
 watch(activeDomain, (d) => {
   if (!d) return
@@ -148,6 +153,64 @@ function shortHost(origin) {
     <div v-if="state.error" class="bg-error/10 border border-error/40 rounded-xl p-4 mb-4 text-sm text-error">
       {{ state.error }}
     </div>
+
+    <!-- Cross-domain overview — collapsible, shown by default -->
+    <section class="bg-surface-soft border border-border rounded-xl mb-4">
+      <button
+        class="w-full px-4 py-3 flex items-center gap-2 border-b border-border/60 hover:bg-surface-soft-hover transition-colors text-left"
+        @click="overviewOpen = !overviewOpen"
+      >
+        <Icon name="mdiViewDashboardOutline" :size="14" class="text-primary" />
+        <h3 class="text-sm font-semibold flex-1">{{ t('All domains — current state') }}</h3>
+        <span class="text-[10px] text-muted">{{ state.overview.length }}</span>
+        <Icon :name="overviewOpen ? 'mdiChevronUp' : 'mdiChevronDown'" :size="14" class="text-muted" />
+      </button>
+      <div v-if="overviewOpen">
+        <div v-if="state.loadingOverview" class="px-4 py-6 text-center text-xs text-muted">{{ t('Loading…') }}</div>
+        <p v-else-if="!state.overview.length" class="px-4 py-6 text-center text-xs text-muted/60 italic">
+          {{ t('No spellcheck runs recorded yet.') }}
+        </p>
+        <table v-else class="w-full text-sm">
+          <thead class="text-[10px] uppercase tracking-wide text-muted/60">
+            <tr>
+              <th class="text-left px-4 py-2 font-medium">{{ t('Domain') }}</th>
+              <th class="text-right px-2 py-2 font-medium">{{ t('Current errors') }}</th>
+              <th class="text-right px-2 py-2 font-medium">{{ t('Trend') }}</th>
+              <th class="text-right px-2 py-2 font-medium">{{ t('Pages') }}</th>
+              <th class="text-left px-2 py-2 font-medium">{{ t('Lang') }}</th>
+              <th class="text-right px-2 py-2 font-medium">{{ t('Runs') }}</th>
+              <th class="text-right px-4 py-2 font-medium">{{ t('Last run') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="row in state.overview" :key="row.domain"
+              class="border-t border-border/30 hover:bg-surface-soft-hover cursor-pointer"
+              @click="pickDomain(row.domain)"
+            >
+              <td class="px-4 py-2 text-xs truncate">{{ row.domain }}</td>
+              <td class="px-2 py-2 text-[11px] text-right tabular-nums" :class="(row.currentErrors ?? 0) > 0 ? 'text-error' : 'text-muted/60'">
+                {{ row.currentErrors ?? '—' }}
+              </td>
+              <td class="px-2 py-2 text-[11px] text-right tabular-nums">
+                <span v-if="row.delta == null" class="text-muted/40">—</span>
+                <span v-else-if="row.delta === 0" class="text-muted">±0</span>
+                <span v-else-if="row.delta > 0" class="text-error inline-flex items-center gap-0.5">
+                  <Icon name="mdiArrowUp" :size="10" />+{{ row.delta }}
+                </span>
+                <span v-else class="text-success inline-flex items-center gap-0.5">
+                  <Icon name="mdiArrowDown" :size="10" />{{ row.delta }}
+                </span>
+              </td>
+              <td class="px-2 py-2 text-[11px] text-right tabular-nums text-muted">{{ row.pagesChecked ?? '—' }}</td>
+              <td class="px-2 py-2 text-[10px] font-mono text-muted">{{ row.language ?? '—' }}</td>
+              <td class="px-2 py-2 text-[11px] text-right tabular-nums text-muted">{{ row.runCount }}</td>
+              <td class="px-4 py-2 text-[10px] text-right text-muted whitespace-nowrap">{{ relative(row.lastRun) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
     <div class="grid grid-cols-3 gap-4">
       <aside class="col-span-1 bg-surface-soft border border-border rounded-xl">

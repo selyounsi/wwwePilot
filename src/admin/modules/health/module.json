@@ -1,0 +1,13 @@
+{
+  "key":        "health",
+  "enabled":    true,
+  "permission": "admin.users.write",
+  "nav": {
+    "order": 110,
+    "icon":  "mdiHeartPulse",
+    "label": "Status"
+  },
+  "routes": [
+    { "path": "health", "name": "admin-health", "view": "Index" }
+  ]
+}

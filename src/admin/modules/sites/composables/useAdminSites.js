@@ -48,6 +48,19 @@ async function purge(origin) {
   state.sites = state.sites.filter(s => s.origin !== origin)
 }
 
+async function fetchConfig(origin) {
+  const data = await apiJson(`${API.admin.url}/sites/${encodeURIComponent(origin)}/config`)
+  return data.config
+}
+
+async function saveConfig(origin, patch) {
+  const data = await apiJson(`${API.admin.url}/sites/${encodeURIComponent(origin)}/config`, {
+    method: 'PUT',
+    body:   JSON.stringify(patch),
+  })
+  return data.config
+}
+
 export function useAdminSites() {
-  return { state, detailState, fetchAll, fetchDetail, purge }
+  return { state, detailState, fetchAll, fetchDetail, purge, fetchConfig, saveConfig }
 }

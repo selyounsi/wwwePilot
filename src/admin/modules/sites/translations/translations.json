@@ -30,6 +30,18 @@
     "Resolve":                                                     "Erledigen",
     "Unresolve":                                                   "Wieder öffnen",
 
+    "Site config":                                                 "Site-Konfiguration",
+    "Default language":                                            "Standard-Sprache",
+    "Auto-detect":                                                 "Auto-Erkennung",
+    "Spellcheck schedule":                                         "Spellcheck-Intervall",
+    "Admin notes":                                                 "Admin-Notizen",
+    "Free-form notes about this site…":                            "Freitext-Notizen zu dieser Seite…",
+    "Site config saved":                                           "Site-Konfiguration gespeichert",
+    "No notes.":                                                   "Keine Notizen.",
+    "manual":                                                      "manuell",
+    "daily":                                                       "täglich",
+    "weekly":                                                      "wöchentlich",
+
     "Note saved":                                                  "Notiz gespeichert",
     "Delete this note?":                                           "Diese Notiz löschen?",
     "{n} active note(s) for this site":                            "{n} aktive Notiz(en) für diese Site",

@@ -1,0 +1,20 @@
+{
+  "de": {
+    "API docs":                                            "API-Docs",
+    "Every endpoint mounted by the backend, grouped by module.": "Alle Endpoints des Backends, gruppiert nach Modul.",
+    "Filter by path, method, permission…":                 "Nach Pfad, Methode, Berechtigung filtern…",
+    "{m} modules · {r} routes":                            "{m} Module · {r} Routen",
+    "routes":                                              "Routen",
+    "Permissions":                                         "Berechtigungen",
+    "No routes detected.":                                 "Keine Routen erkannt.",
+    "No matches.":                                         "Keine Treffer.",
+    "Every endpoint mounted by the backend. Annotated routes carry rich schema + summary; auto-discovered routes show method + path + permission only.": "Alle Endpoints des Backends. Annotierte Routen tragen Schema + Summary; auto-erkannte Routen zeigen nur Methode + Pfad + Permission.",
+    "annotated":                                           "annotiert",
+    "reflected only":                                      "nur reflektiert",
+    "Annotated with Zod schemas":                          "Mit Zod-Schemas annotiert",
+    "Request body":                                        "Request-Body",
+    "Query params":                                        "Query-Parameter",
+    "Responses":                                           "Responses"
+  },
+  "en": {}
+}

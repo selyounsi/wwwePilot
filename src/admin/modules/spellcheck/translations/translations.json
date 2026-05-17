@@ -57,7 +57,15 @@
     "No errors in this run.":                                                                                                  "Keine Fehler in diesem Lauf.",
     "No per-page data.":                                                                                                       "Keine Seiten-Daten.",
     "{n} errors":                                                                                                              "{n} Fehler",
-    "more":                                                                                                                    "weitere"
+    "more":                                                                                                                    "weitere",
+
+    "All domains — current state":                                                                                             "Alle Domains — aktueller Stand",
+    "No spellcheck runs recorded yet.":                                                                                        "Noch keine Spellcheck-Läufe erfasst.",
+    "Domain":                                                                                                                  "Domain",
+    "Current errors":                                                                                                          "Aktuelle Fehler",
+    "Trend":                                                                                                                   "Trend",
+    "Runs":                                                                                                                    "Läufe",
+    "Last run":                                                                                                                "Letzter Lauf"
   },
   "en": {}
 }

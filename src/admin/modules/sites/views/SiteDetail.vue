@@ -11,7 +11,7 @@ const router = useRouter()
 const route  = useRoute()
 const { t } = useI18n()
 const toast = useToast()
-const { detailState, fetchDetail, purge } = useAdminSites()
+const { detailState, fetchDetail, purge, fetchConfig, saveConfig } = useAdminSites()
 const { createNote, updateNote, deleteNote, ensureLoaded } = useSiteNotes()
 const { canWriteUsers } = usePermissions()
 
@@ -20,10 +20,44 @@ const origin = computed(() => decodeURIComponent(String(route.params.origin ?? '
 const adding   = ref(false)
 const draft    = ref({ content: '', scopePath: '', moduleId: '' })
 
+// Per-domain config — fetched separately so the rest of the page renders
+// instantly while we resolve the config row (or get a stub back).
+const config       = ref(null)
+const configDraft  = ref({ defaultLanguage: '', notes: '', spellcheckSchedule: 'manual' })
+const configEditing = ref(false)
+const configBusy    = ref(false)
+
+async function loadConfig() {
+  if (!origin.value) return
+  try {
+    config.value = await fetchConfig(origin.value)
+    configDraft.value = {
+      defaultLanguage:    config.value?.defaultLanguage    ?? '',
+      notes:              config.value?.notes              ?? '',
+      spellcheckSchedule: config.value?.spellcheckSchedule ?? 'manual',
+    }
+  } catch { /* tolerated — UI shows defaults */ }
+}
+
+async function saveSiteConfig() {
+  configBusy.value = true
+  try {
+    config.value = await saveConfig(origin.value, {
+      defaultLanguage:    configDraft.value.defaultLanguage || null,
+      notes:              configDraft.value.notes || null,
+      spellcheckSchedule: configDraft.value.spellcheckSchedule,
+    })
+    configEditing.value = false
+    toast.success(t('Site config saved'))
+  } catch (e) { toast.error(e.message) }
+  finally { configBusy.value = false }
+}
+
 async function load() {
   if (!origin.value) return
   await fetchDetail(origin.value)
   await ensureLoaded(origin.value, { force: true })
+  loadConfig()
 }
 
 onMounted(load)
@@ -168,6 +202,80 @@ async function onPurgeSite() {
         <div class="bg-surface-soft border border-border rounded-xl p-4">
           <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Warnings (sum)') }}</div>
           <div class="text-2xl font-bold tabular-nums mt-1">{{ detailState.detail.aggregate.warning_total }}</div>
+        </div>
+      </section>
+
+      <!-- Per-domain config -->
+      <section class="bg-surface-soft border border-border rounded-xl">
+        <header class="px-4 py-3 border-b border-border/60 flex items-center justify-between">
+          <h3 class="font-semibold text-sm">{{ t('Site config') }}</h3>
+          <BaseButton
+            v-if="canWriteUsers && !configEditing"
+            variant="pill" icon="mdiPencil" :icon-size="13"
+            @click="configEditing = true"
+          >{{ t('Edit') }}</BaseButton>
+          <div v-else-if="configEditing" class="flex gap-2">
+            <BaseButton variant="pill" @click="configEditing = false; loadConfig()">{{ t('Cancel') }}</BaseButton>
+            <BaseButton
+              variant="pill"
+              class="bg-primary! border-primary! text-black/80!"
+              :disabled="configBusy"
+              @click="saveSiteConfig"
+            >{{ t('Save') }}</BaseButton>
+          </div>
+        </header>
+
+        <div v-if="!configEditing" class="px-4 py-3 grid grid-cols-3 gap-4 text-xs">
+          <div>
+            <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Default language') }}</div>
+            <div class="mt-1 font-mono">{{ config?.defaultLanguage ?? t('Auto-detect') }}</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Spellcheck schedule') }}</div>
+            <div class="mt-1">{{ t(config?.spellcheckSchedule ?? 'manual') }}</div>
+          </div>
+          <div class="col-span-3">
+            <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Admin notes') }}</div>
+            <p v-if="config?.notes" class="mt-1 whitespace-pre-wrap">{{ config.notes }}</p>
+            <p v-else class="mt-1 text-muted/60 italic">{{ t('No notes.') }}</p>
+          </div>
+        </div>
+
+        <div v-else class="px-4 py-3 space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <label class="text-[10px] text-muted">
+              {{ t('Default language') }}
+              <select
+                v-model="configDraft.defaultLanguage"
+                class="mt-1 w-full bg-surface border border-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-primary/60"
+              >
+                <option value="">{{ t('Auto-detect') }}</option>
+                <option value="de-DE">de-DE</option>
+                <option value="en-US">en-US</option>
+                <option value="en-GB">en-GB</option>
+              </select>
+            </label>
+            <label class="text-[10px] text-muted">
+              {{ t('Spellcheck schedule') }}
+              <select
+                v-model="configDraft.spellcheckSchedule"
+                class="mt-1 w-full bg-surface border border-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-primary/60"
+              >
+                <option value="manual">{{ t('manual') }}</option>
+                <option value="daily">{{ t('daily') }}</option>
+                <option value="weekly">{{ t('weekly') }}</option>
+              </select>
+            </label>
+          </div>
+          <label class="text-[10px] text-muted block">
+            {{ t('Admin notes') }}
+            <textarea
+              v-model="configDraft.notes"
+              rows="3"
+              :placeholder="t('Free-form notes about this site…')"
+              class="mt-1 w-full bg-surface border border-border rounded px-2 py-1.5 text-xs resize-y focus:outline-none focus:border-primary/60"
+            />
+          </label>
         </div>
       </section>
 
