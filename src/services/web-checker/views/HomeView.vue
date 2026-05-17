@@ -69,15 +69,23 @@ const hasCheck = computed(() => !!state.checkedTabId)
     <div class="flex-1 px-4 py-4 flex flex-col gap-2 overflow-y-auto">
       <div class="flex items-center justify-between gap-2">
         <SectionLabel class="shrink-0">{{ t('Modules') }}</SectionLabel>
-        <BaseButton
-          v-if="hasCheck"
-          variant="square-sm"
-          icon="mdiPlayCircleOutline"
-          :icon-size="15"
-          :tooltip="t('Check current tab')"
-          class="shrink-0"
-          @click="runChecks()"
-        />
+        <div class="flex items-center gap-1 shrink-0">
+          <BaseButton
+            variant="square-sm"
+            icon="mdiHistory"
+            :icon-size="15"
+            :tooltip="t('Previous checks')"
+            @click="router.push('/service/web-checker/history')"
+          />
+          <BaseButton
+            v-if="hasCheck"
+            variant="square-sm"
+            icon="mdiPlayCircleOutline"
+            :icon-size="15"
+            :tooltip="t('Check current tab')"
+            @click="runChecks()"
+          />
+        </div>
       </div>
       <div v-if="state.checkedTabId" class="flex items-center justify-between gap-2 min-w-0 -mt-1 mb-1">
         <TabStatusBadge
