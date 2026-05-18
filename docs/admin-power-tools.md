@@ -5,19 +5,40 @@ Vier neue Quality-of-Life-Features im Admin-Backend.
 ## Cmd+K Quick-Switcher
 
 Globaler `⌘K` / `Ctrl+K` Shortcut öffnet ein zentriertes Such-Modal das über
-vier Entity-Typen sucht: Users (Email/Name), Reports (Titel oder ID), Sites
-(Origin), Check-Runs (ID).
+fünf Kategorien sucht: **Pages** (Admin-Nav-Einträge inkl. Sub-Items in
+Gruppen), Users (Email/Name), Reports (Titel oder ID), Sites (Origin),
+Check-Runs (ID).
 
-- Backend: `GET /api/admin/search?q=…` — ILIKE pro Entity, je 5 Treffer pro
-  Kategorie (`MIN_Q=2`, `PER_CAT=5` in `modules/search/admin.js`).
+- **Pages** (lokal, instant): `useAdminSearch.js` baut beim Modul-Laden einen
+  Index aus `adminNav` + `adminNavGroups`. Match gegen Label, Key, Group,
+  Group-Label, Path und Permission-Slug. Keine Round-Trip — funktioniert
+  auch offline.
+- **Backend-Entities**: `GET /api/admin/search?q=…` — ILIKE pro Entity, je 5
+  Treffer pro Kategorie (`MIN_Q=2`, `PER_CAT=5` in
+  `services/search/admin.js`).
 - Composable: `useAdminSearch()` mit Inflight-Tracking gegen Race-Conditions
   bei schneller Eingabe.
 - UI: `AdminQuickSwitcher.vue` — Pfeiltasten + Enter zum Navigieren, Esc
   zum Schließen, Click-Outside schließt. Globaler `defineExpose({ open })`
   lässt den Sidebar-Such-Button das Modal öffnen.
 
-Die Sidebar zeigt einen "Suchen… ⌘K" Button als Discoverability-Affordance —
-sonst wüsste niemand dass es den Shortcut gibt.
+### Permission-Filterung (automatisch)
+
+Suche zeigt nur Ergebnisse für die der User Zugriff hat — beidseitig
+gegated:
+
+- **Frontend (Pages)**: `searchPages()` ruft die `has(slug)`-Callback aus
+  `usePermissions()` für jeden Treffer. Items ohne `permission`-Feld
+  durchlaufen unverändert (z.B. Dashboard ohne explizite Berechtigung).
+- **Backend (Entities)**: `services/search/admin.js` prüft pro Kategorie
+  mit `hasPermission(req.user, slug)`:
+  - `users` → `admin.users.read`
+  - `reports` → `admin.reports.read`
+  - `sites` + `runs` → `admin.activity.read`
+
+  Fehlt die Permission, wird die SQL-Query für diese Kategorie
+  übersprungen und ein leeres Array zurückgegeben. Verhindert Information
+  Leakage über die bloße Existenz von Entities.
 
 ## CSV-Export
 

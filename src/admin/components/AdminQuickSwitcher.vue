@@ -2,10 +2,12 @@
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n }   from '@/composables/i18n/useI18n.js'
+import { usePermissions } from '@/composables/usePermissions.js'
 import { useAdminSearch } from '@/admin/composables/useAdminSearch.js'
 
 const router = useRouter()
 const { t }  = useI18n()
+const { has } = usePermissions()
 const { state, search } = useAdminSearch()
 
 const open       = ref(false)
@@ -14,8 +16,10 @@ const query      = ref('')
 const activeIdx  = ref(0)
 
 // Flattened result list — easier for keyboard nav than nested groups.
+// Pages come first because navigation is the most common use of Cmd+K.
 const flat = computed(() => {
   const out = []
+  for (const p of state.results.pages   ?? []) out.push({ kind: 'page',   id: p.key,    label: t(p.label), sub: p.groupLabel ? `${t(p.groupLabel)} · ${p.path}` : p.path, icon: p.icon, route: { path: p.path } })
   for (const u of state.results.users   ?? []) out.push({ kind: 'user',   id: u.id,     label: userLabel(u), sub: u.email, route: { name: 'admin-user-detail', params: { id: u.id } } })
   for (const r of state.results.reports ?? []) out.push({ kind: 'report', id: r.id,     label: r.title,      sub: shortId(r.id), route: { name: 'admin-report-detail', params: { id: r.id } } })
   for (const s of state.results.sites   ?? []) out.push({ kind: 'site',   id: s.origin, label: s.origin,     sub: t('{n} runs', { n: s.run_count }), route: { name: 'admin-site-detail', params: { origin: s.origin } } })
@@ -24,12 +28,14 @@ const flat = computed(() => {
 })
 
 const KIND_ICONS = {
+  page:   'mdiFileTreeOutline',
   user:   'mdiAccountCircleOutline',
   report: 'mdiBugOutline',
   site:   'mdiWebSync',
   run:    'mdiPlayCircleOutline',
 }
 const KIND_LABELS = computed(() => ({
+  page:   t('Page'),
   user:   t('User'),
   report: t('Report'),
   site:   t('Site'),
@@ -46,7 +52,8 @@ let debounceTimer = null
 watch(query, (q) => {
   clearTimeout(debounceTimer)
   debounceTimer = setTimeout(() => {
-    search(q)
+    // Pass `has` so the page search filters out routes the user can't access.
+    search(q, has)
     activeIdx.value = 0
   }, 150)
 })
@@ -120,6 +127,10 @@ defineExpose({
               {{ t('Type at least 2 characters to search.') }}
             </p>
             <p v-else-if="state.loading" class="px-4 py-6 text-center text-xs text-muted">{{ t('Searching…') }}</p>
+            <p v-else-if="state.error" class="px-4 py-6 text-center text-xs text-error">
+              <Icon name="mdiAlertCircleOutline" :size="14" class="inline-block mr-1 -mt-0.5" />
+              {{ t('Search failed: {msg}', { msg: state.error }) }}
+            </p>
             <p v-else-if="!flat.length" class="px-4 py-6 text-center text-xs text-muted">{{ t('No matches.') }}</p>
             <button
               v-for="(item, i) in flat" :key="`${item.kind}.${item.id}`"
@@ -128,7 +139,7 @@ defineExpose({
               @mouseenter="activeIdx = i"
               @click="go(item)"
             >
-              <Icon :name="KIND_ICONS[item.kind]" :size="14" class="text-muted shrink-0" />
+              <Icon :name="item.icon || KIND_ICONS[item.kind]" :size="14" class="text-muted shrink-0" />
               <div class="flex-1 min-w-0">
                 <div class="text-sm truncate">{{ item.label }}</div>
                 <div class="text-[10px] text-muted truncate">{{ item.sub }}</div>

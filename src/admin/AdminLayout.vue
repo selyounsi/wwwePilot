@@ -29,7 +29,19 @@ const canReadReports = computed(() => has('admin.reports.read'))
 const canReadRoles   = computed(() => has('admin.users.read'))
 
 let pollTimer = null
+// Safety net: even with `fixed inset-0` on the root, if any descendant view
+// sets its own height incorrectly the document body can still scroll behind
+// the admin shell. Locking body overflow while admin is mounted guarantees
+// only the inner main column ever scrolls. Restored on unmount so this
+// doesn't leak into the side-panel context.
+let prevBodyOverflow = null
+let prevHtmlOverflow = null
 onMounted(() => {
+  prevBodyOverflow = document.body.style.overflow
+  prevHtmlOverflow = document.documentElement.style.overflow
+  document.body.style.overflow = 'hidden'
+  document.documentElement.style.overflow = 'hidden'
+
   if (canReadReports.value) {
     fetchReportCounts()
     // Poll every 60s — cheap GROUP BY on an indexed status column, no need to
@@ -40,6 +52,8 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   if (pollTimer) clearInterval(pollTimer)
+  document.body.style.overflow = prevBodyOverflow ?? ''
+  document.documentElement.style.overflow = prevHtmlOverflow ?? ''
 })
 
 function decorate(n) {
@@ -93,29 +107,28 @@ const navTree = computed(() => {
 
 const isActive = (path) => route.path === path || route.path.startsWith(path + '/')
 
-// Group collapse state — persisted per-browser so the user's choice survives
-// reloads. Default: any group whose child matches the current route stays
-// expanded, others can be remembered as collapsed.
-const COLLAPSE_KEY = 'admin-nav-collapsed-groups'
-const collapsed = ref(loadCollapsed())
-function loadCollapsed() {
-  try { return new Set(JSON.parse(localStorage.getItem(COLLAPSE_KEY) ?? '[]')) }
+// Group expand state — persisted per-browser. Default: every group is
+// collapsed; the user opts in by clicking the header. Groups whose child
+// matches the current route are force-expanded so a deep link never lands
+// on a hidden item.
+const EXPAND_KEY = 'admin-nav-expanded-groups'
+const expanded = ref(loadExpanded())
+function loadExpanded() {
+  try { return new Set(JSON.parse(localStorage.getItem(EXPAND_KEY) ?? '[]')) }
   catch { return new Set() }
 }
-function persistCollapsed() {
-  try { localStorage.setItem(COLLAPSE_KEY, JSON.stringify([...collapsed.value])) } catch {}
+function persistExpanded() {
+  try { localStorage.setItem(EXPAND_KEY, JSON.stringify([...expanded.value])) } catch {}
 }
 function toggleGroup(key) {
-  if (collapsed.value.has(key)) collapsed.value.delete(key)
-  else                          collapsed.value.add(key)
-  collapsed.value = new Set(collapsed.value)
-  persistCollapsed()
+  if (expanded.value.has(key)) expanded.value.delete(key)
+  else                         expanded.value.add(key)
+  expanded.value = new Set(expanded.value)
+  persistExpanded()
 }
 function isGroupOpen(group) {
-  if (collapsed.value.has(group.key)) return false
-  // Force-open when one of the children is active so a deep-linked URL
-  // doesn't land on a collapsed group.
-  return true
+  if (isGroupActive(group)) return true
+  return expanded.value.has(group.key)
 }
 function isGroupActive(group) {
   return group.items.some(i => isActive(i.path))
@@ -154,8 +167,11 @@ const roleLabels = computed(() => {
 </script>
 
 <template>
-  <div class="h-screen bg-background flex overflow-hidden">
-    <aside class="w-64 bg-surface-soft border-r border-border flex flex-col shrink-0 h-screen">
+  <!-- fixed inset-0 instead of h-screen so the admin layout is anchored
+       to the viewport and ignores whatever min-height ancestors might
+       set. Sidebar stays put, only the main column scrolls. -->
+  <div class="fixed inset-0 bg-background flex overflow-hidden">
+    <aside class="w-64 bg-surface-soft border-r border-border flex flex-col shrink-0 h-full">
       <div class="px-5 py-4 border-b border-border shrink-0">
         <div class="flex items-center gap-2 mb-2">
           <Icon name="mdiShieldCrownOutline" :size="20" class="text-primary shrink-0" />
@@ -173,7 +189,7 @@ const roleLabels = computed(() => {
       </div>
 
       <button
-        class="mx-2 mt-3 mb-1 flex items-center gap-2 px-3 py-2 bg-surface border border-border rounded-lg text-left text-xs text-muted hover:bg-surface-soft-hover transition-colors"
+        class="mx-2 mt-3 mb-1 shrink-0 flex items-center gap-2 px-3 py-2 bg-surface border border-border rounded-lg text-left text-xs text-muted hover:bg-surface-soft-hover transition-colors"
         @click="openQuickSwitcher"
       >
         <Icon name="mdiMagnify" :size="14" />
@@ -259,7 +275,7 @@ const roleLabels = computed(() => {
       </div>
     </aside>
 
-    <main class="flex-1 overflow-y-auto h-screen">
+    <main class="flex-1 overflow-y-auto overflow-x-hidden h-full min-w-0">
       <RouterView />
     </main>
 

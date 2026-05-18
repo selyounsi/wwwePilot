@@ -94,6 +94,11 @@ folder on next build, no central edit needed.
   a module or rolling out a half-finished feature.
 - **Permission-gate**: change `permission` (module-level) or the per-route
   override.
+- **Group collapse**: groups (e.g. Web-checker, Chatbot, API) start
+  **collapsed** by default. Clicking the group header toggles it; the
+  user's choice persists in `localStorage` under `admin-nav-expanded-groups`.
+  Groups whose current sub-route is active are force-expanded so deep links
+  never land on a hidden item.
 
 ## Badges
 
