@@ -64,8 +64,9 @@ export const adminNav = navItems.sort((a, b) => a.order - b.order)
  * module references via `nav.group` falls back to a generic header.
  */
 export const adminNavGroups = {
-  webchecker: { order: 25, icon: 'mdiSpiderWeb',         label: 'Web-checker' },
-  chatbot:    { order: 75, icon: 'mdiChatProcessingOutline', label: 'Chatbot' },
+  webchecker: { order: 25,  icon: 'mdiSpiderWeb',              label: 'Web-checker' },
+  chatbot:    { order: 75,  icon: 'mdiChatProcessingOutline',  label: 'Chatbot' },
+  api:        { order: 105, icon: 'mdiApi',                    label: 'API' },
 }
 
 /**

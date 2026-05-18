@@ -1,0 +1,14 @@
+{
+  "key":        "api-tokens",
+  "enabled":    true,
+  "permission": "admin.api-tokens.read",
+  "nav": {
+    "group": "api",
+    "order": 10,
+    "icon":  "mdiKeyOutline",
+    "label": "Tokens"
+  },
+  "routes": [
+    { "path": "api-tokens", "name": "admin-api-tokens", "view": "Index" }
+  ]
+}

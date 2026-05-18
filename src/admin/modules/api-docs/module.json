@@ -3,9 +3,10 @@
   "enabled":    true,
   "permission": "admin.users.write",
   "nav": {
-    "order": 95,
+    "group": "api",
+    "order": 20,
     "icon":  "mdiCodeBracesBox",
-    "label": "API docs"
+    "label": "Docs"
   },
   "routes": [
     { "path": "api-docs", "name": "admin-api-docs", "view": "Index" }

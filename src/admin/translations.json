@@ -65,7 +65,10 @@
     "{user} · {action}":                      "{user} · {action}",
 
     "Web-checker":          "Webchecker",
-    "Chatbot":              "Chatbot"
+    "Chatbot":              "Chatbot",
+    "API":                  "API",
+    "Tokens":               "Tokens",
+    "Docs":                 "Docs"
   },
   "en": {}
 }
