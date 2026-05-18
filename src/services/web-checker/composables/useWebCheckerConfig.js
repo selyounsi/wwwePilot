@@ -37,15 +37,19 @@ let inflight = null
 async function fetchFromBackend() {
   if (inflight) return inflight
   inflight = (async () => {
+    // Lazy import to avoid an import-cycle through the apiClient chain.
+    const { reportFailure, reportSuccess } = await import('@/composables/useBackendStatus.js')
     try {
       const res = await fetch(`${API.config.url}/web-checker`, { credentials: 'omit' })
+      reportSuccess()
       if (!res.ok) return
       const data = await res.json()
       if (!data?.global || !data?.modules) return
       state.config    = { global: data.global, modules: data.modules }
       state.updatedAt = Date.now()
       state.source    = 'network'
-    } catch {
+    } catch (e) {
+      reportFailure(e)
     } finally {
       inflight = null
     }

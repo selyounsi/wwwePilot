@@ -31,15 +31,18 @@ let inflight = null
 async function fetchFromBackend() {
   if (inflight) return inflight
   inflight = (async () => {
+    const { reportFailure, reportSuccess } = await import('@/composables/useBackendStatus.js')
     try {
       const res = await fetch(`${API.config.url}/feature-flags`, { credentials: 'omit' })
+      reportSuccess()
       if (!res.ok) return
       const data = await res.json()
       if (!data?.flags) return
       state.flags     = data.flags
       state.updatedAt = Date.now()
       state.source    = 'network'
-    } catch {
+    } catch (e) {
+      reportFailure(e)
     } finally {
       inflight = null
     }

@@ -144,13 +144,18 @@ async function refresh() {
   if (!state.refreshToken) return null
 
   refreshInFlight = (async () => {
+    const { reportFailure, reportSuccess } = await import('@/composables/useBackendStatus.js')
     try {
       const res = await fetch(`${API.auth.url}/refresh`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ refreshToken: state.refreshToken }),
       })
+      reportSuccess()
       if (!res.ok) {
+        // Don't clear the refresh token on network errors — only on a
+        // real 401 from a reachable server. Network outages should be
+        // recoverable without the user having to re-login.
         clear()
         return null
       }
@@ -159,6 +164,9 @@ async function refresh() {
       state.refreshToken = data.refreshToken
       state.user         = data.user
       return data.accessToken
+    } catch (e) {
+      reportFailure(e)
+      return null
     } finally {
       refreshInFlight = null
     }

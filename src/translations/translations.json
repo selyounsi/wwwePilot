@@ -3,6 +3,11 @@
     "Services": "Services",
     "Choose a service": "Wähle einen Service",
     "No active services found.": "Keine aktiven Services gefunden.",
+
+    "Backend offline":      "Backend offline",
+    "Click to retry":       "Klicken zum Neuprüfen",
+    "checking…":            "prüfe…",
+
     "Cancel": "Abbrechen",
     "Recheck": "Erneut prüfen",
     "Try again": "Erneut versuchen",

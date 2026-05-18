@@ -1,8 +1,13 @@
 import { useAuth, whenAuthHydrated } from './useAuth.js'
+import { reportFailure, reportSuccess } from '@/composables/useBackendStatus.js'
 
 /**
- * Fetch with Bearer token, automatic refresh + retry on 401, and state clear
- * on final 401. Works in both sidebar and service-worker context.
+ * Fetch with Bearer token, automatic refresh + retry on 401, and state
+ * clear on final 401. Works in both sidebar and service-worker context.
+ *
+ * Also feeds the global backend-status tracker: network-level failures
+ * (TypeError: Failed to fetch) flip the app to "offline" and trigger the
+ * retry loop; any successful HTTP response flips back to "online".
  */
 export async function apiFetch(url, options = {}) {
   await whenAuthHydrated()
@@ -17,12 +22,29 @@ export async function apiFetch(url, options = {}) {
     return fetch(url, { ...options, headers })
   }
 
-  let res = await doFetch(auth.state.accessToken)
+  let res
+  try {
+    res = await doFetch(auth.state.accessToken)
+  } catch (e) {
+    reportFailure(e)
+    throw e
+  }
 
   if (res.status === 401 && auth.state.refreshToken) {
     const newToken = await auth.refresh()
-    if (newToken) res = await doFetch(newToken)
+    if (newToken) {
+      try {
+        res = await doFetch(newToken)
+      } catch (e) {
+        reportFailure(e)
+        throw e
+      }
+    }
   }
+
+  // Got *some* response — server is alive, even if it didn't like this
+  // specific call. Flip back to online if we were marked offline.
+  reportSuccess()
 
   if (res.status === 401) auth.clear()
 
