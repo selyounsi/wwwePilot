@@ -124,21 +124,31 @@ function openRunDetail(run) {
   router.push({ name: 'admin-spellcheck-run', params: { slug: run.slug } })
 }
 
-function relative(ts) {
-  if (!ts) return '—'
-  const diff = Date.now() - new Date(ts).getTime()
-  const min  = Math.floor(diff / 60_000)
-  if (min < 1)  return t('just now')
-  if (min < 60) return t('{n} min ago', { n: min })
-  const h = Math.floor(min / 60)
-  if (h < 24)   return t('{n} h ago', { n: h })
-  const d = Math.floor(h / 24)
-  return t('{n} d ago', { n: d })
-}
+import { relativeTime } from '@/admin/composables/timelineFormat.js'
+function relative(ts) { return relativeTime(ts, t) }
 
 function shortHost(origin) {
   try { return new URL(origin).host } catch { return origin }
 }
+
+const overviewColumns = [
+  { key: 'domain',  label: 'Domain',          minWidth: 200, truncate: true, titleFrom: r => r.domain },
+  { key: 'errors',  label: 'Current errors',  minWidth: 110, align: 'right' },
+  { key: 'trend',   label: 'Trend',           minWidth: 70,  align: 'right' },
+  { key: 'pages',   label: 'Pages',           minWidth: 70,  align: 'right' },
+  { key: 'lang',    label: 'Lang',            minWidth: 70 },
+  { key: 'runs',    label: 'Runs',            minWidth: 60,  align: 'right' },
+  { key: 'lastRun', label: 'Last run',        minWidth: 100, align: 'right' },
+]
+
+const runsColumns = [
+  { key: 'when',     label: 'When',     minWidth: 130 },
+  { key: 'pages',    label: 'Pages',    minWidth: 60,  align: 'right' },
+  { key: 'errors',   label: 'Errors',   minWidth: 70,  align: 'right' },
+  { key: 'duration', label: 'Duration', minWidth: 80,  align: 'right' },
+  { key: 'lang',     label: 'Lang',     minWidth: 70 },
+  { key: 'arrow',    label: '',         width: 40,     align: 'right' },
+]
 </script>
 
 <template>
@@ -165,51 +175,36 @@ function shortHost(origin) {
         <span class="text-[10px] text-muted">{{ state.overview.length }}</span>
         <Icon :name="overviewOpen ? 'mdiChevronUp' : 'mdiChevronDown'" :size="14" class="text-muted" />
       </button>
-      <div v-if="overviewOpen">
-        <div v-if="state.loadingOverview" class="px-4 py-6 text-center text-xs text-muted">{{ t('Loading…') }}</div>
-        <p v-else-if="!state.overview.length" class="px-4 py-6 text-center text-xs text-muted/60 italic">
-          {{ t('No spellcheck runs recorded yet.') }}
-        </p>
-        <table v-else class="w-full text-sm">
-          <thead class="text-[10px] uppercase tracking-wide text-muted/60">
-            <tr>
-              <th class="text-left px-4 py-2 font-medium">{{ t('Domain') }}</th>
-              <th class="text-right px-2 py-2 font-medium">{{ t('Current errors') }}</th>
-              <th class="text-right px-2 py-2 font-medium">{{ t('Trend') }}</th>
-              <th class="text-right px-2 py-2 font-medium">{{ t('Pages') }}</th>
-              <th class="text-left px-2 py-2 font-medium">{{ t('Lang') }}</th>
-              <th class="text-right px-2 py-2 font-medium">{{ t('Runs') }}</th>
-              <th class="text-right px-4 py-2 font-medium">{{ t('Last run') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="row in state.overview" :key="row.domain"
-              class="border-t border-border/30 hover:bg-surface-soft-hover cursor-pointer"
-              @click="pickDomain(row.domain)"
-            >
-              <td class="px-4 py-2 text-xs truncate">{{ row.domain }}</td>
-              <td class="px-2 py-2 text-[11px] text-right tabular-nums" :class="(row.currentErrors ?? 0) > 0 ? 'text-error' : 'text-muted/60'">
-                {{ row.currentErrors ?? '—' }}
-              </td>
-              <td class="px-2 py-2 text-[11px] text-right tabular-nums">
-                <span v-if="row.delta == null" class="text-muted/40">—</span>
-                <span v-else-if="row.delta === 0" class="text-muted">±0</span>
-                <span v-else-if="row.delta > 0" class="text-error inline-flex items-center gap-0.5">
-                  <Icon name="mdiArrowUp" :size="10" />+{{ row.delta }}
-                </span>
-                <span v-else class="text-success inline-flex items-center gap-0.5">
-                  <Icon name="mdiArrowDown" :size="10" />{{ row.delta }}
-                </span>
-              </td>
-              <td class="px-2 py-2 text-[11px] text-right tabular-nums text-muted">{{ row.pagesChecked ?? '—' }}</td>
-              <td class="px-2 py-2 text-[10px] font-mono text-muted">{{ row.language ?? '—' }}</td>
-              <td class="px-2 py-2 text-[11px] text-right tabular-nums text-muted">{{ row.runCount }}</td>
-              <td class="px-4 py-2 text-[10px] text-right text-muted whitespace-nowrap">{{ relative(row.lastRun) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        v-if="overviewOpen"
+        :rows="state.overview"
+        :columns="overviewColumns"
+        :loading="state.loadingOverview"
+        :on-row-click="(row) => pickDomain(row.domain)"
+        :empty-text="t('No spellcheck runs recorded yet.')"
+        :row-key="r => r.domain"
+        dense
+        min-width="700px"
+      >
+        <template #cell-domain="{ row }">{{ row.domain }}</template>
+        <template #cell-errors="{ row }">
+          <CellNumber :value="row.currentErrors" error-when="> 0" muted-when="== 0" />
+        </template>
+        <template #cell-trend="{ row }">
+          <span v-if="row.delta == null" class="text-muted/40">—</span>
+          <span v-else-if="row.delta === 0" class="text-muted tabular-nums">±0</span>
+          <span v-else-if="row.delta > 0" class="text-error inline-flex items-center gap-0.5 tabular-nums">
+            <Icon name="mdiArrowUp" :size="10" />+{{ row.delta }}
+          </span>
+          <span v-else class="text-success inline-flex items-center gap-0.5 tabular-nums">
+            <Icon name="mdiArrowDown" :size="10" />{{ row.delta }}
+          </span>
+        </template>
+        <template #cell-pages="{ row }"><CellNumber :value="row.pagesChecked" muted-when=">= 0" /></template>
+        <template #cell-lang="{ row }"><CellCode :value="row.language ?? '—'" /></template>
+        <template #cell-runs="{ row }"><CellNumber :value="row.runCount" muted-when=">= 0" /></template>
+        <template #cell-lastRun="{ row }"><CellTimestamp :value="row.lastRun" mode="relative" /></template>
+      </DataTable>
     </section>
 
     <div class="grid grid-cols-3 gap-4">
@@ -220,32 +215,38 @@ function shortHost(origin) {
         </header>
 
         <div class="px-4 py-3 border-b border-border/60 flex items-center gap-2">
-          <input
+          <FormField
             v-model="customDomain"
-            type="text"
+            dense
+            class="flex-1"
             :placeholder="t('Or type a domain…')"
-            class="flex-1 bg-surface border border-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-primary/60"
             @keydown.enter.prevent="applyCustomDomain"
           />
           <BaseButton variant="pill" icon="mdiArrowRight" :icon-size="11" @click="applyCustomDomain" />
         </div>
 
-        <div v-if="state.loadingDomains" class="px-4 py-6 text-center text-xs text-muted">{{ t('Loading…') }}</div>
-        <ul v-else class="max-h-[60vh] overflow-y-auto">
-          <li v-if="!state.domains.length" class="px-4 py-4 text-xs text-muted/60 italic">{{ t('No domains yet.') }}</li>
-          <li
-            v-for="d in state.domains" :key="d.origin"
-            class="px-4 py-2 border-b border-border/30 last:border-b-0 cursor-pointer transition-colors"
-            :class="activeDomain === shortHost(d.origin) ? 'bg-primary/10' : 'hover:bg-surface-soft-hover'"
-            @click="pickDomain(shortHost(d.origin))"
-          >
-            <div class="text-xs truncate">{{ shortHost(d.origin) }}</div>
-            <div class="text-[10px] text-muted/60 mt-0.5 flex items-center justify-between">
-              <span>{{ t('{n} runs', { n: d.run_count }) }}</span>
-              <span>{{ relative(d.last_run) }}</span>
-            </div>
-          </li>
-        </ul>
+        <ItemList
+          :items="state.domains"
+          :row-key="d => d.origin"
+          :max-height="'60vh'"
+          :empty-text="state.loadingDomains ? t('Loading…') : t('No domains yet.')"
+        >
+          <template #item="{ item: d }">
+            <ItemListRow
+              clickable
+              :active="activeDomain === shortHost(d.origin)"
+              @click="pickDomain(shortHost(d.origin))"
+            >
+              <div class="min-w-0 flex-1">
+                <div class="text-xs truncate">{{ shortHost(d.origin) }}</div>
+                <div class="text-[10px] text-muted/60 mt-0.5 flex items-center justify-between">
+                  <span>{{ t('{n} runs', { n: d.run_count }) }}</span>
+                  <span>{{ relative(d.last_run) }}</span>
+                </div>
+              </div>
+            </ItemListRow>
+          </template>
+        </ItemList>
       </aside>
 
       <section class="col-span-2 space-y-4">
@@ -285,21 +286,16 @@ function shortHost(origin) {
             <div v-if="optionsOpen" class="px-4 py-3 border-t border-border/60 flex flex-wrap gap-3 items-center">
               <label class="text-[10px] text-muted flex items-center gap-2">
                 {{ t('Max pages') }}
-                <input
-                  v-model="optMaxPages"
-                  type="number" min="1" max="500"
-                  placeholder="—"
-                  class="w-20 bg-surface border border-border rounded px-2 py-1 text-xs focus:outline-none focus:border-primary/60"
-                />
+                <FormField v-model="optMaxPages" type="number" dense placeholder="—" class="w-20" min="1" max="500" :full-width="false" />
               </label>
               <label class="text-[10px] text-muted flex items-center gap-2">
                 {{ t('Force language') }}
-                <select v-model="optLanguage" class="bg-surface border border-border rounded px-2 py-1 text-xs">
+                <SelectField v-model="optLanguage" dense>
                   <option value="">{{ t('Auto-detect') }}</option>
                   <option value="de-DE">de-DE</option>
                   <option value="en-US">en-US</option>
                   <option value="en-GB">en-GB</option>
-                </select>
+                </SelectField>
               </label>
             </div>
           </div>
@@ -353,38 +349,22 @@ function shortHost(origin) {
               <h4 class="text-sm font-semibold flex-1">{{ t('Check history') }}</h4>
               <span class="text-[10px] text-muted">{{ state.runs.length }}</span>
             </header>
-            <div v-if="state.loadingRuns" class="px-4 py-6 text-center text-xs text-muted">{{ t('Loading…') }}</div>
-            <table v-else-if="state.runs.length" class="w-full text-sm">
-              <thead class="text-[10px] uppercase tracking-wide text-muted/60">
-                <tr>
-                  <th class="text-left px-4 py-2 font-medium">{{ t('When') }}</th>
-                  <th class="text-right px-2 py-2 font-medium">{{ t('Pages') }}</th>
-                  <th class="text-right px-2 py-2 font-medium">{{ t('Errors') }}</th>
-                  <th class="text-right px-2 py-2 font-medium">{{ t('Duration') }}</th>
-                  <th class="text-left px-2 py-2 font-medium">{{ t('Lang') }}</th>
-                  <th class="px-4 py-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="run in state.runs" :key="run.id"
-                  class="border-t border-border/30 hover:bg-surface-soft-hover cursor-pointer"
-                  @click="openRunDetail(run)"
-                >
-                  <td class="px-4 py-2 text-[11px] text-muted whitespace-nowrap">{{ relative(run.createdAt) }}</td>
-                  <td class="px-2 py-2 text-[11px] text-right tabular-nums">{{ run.pagesChecked }}</td>
-                  <td class="px-2 py-2 text-[11px] text-right tabular-nums" :class="run.totalErrors ? 'text-error' : 'text-muted/60'">{{ run.totalErrors }}</td>
-                  <td class="px-2 py-2 text-[11px] text-right tabular-nums">{{ run.durationSecs ?? '—' }}s</td>
-                  <td class="px-2 py-2 text-[11px] font-mono">{{ run.languageDetected ?? '—' }}</td>
-                  <td class="px-4 py-2 text-right">
-                    <Icon name="mdiChevronRight" :size="12" class="text-muted/60" />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <p v-else class="px-4 py-6 text-center text-xs text-muted/60 italic">
-              {{ t('No checks recorded yet for this domain.') }}
-            </p>
+            <DataTable
+              :rows="state.runs"
+              :columns="runsColumns"
+              :loading="state.loadingRuns"
+              :on-row-click="openRunDetail"
+              :empty-text="t('No checks recorded yet for this domain.')"
+              dense
+              min-width="600px"
+            >
+              <template #cell-when="{ row }"><CellTimestamp :value="row.createdAt" mode="relative" /></template>
+              <template #cell-pages="{ row }"><CellNumber :value="row.pagesChecked" /></template>
+              <template #cell-errors="{ row }"><CellNumber :value="row.totalErrors" error-when="> 0" muted-when="== 0" /></template>
+              <template #cell-duration="{ row }"><span class="text-[11px] tabular-nums">{{ row.durationSecs ?? '—' }}s</span></template>
+              <template #cell-lang="{ row }"><CellCode :value="row.languageDetected ?? '—'" /></template>
+              <template #cell-arrow><Icon name="mdiChevronRight" :size="12" class="text-muted/60" /></template>
+            </DataTable>
           </div>
 
           <!-- Dictionary -->
@@ -396,17 +376,18 @@ function shortHost(origin) {
             </header>
 
             <div v-if="canWrite" class="px-4 py-3 border-b border-border/60 flex items-center gap-2">
-              <input
+              <FormField
                 v-model="newWord"
-                type="text"
+                dense
+                class="flex-1"
                 :placeholder="t('New word to whitelist…')"
-                class="flex-1 bg-surface border border-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-primary/60"
                 @keydown.enter.prevent="onAddWord"
               />
-              <label class="text-[10px] text-muted inline-flex items-center gap-1 cursor-pointer">
-                <input v-model="newWordForce" type="checkbox" class="accent-primary" />
-                {{ t('Force') }}
-              </label>
+              <CheckboxField
+                v-model="newWordForce"
+                :label="t('Add anyway')"
+                :info-tooltip="t('force.help')"
+              />
               <BaseButton
                 variant="pill" icon="mdiPlus" :icon-size="11"
                 class="bg-primary! border-primary! text-black/80!"
@@ -415,23 +396,19 @@ function shortHost(origin) {
               >{{ t('Add') }}</BaseButton>
             </div>
 
-            <div v-if="state.loadingDomain" class="px-4 py-6 text-center text-xs text-muted">{{ t('Loading…') }}</div>
-            <ul v-else-if="state.dictionary.length" class="max-h-72 overflow-y-auto divide-y divide-border/30">
-              <li v-for="w in state.dictionary" :key="w.id" class="flex items-center gap-2 px-4 py-2">
-                <code class="text-[11px] text-light flex-1">{{ w.word }}</code>
-                <span class="text-[10px] text-muted/60">{{ w.source }}</span>
-                <span class="text-[10px] text-muted/60">{{ relative(w.created_at) }}</span>
-                <button
-                  v-if="canWrite"
-                  class="p-1 rounded hover:bg-error/10 text-error/70 hover:text-error transition-colors"
-                  :title="t('Remove')"
-                  @click="onRemoveWord(w)"
-                >
-                  <Icon name="mdiClose" :size="12" />
-                </button>
-              </li>
-            </ul>
-            <p v-else class="px-4 py-6 text-center text-xs text-muted/60 italic">{{ t('No words yet for this domain.') }}</p>
+            <ItemList
+              :items="state.dictionary"
+              :max-height="288"
+              :empty-text="state.loadingDomain ? t('Loading…') : t('No words yet for this domain.')"
+            >
+              <template #item="{ item: w }">
+                <ItemListRow :removable="canWrite" @remove="onRemoveWord(w)">
+                  <code class="text-[11px] text-light flex-1">{{ w.word }}</code>
+                  <span class="text-[10px] text-muted/60">{{ w.source }}</span>
+                  <span class="text-[10px] text-muted/60">{{ relative(w.created_at) }}</span>
+                </ItemListRow>
+              </template>
+            </ItemList>
           </div>
 
           <!-- Ignored errors -->
@@ -443,11 +420,11 @@ function shortHost(origin) {
             </header>
 
             <div v-if="canWrite" class="px-4 py-3 border-b border-border/60 flex items-center gap-2">
-              <input
+              <FormField
                 v-model="newIgnoredErr"
-                type="text"
+                dense
+                class="flex-1"
                 :placeholder="t('Exact text to suppress…')"
-                class="flex-1 bg-surface border border-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-primary/60"
                 @keydown.enter.prevent="onAddIgnoredError"
               />
               <BaseButton
@@ -458,22 +435,18 @@ function shortHost(origin) {
               >{{ t('Add') }}</BaseButton>
             </div>
 
-            <div v-if="state.loadingDomain" class="px-4 py-6 text-center text-xs text-muted">{{ t('Loading…') }}</div>
-            <ul v-else-if="state.ignoredErrors.length" class="max-h-72 overflow-y-auto divide-y divide-border/30">
-              <li v-for="e in state.ignoredErrors" :key="e.id" class="flex items-center gap-2 px-4 py-2">
-                <code class="text-[11px] text-light flex-1 break-all">{{ e.error_text }}</code>
-                <span class="text-[10px] text-muted/60">{{ relative(e.created_at) }}</span>
-                <button
-                  v-if="canWrite"
-                  class="p-1 rounded hover:bg-error/10 text-error/70 hover:text-error transition-colors"
-                  :title="t('Remove')"
-                  @click="onRemoveIgnoredError(e)"
-                >
-                  <Icon name="mdiClose" :size="12" />
-                </button>
-              </li>
-            </ul>
-            <p v-else class="px-4 py-6 text-center text-xs text-muted/60 italic">{{ t('No ignored errors yet for this domain.') }}</p>
+            <ItemList
+              :items="state.ignoredErrors"
+              :max-height="288"
+              :empty-text="state.loadingDomain ? t('Loading…') : t('No ignored errors yet for this domain.')"
+            >
+              <template #item="{ item: e }">
+                <ItemListRow :removable="canWrite" @remove="onRemoveIgnoredError(e)">
+                  <code class="text-[11px] text-light flex-1 break-all">{{ e.error_text }}</code>
+                  <span class="text-[10px] text-muted/60">{{ relative(e.created_at) }}</span>
+                </ItemListRow>
+              </template>
+            </ItemList>
           </div>
         </template>
       </section>

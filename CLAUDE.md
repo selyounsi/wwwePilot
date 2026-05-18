@@ -167,7 +167,10 @@ Erst lesen, dann fragen:
 | Claude-Aktionen (komplette Liste) | [docs/claude-actions.md](docs/claude-actions.md) |
 | Live-Editor-Bridge + CMS4-Erkennung | [docs/live-editor.md](docs/live-editor.md) |
 | Re-Check-Flow + Tab-Handling | [docs/check-flow.md](docs/check-flow.md) |
+| Check-Types (Profile + manuelle Tasks) | [docs/check-types.md](docs/check-types.md) |
 | Globale UI-Bausteine | [docs/ui-components.md](docs/ui-components.md) |
+| Admin-Tabellen (`<DataTable>` + Cells) | [docs/ui-data-table.md](docs/ui-data-table.md) |
+| Form-Felder, Modal, Cards, KPI, Listen, Tabs | [docs/ui-forms.md](docs/ui-forms.md) |
 | Update-System + Notifications | [docs/extension-versioning.md](docs/extension-versioning.md) |
 | chrome-devtools-mcp Setup | [docs/dev-mcp.md](docs/dev-mcp.md) |
 | Was prüft Modul X im Detail | `services/web-checker/modules/<x>/README.md` |

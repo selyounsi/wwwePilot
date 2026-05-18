@@ -25,10 +25,6 @@ function downloadCSV() {
   })
 }
 
-function formatTime(ts) {
-  return new Date(ts).toLocaleString()
-}
-
 function summarize(ev) {
   const parts = []
   if (ev.targetType) parts.push(`${ev.targetType}`)
@@ -38,12 +34,19 @@ function summarize(ev) {
   }
   return parts.join(' · ')
 }
+
+const columns = [
+  { key: 'time',    label: 'Time',             minWidth: 150 },
+  { key: 'actor',   label: 'Actor',            minWidth: 110 },
+  { key: 'action',  label: 'Action',           minWidth: 200 },
+  { key: 'target',  label: 'Target / Payload', minWidth: 240, truncate: true, titleFrom: summarize },
+]
 </script>
 
 <template>
   <div class="p-6">
-    <header class="mb-6 flex items-start justify-between gap-3">
-      <div>
+    <header class="mb-6 flex items-start justify-between gap-3 flex-wrap">
+      <div class="min-w-0">
         <h2 class="text-xl font-bold">{{ t('Admin audit') }}</h2>
         <p class="text-xs text-muted mt-0.5">
           {{ t('Append-only trail of state-changing admin actions. Read-only.') }}
@@ -58,37 +61,18 @@ function summarize(ev) {
       >CSV</BaseButton>
     </header>
 
-    <div v-if="state.loading" class="flex items-center justify-center py-12">
-      <LoadingSpinner />
-    </div>
-
-    <div v-else-if="state.error" class="bg-error/10 border border-error/40 rounded-xl p-4">
-      <p class="text-sm text-error">{{ state.error }}</p>
-    </div>
-
-    <div v-else class="bg-surface-soft border border-border rounded-xl overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-surface text-xs uppercase tracking-wide text-muted">
-          <tr>
-            <th class="text-left px-4 py-2.5 font-medium">{{ t('Time') }}</th>
-            <th class="text-left px-4 py-2.5 font-medium">{{ t('Actor') }}</th>
-            <th class="text-left px-4 py-2.5 font-medium">{{ t('Action') }}</th>
-            <th class="text-left px-4 py-2.5 font-medium">{{ t('Target / Payload') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="ev in state.events" :key="ev.id"
-            class="border-t border-border/40 hover:bg-surface-soft-hover"
-          >
-            <td class="px-4 py-2 text-[11px] text-muted whitespace-nowrap tabular-nums">{{ formatTime(ev.createdAt) }}</td>
-            <td class="px-4 py-2 text-[11px] text-muted font-mono">{{ (ev.userId ?? '—').slice(0, 8) }}</td>
-            <td class="px-4 py-2"><code class="text-[11px] text-primary">{{ ev.action }}</code></td>
-            <td class="px-4 py-2 text-[11px] text-muted">{{ summarize(ev) }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <p v-if="!state.events.length" class="text-center text-muted py-8 text-sm">{{ t('No audit events yet.') }}</p>
-    </div>
+    <DataTable
+      :rows="state.events"
+      :columns="columns"
+      :loading="state.loading"
+      :error="state.error"
+      :empty-text="t('No audit events yet.')"
+      min-width="780px"
+    >
+      <template #cell-time="{ row }"><CellTimestamp :value="row.createdAt" mode="both" /></template>
+      <template #cell-actor="{ row }"><CellCode :value="row.userId ?? '—'" :slice="8" /></template>
+      <template #cell-action="{ row }"><code class="text-[11px] text-primary">{{ row.action }}</code></template>
+      <template #cell-target="{ row }">{{ summarize(row) }}</template>
+    </DataTable>
   </div>
 </template>

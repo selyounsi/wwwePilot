@@ -119,28 +119,19 @@ function shortHost() {
   try { return new URL(origin.value).host } catch { return origin.value }
 }
 
-function statusColor(s) {
-  switch (s) {
-    case 'running':   return 'bg-primary/15 text-primary'
-    case 'finished':  return 'bg-success/15 text-success'
-    case 'cancelled': return 'bg-alert/15  text-alert'
-    case 'aborted':   return 'bg-error/15  text-error'
-    default:          return 'bg-surface   text-light'
-  }
-}
-function statusLabel(s) {
-  switch (s) {
-    case 'running':   return t('Running')
-    case 'finished':  return t('Finished')
-    case 'cancelled': return t('Cancelled')
-    case 'aborted':   return t('Aborted')
-    default:          return s
-  }
+function openRun(r) {
+  router.push({ name: 'admin-run-detail', params: { id: r.id } })
 }
 
-function openRun(id) {
-  router.push({ name: 'admin-run-detail', params: { id } })
-}
+const runsColumns = [
+  { key: 'when',     label: 'When',     minWidth: 150 },
+  { key: 'user',     label: 'User',     minWidth: 140 },
+  { key: 'kind',     label: 'Kind',     minWidth: 100 },
+  { key: 'status',   label: 'Status',   minWidth: 110 },
+  { key: 'pages',    label: 'Pages',    minWidth: 70, align: 'right' },
+  { key: 'errors',   label: 'Errors',   minWidth: 70, align: 'right' },
+  { key: 'warnings', label: 'Warnings', minWidth: 80, align: 'right' },
+]
 
 async function onPurgeSite() {
   const typed = prompt(t('Purging deletes ALL runs, notes and events for "{o}". Type the full origin to confirm:', { o: origin.value }))
@@ -185,24 +176,11 @@ async function onPurgeSite() {
     <div v-else-if="detailState.error" class="bg-error/10 border border-error/40 rounded-xl p-4 text-sm text-error">{{ detailState.error }}</div>
 
     <div v-else-if="detailState.detail" class="space-y-6">
-      <!-- Aggregate KPIs -->
-      <section v-if="detailState.detail.aggregate" class="grid grid-cols-4 gap-3">
-        <div class="bg-surface-soft border border-border rounded-xl p-4">
-          <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Total runs') }}</div>
-          <div class="text-2xl font-bold tabular-nums mt-1">{{ detailState.detail.aggregate.run_count }}</div>
-        </div>
-        <div class="bg-surface-soft border border-border rounded-xl p-4">
-          <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Unique users') }}</div>
-          <div class="text-2xl font-bold tabular-nums mt-1">{{ detailState.detail.aggregate.unique_users }}</div>
-        </div>
-        <div class="bg-surface-soft border border-border rounded-xl p-4">
-          <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Errors (sum)') }}</div>
-          <div class="text-2xl font-bold tabular-nums mt-1 text-error">{{ detailState.detail.aggregate.error_total }}</div>
-        </div>
-        <div class="bg-surface-soft border border-border rounded-xl p-4">
-          <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Warnings (sum)') }}</div>
-          <div class="text-2xl font-bold tabular-nums mt-1">{{ detailState.detail.aggregate.warning_total }}</div>
-        </div>
+      <section v-if="detailState.detail.aggregate" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <KpiTile :label="t('Total runs')"     :value="detailState.detail.aggregate.run_count" />
+        <KpiTile :label="t('Unique users')"   :value="detailState.detail.aggregate.unique_users" />
+        <KpiTile :label="t('Errors (sum)')"   :value="detailState.detail.aggregate.error_total"   tone="error" />
+        <KpiTile :label="t('Warnings (sum)')" :value="detailState.detail.aggregate.warning_total" />
       </section>
 
       <!-- Per-domain config -->
@@ -242,40 +220,26 @@ async function onPurgeSite() {
         </div>
 
         <div v-else class="px-4 py-3 space-y-3">
-          <div class="grid grid-cols-2 gap-3">
-            <label class="text-[10px] text-muted">
-              {{ t('Default language') }}
-              <select
-                v-model="configDraft.defaultLanguage"
-                class="mt-1 w-full bg-surface border border-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-primary/60"
-              >
-                <option value="">{{ t('Auto-detect') }}</option>
-                <option value="de-DE">de-DE</option>
-                <option value="en-US">en-US</option>
-                <option value="en-GB">en-GB</option>
-              </select>
-            </label>
-            <label class="text-[10px] text-muted">
-              {{ t('Spellcheck schedule') }}
-              <select
-                v-model="configDraft.spellcheckSchedule"
-                class="mt-1 w-full bg-surface border border-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-primary/60"
-              >
-                <option value="manual">{{ t('manual') }}</option>
-                <option value="daily">{{ t('daily') }}</option>
-                <option value="weekly">{{ t('weekly') }}</option>
-              </select>
-            </label>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <SelectField v-model="configDraft.defaultLanguage" dense full-width :label="t('Default language')">
+              <option value="">{{ t('Auto-detect') }}</option>
+              <option value="de-DE">de-DE</option>
+              <option value="en-US">en-US</option>
+              <option value="en-GB">en-GB</option>
+            </SelectField>
+            <SelectField v-model="configDraft.spellcheckSchedule" dense full-width :label="t('Spellcheck schedule')">
+              <option value="manual">{{ t('manual') }}</option>
+              <option value="daily">{{ t('daily') }}</option>
+              <option value="weekly">{{ t('weekly') }}</option>
+            </SelectField>
           </div>
-          <label class="text-[10px] text-muted block">
-            {{ t('Admin notes') }}
-            <textarea
-              v-model="configDraft.notes"
-              rows="3"
-              :placeholder="t('Free-form notes about this site…')"
-              class="mt-1 w-full bg-surface border border-border rounded px-2 py-1.5 text-xs resize-y focus:outline-none focus:border-primary/60"
-            />
-          </label>
+          <TextareaField
+            v-model="configDraft.notes"
+            dense
+            :rows="3"
+            :label="t('Admin notes')"
+            :placeholder="t('Free-form notes about this site…')"
+          />
         </div>
       </section>
 
@@ -336,49 +300,31 @@ async function onPurgeSite() {
         </div>
       </section>
 
-      <!-- Recent runs -->
-      <section class="bg-surface-soft border border-border rounded-xl">
-        <header class="px-4 py-3 border-b border-border/60">
-          <h3 class="font-semibold text-sm">{{ t('Recent runs') }}</h3>
-        </header>
-        <table class="w-full text-sm">
-          <thead class="text-xs uppercase tracking-wide text-muted">
-            <tr>
-              <th class="text-left px-4 py-2 font-medium">{{ t('When') }}</th>
-              <th class="text-left px-4 py-2 font-medium">{{ t('User') }}</th>
-              <th class="text-left px-4 py-2 font-medium">{{ t('Kind') }}</th>
-              <th class="text-left px-4 py-2 font-medium">{{ t('Status') }}</th>
-              <th class="text-right px-4 py-2 font-medium">{{ t('Pages') }}</th>
-              <th class="text-right px-4 py-2 font-medium">{{ t('Errors') }}</th>
-              <th class="text-right px-4 py-2 font-medium">{{ t('Warnings') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="r in detailState.detail.runs" :key="r.id"
-              @click="openRun(r.id)"
-              class="border-t border-border/30 hover:bg-surface-soft-hover cursor-pointer"
-            >
-              <td class="px-4 py-2 text-[11px] text-muted whitespace-nowrap tabular-nums">{{ formatTime(r.started_at) }}</td>
-              <td class="px-4 py-2 text-[11px]">{{ userLabel(r) }}</td>
-              <td class="px-4 py-2">
-                <span
-                  class="text-[10px] px-1.5 py-0.5 rounded"
-                  :class="r.kind === 'site-wide' ? 'bg-primary/15 text-primary' : 'bg-surface text-light'"
-                >{{ r.kind === 'site-wide' ? t('Site-wide') : t('Single') }}</span>
-              </td>
-              <td class="px-4 py-2">
-                <span class="text-[10px] px-1.5 py-0.5 rounded" :class="statusColor(r.status)">
-                  {{ statusLabel(r.status) }}
-                </span>
-              </td>
-              <td class="px-4 py-2 text-[11px] text-right tabular-nums">{{ r.pages_count }}</td>
-              <td class="px-4 py-2 text-[11px] text-right tabular-nums" :class="r.total_errors > 0 && 'text-error'">{{ r.total_errors }}</td>
-              <td class="px-4 py-2 text-[11px] text-right tabular-nums text-muted">{{ r.total_warnings }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
+      <div>
+        <h3 class="font-semibold text-sm mb-2">{{ t('Recent runs') }}</h3>
+        <DataTable
+          :rows="detailState.detail.runs ?? []"
+          :columns="runsColumns"
+          :on-row-click="openRun"
+          :empty-text="t('No runs for this site yet.')"
+          dense
+          min-width="900px"
+        >
+          <template #cell-when="{ row }"><CellTimestamp :value="row.started_at" mode="both" /></template>
+          <template #cell-user="{ row }"><CellUser :user="row" /></template>
+          <template #cell-kind="{ row }">
+            <CellBadge
+              :value="row.kind"
+              :label="row.kind === 'site-wide' ? t('Site-wide') : t('Single')"
+              :class-name="row.kind === 'site-wide' ? 'bg-primary/15 text-primary' : 'bg-surface text-light'"
+            />
+          </template>
+          <template #cell-status="{ row }"><CellBadge variant="status" :value="row.status" /></template>
+          <template #cell-pages="{ row }"><CellNumber :value="row.pages_count" /></template>
+          <template #cell-errors="{ row }"><CellNumber :value="row.total_errors" error-when="> 0" /></template>
+          <template #cell-warnings="{ row }"><CellNumber :value="row.total_warnings" muted-when=">= 0" /></template>
+        </DataTable>
+      </div>
 
       <!-- Resolved notes (collapsed) -->
       <details v-if="resolvedNotes.length" class="bg-surface-soft border border-border rounded-xl">

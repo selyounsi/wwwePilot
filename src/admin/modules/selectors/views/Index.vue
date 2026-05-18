@@ -95,6 +95,13 @@ async function saveNote(sel) {
   await onUpdateNote(sel, draftNote.value)
   editingId.value = null
 }
+
+const columns = [
+  { key: 'pattern', label: 'Pattern', minWidth: 240, truncate: true, titleFrom: s => s.pattern },
+  { key: 'note',    label: 'Note',    minWidth: 200 },
+  { key: 'source',  label: 'Source',  minWidth: 90 },
+  { key: 'status',  label: 'Status',  minWidth: 100 },
+]
 </script>
 
 <template>
@@ -120,35 +127,30 @@ async function saveNote(sel) {
     </div>
 
     <div v-else>
-      <nav class="flex gap-1 mb-4 border-b border-border">
-        <button
-          v-for="scope in state.scopes" :key="scope"
-          @click="activeScope = scope"
-          class="px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors"
-          :class="activeScope === scope
-            ? 'border-primary text-primary'
-            : 'border-transparent text-muted hover:text-light'"
-        >
-          {{ scope }}
-          <span class="ml-1 text-[10px] text-muted/60 tabular-nums">
-            {{ (grouped.get(scope) ?? []).length }}
-          </span>
-        </button>
-      </nav>
+      <TabNav
+        v-model="activeScope"
+        :tabs="state.scopes.map(scope => ({
+          key: scope,
+          label: scope,
+          translate: false,
+          count: (grouped.get(scope) ?? []).length,
+        }))"
+      />
 
-      <section class="bg-surface-soft border border-primary/30 rounded-xl p-4 mb-4">
-        <h3 class="text-sm font-semibold mb-2">{{ t('Add new selector to scope "{s}"', { s: activeScope }) }}</h3>
-        <div class="flex gap-2">
-          <input
+      <BaseCard tone="primary" class="mb-4" :title="t('Add new selector to scope &quot;{s}&quot;', { s: activeScope })">
+        <div class="flex flex-wrap gap-2">
+          <FormField
             v-model="newPattern"
+            mono
+            class="flex-1 min-w-50"
             :placeholder="t('e.g. .cookie-banner, #widget, [data-tracker]')"
-            class="flex-1 bg-surface border border-border rounded px-2 py-1.5 text-sm font-mono focus:outline-none focus:border-primary/60"
             @keydown.enter="onCreate"
           />
-          <input
+          <FormField
             v-model="newNote"
+            class="w-64"
+            :full-width="false"
             :placeholder="t('Optional note')"
-            class="w-64 bg-surface border border-border rounded px-2 py-1.5 text-sm focus:outline-none focus:border-primary/60"
             @keydown.enter="onCreate"
           />
           <BaseButton class="text-xs! py-1.5!" @click="onCreate">
@@ -156,95 +158,80 @@ async function saveNote(sel) {
             {{ t('Add') }}
           </BaseButton>
         </div>
-      </section>
+      </BaseCard>
 
-      <section class="bg-surface-soft border border-border rounded-xl">
-        <div class="px-4 py-2.5 border-b border-border/60 flex items-center gap-3 text-[11px] text-muted">
+      <DataTable
+        :rows="activeList"
+        :columns="columns"
+        :empty-text="t('No selectors in this scope yet.')"
+        min-width="780px"
+      >
+        <template #toolbar>
           <span>{{ t('{n} total', { n: activeCounts.total }) }}</span>
           <span class="text-success">{{ t('{n} active', { n: activeCounts.active }) }}</span>
           <span v-if="activeCounts.disabled" class="text-error">{{ t('{n} disabled', { n: activeCounts.disabled }) }}</span>
-          <span class="ml-auto">
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary mr-1">{{ activeCounts.seed }} {{ t('seed') }}</span>
+          <span class="ml-auto inline-flex gap-1">
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary">{{ activeCounts.seed }} {{ t('seed') }}</span>
             <span class="text-[10px] px-1.5 py-0.5 rounded bg-surface text-light">{{ activeCounts.custom }} {{ t('custom') }}</span>
           </span>
-        </div>
+        </template>
 
-        <table class="w-full text-sm">
-          <thead class="text-xs uppercase tracking-wide text-muted">
-            <tr>
-              <th class="text-left px-4 py-2 font-medium">{{ t('Pattern') }}</th>
-              <th class="text-left px-4 py-2 font-medium">{{ t('Note') }}</th>
-              <th class="text-left px-4 py-2 font-medium">{{ t('Source') }}</th>
-              <th class="text-left px-4 py-2 font-medium">{{ t('Status') }}</th>
-              <th class="px-4 py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="sel in activeList" :key="sel.id"
-              class="border-t border-border/40 hover:bg-surface-soft-hover"
-              :class="sel.disabled && 'opacity-60'"
+        <template #cell-pattern="{ row: sel }">
+          <code class="text-[11px] text-light" :class="sel.disabled && 'opacity-60'">{{ sel.pattern }}</code>
+        </template>
+
+        <template #cell-note="{ row: sel }">
+          <template v-if="editingId === sel.id">
+            <input
+              v-model="draftNote"
+              class="bg-surface border border-border rounded px-2 py-1 text-xs w-full focus:outline-none focus:border-primary/60"
+              @blur="saveNote(sel)"
+              @keydown.enter="saveNote(sel)"
+            />
+          </template>
+          <template v-else>
+            <button
+              @click="startEditNote(sel)"
+              class="text-[11px] text-muted hover:text-light text-left"
             >
-              <td class="px-4 py-2"><code class="text-[11px] text-light">{{ sel.pattern }}</code></td>
-              <td class="px-4 py-2">
-                <template v-if="editingId === sel.id">
-                  <input
-                    v-model="draftNote"
-                    class="bg-surface border border-border rounded px-2 py-1 text-xs w-full focus:outline-none focus:border-primary/60"
-                    @blur="saveNote(sel)"
-                    @keydown.enter="saveNote(sel)"
-                  />
-                </template>
-                <template v-else>
-                  <button
-                    @click="startEditNote(sel)"
-                    class="text-[11px] text-muted hover:text-light text-left"
-                  >
-                    {{ sel.note || `(${t('add note')})` }}
-                  </button>
-                </template>
-              </td>
-              <td class="px-4 py-2">
-                <span
-                  class="text-[10px] px-1.5 py-0.5 rounded"
-                  :class="sel.source === 'seed'
-                    ? 'bg-primary/15 text-primary'
-                    : 'bg-surface text-light'"
-                >{{ sel.source }}</span>
-              </td>
-              <td class="px-4 py-2">
-                <span
-                  class="text-[10px] px-1.5 py-0.5 rounded"
-                  :class="sel.disabled
-                    ? 'bg-error/15 text-error'
-                    : 'bg-success/15 text-success'"
-                >{{ sel.disabled ? t('disabled') : t('active') }}</span>
-              </td>
-              <td class="px-4 py-2 text-right whitespace-nowrap">
-                <div class="inline-flex items-center gap-1">
-                  <BaseButton
-                    :variant="sel.disabled ? 'icon-success' : 'icon-alert'"
-                    :icon="sel.disabled ? 'mdiCheckCircleOutline' : 'mdiCancel'"
-                    :icon-size="16"
-                    :tooltip="sel.disabled ? t('Enable') : t('Disable')"
-                    @click="toggleDisabled(sel)"
-                  />
-                  <BaseButton
-                    variant="icon-error"
-                    icon="mdiDelete"
-                    :icon-size="16"
-                    :tooltip="t('Delete')"
-                    @click="onDelete(sel)"
-                  />
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <p v-if="!activeList.length" class="text-center text-muted py-8 text-sm">
-          {{ t('No selectors in this scope yet.') }}
-        </p>
-      </section>
+              {{ sel.note || `(${t('add note')})` }}
+            </button>
+          </template>
+        </template>
+
+        <template #cell-source="{ row: sel }">
+          <CellBadge
+            :value="sel.source"
+            :class-name="sel.source === 'seed' ? 'bg-primary/15 text-primary' : 'bg-surface text-light'"
+          />
+        </template>
+
+        <template #cell-status="{ row: sel }">
+          <CellBadge
+            :value="sel.disabled ? 'disabled' : 'active'"
+            :class-name="sel.disabled ? 'bg-error/15 text-error' : 'bg-success/15 text-success'"
+          />
+        </template>
+
+        <template #row-actions="{ row: sel }">
+          <div class="inline-flex items-center gap-1">
+            <BaseButton
+              :variant="sel.disabled ? 'icon-success' : 'icon-alert'"
+              :icon="sel.disabled ? 'mdiCheckCircleOutline' : 'mdiCancel'"
+              :icon-size="16"
+              :tooltip="sel.disabled ? t('Enable') : t('Disable')"
+              @click="toggleDisabled(sel)"
+            />
+            <BaseButton
+              variant="icon-error"
+              icon="mdiDelete"
+              :icon-size="16"
+              :tooltip="t('Delete')"
+              @click="onDelete(sel)"
+            />
+          </div>
+        </template>
+      </DataTable>
     </div>
   </div>
 </template>

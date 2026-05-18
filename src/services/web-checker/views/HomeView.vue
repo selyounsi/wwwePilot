@@ -1,10 +1,12 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWebChecker }     from '../composables/useWebChecker.js'
 import { useSiteCheckStore } from '../composables/useSiteCheckStore.js'
+import { useCheckTypes }     from '../composables/useCheckTypes.js'
 import { useI18n }           from '@/composables/i18n/useI18n.js'
 import { useFavorites }      from '@/composables/useFavorites.js'
+import ManualTaskPanel       from '../components/ManualTaskPanel.vue'
 
 const router = useRouter()
 const {
@@ -19,6 +21,33 @@ const {
 } = useWebChecker()
 const { t } = useI18n()
 
+const checkTypes = useCheckTypes()
+
+// `selectedSlug` is the user's pick from the dropdown. Empty = no type =
+// fall back to running every module the user has access to. Once Types
+// exist the UI hides the manual module-toggles for that run, because the
+// admin has decided the bundle.
+const selectedSlug = ref('')
+
+onMounted(() => {
+  checkTypes.fetchAvailable()
+})
+
+watch(selectedSlug, async (slug) => {
+  await checkTypes.selectType(slug)
+})
+
+const showTypeSelector = computed(() =>
+  checkTypes.isCheckTypesEnabled() && checkTypes.state.available.length > 0,
+)
+
+const activeType = computed(() => checkTypes.state.active)
+
+const checkedOrigin = computed(() => {
+  if (!state.checkedUrl) return ''
+  try { return new URL(state.checkedUrl).origin } catch { return '' }
+})
+
 const { isFavorite, toggle: toggleFavorite } = useFavorites()
 const siteCheck = useSiteCheckStore()
 const siteCheckCount = computed(() => siteCheck.state.urls.length)
@@ -27,6 +56,15 @@ const siteCheckLabel = computed(() => hasSiteCheck.value
   ? t('Back to overview ({count} pages)', { count: siteCheckCount.value })
   : t('Full Website Check'),
 )
+
+// When a check-type is active its `moduleIds` becomes the canonical
+// allow-list. Everything else is hidden from the list AND from the
+// runner. Falls back to "every loaded module" when no type is selected.
+const effectiveModules = computed(() => {
+  if (!activeType.value) return modules
+  const allow = new Set(activeType.value.type.moduleIds ?? [])
+  return modules.filter(m => allow.has(m.id))
+})
 
 const sortedModules = computed(() => {
   const order = (mod) => {
@@ -37,7 +75,7 @@ const sortedModules = computed(() => {
     if (warnings > 0)     return 1
     return 2
   }
-  return [...modules].sort((a, b) => order(a) - order(b))
+  return [...effectiveModules.value].sort((a, b) => order(a) - order(b))
 })
 
 const isLiveEditor   = computed(() => tabStatus.value === 'editor-match')
@@ -56,7 +94,10 @@ async function handleCheck() {
     if (tab?.id) chrome.tabs.reload(tab.id)
     return
   }
-  runChecks()
+  // When a type is active, restrict the run to the type's module set.
+  // Otherwise the default `runChecks()` (no args) uses every loaded module.
+  if (activeType.value) runChecks(effectiveModules.value)
+  else                  runChecks()
 }
 
 const hasCheck = computed(() => !!state.checkedTabId)
@@ -67,6 +108,21 @@ const hasCheck = computed(() => !!state.checkedTabId)
     <AppHeader showBack />
 
     <div class="flex-1 px-4 py-4 flex flex-col gap-2 overflow-y-auto">
+      <div v-if="showTypeSelector" class="bg-surface-soft border border-border rounded-lg px-3 py-2 mb-1">
+        <label class="text-[10px] uppercase tracking-wide text-muted/70 block mb-1">
+          {{ t('Check type') }}
+        </label>
+        <SelectField v-model="selectedSlug" dense full-width>
+          <option value="">{{ t('— Full check (all modules) —') }}</option>
+          <option v-for="ct in checkTypes.state.available" :key="ct.id" :value="ct.slug">
+            {{ ct.name }}
+          </option>
+        </SelectField>
+        <p v-if="activeType?.type?.description" class="mt-1 text-[10px] text-muted/70">
+          {{ activeType.type.description }}
+        </p>
+      </div>
+
       <div class="flex items-center justify-between gap-2">
         <SectionLabel class="shrink-0">{{ t('Modules') }}</SectionLabel>
         <div class="flex items-center gap-1 shrink-0">
@@ -119,6 +175,12 @@ const hasCheck = computed(() => !!state.checkedTabId)
         </Tooltip>
         <StatusPill v-else :count="errorCount(mod.id)" :warning-count="warningCount(mod.id)" />
       </CardItem>
+
+      <ManualTaskPanel
+        v-if="activeType && activeType.tasks?.length"
+        :url="state.checkedUrl"
+        :origin="checkedOrigin"
+      />
     </div>
 
     <div class="px-4 pt-3 pb-5 bg-background border-t border-border shrink-0 flex flex-col gap-2">

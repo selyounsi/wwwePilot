@@ -1,10 +1,12 @@
 <script setup>
 import { onMounted, ref, computed } from 'vue'
 import { useI18n } from '@/composables/i18n/useI18n.js'
+import { useToast } from '@/composables/useToast.js'
 import { apiJson } from '@/composables/auth/apiClient.js'
 import { API }     from '@/config/api.js'
 
 const { t } = useI18n()
+const toast = useToast()
 const modules = ref([])
 const counts  = ref(null)
 const loading = ref(false)
@@ -12,6 +14,11 @@ const error   = ref(null)
 const search  = ref('')
 
 const expanded = ref(new Set())
+const previewOpen = ref(false)
+const previewSpec = ref(null)
+const previewBusy = ref(false)
+const previewCopied = ref(false)
+const downloadBusy  = ref(false)
 
 async function load() {
   loading.value = true
@@ -69,8 +76,54 @@ function annotatedRoutes(mods) {
   return mods.reduce((n, m) => n + m.routes.filter(r => r.annotated).length, 0)
 }
 
-function openapiUrl() {
-  return `${API.admin.url}/api-docs/openapi.json`
+async function fetchOpenapi() {
+  return apiJson(`${API.admin.url}/api-docs/openapi.json`)
+}
+
+async function downloadOpenapi() {
+  if (downloadBusy.value) return
+  downloadBusy.value = true
+  try {
+    const spec = await fetchOpenapi()
+    const blob = new Blob([JSON.stringify(spec, null, 2)], { type: 'application/json' })
+    const url  = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `openapi-${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    toast.error(t('OpenAPI download failed: {msg}', { msg: e.message }))
+  } finally {
+    downloadBusy.value = false
+  }
+}
+
+async function viewOpenapi() {
+  if (previewBusy.value) return
+  previewBusy.value = true
+  previewOpen.value = true
+  try {
+    previewSpec.value = await fetchOpenapi()
+  } catch (e) {
+    toast.error(t('OpenAPI fetch failed: {msg}', { msg: e.message }))
+    previewOpen.value = false
+  } finally {
+    previewBusy.value = false
+  }
+}
+
+async function copyOpenapi() {
+  if (!previewSpec.value) return
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(previewSpec.value, null, 2))
+    previewCopied.value = true
+    setTimeout(() => { previewCopied.value = false }, 2000)
+  } catch (e) {
+    toast.error(t('Clipboard write failed — copy manually'))
+  }
 }
 
 function formatSchema(s) {
@@ -88,21 +141,29 @@ function formatSchema(s) {
           {{ t('Every endpoint mounted by the backend. Annotated routes carry rich schema + summary; auto-discovered routes show method + path + permission only.') }}
         </p>
       </div>
-      <div class="flex items-center gap-2">
-        <a
-          :href="openapiUrl()"
-          target="_blank"
-          rel="noreferrer"
-          class="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md border border-border text-muted hover:bg-surface-soft-hover transition-colors"
-        >
-          <Icon name="mdiCodeJson" :size="11" />
-          openapi.json
-        </a>
-        <input
+      <div class="flex items-center gap-2 flex-wrap">
+        <BaseButton
+          variant="pill"
+          icon="mdiCodeJson"
+          :icon-size="13"
+          :tooltip="t('Preview the full OpenAPI 3.0 spec in a modal')"
+          :loading="previewBusy"
+          @click="viewOpenapi"
+        >{{ t('View spec') }}</BaseButton>
+        <BaseButton
+          variant="pill"
+          icon="mdiDownload"
+          :icon-size="13"
+          :tooltip="t('Download openapi.json for import into Postman / Swagger UI')"
+          :loading="downloadBusy"
+          @click="downloadOpenapi"
+        >openapi.json</BaseButton>
+        <FormField
           v-model="search"
           type="search"
+          prefix-icon="mdiMagnify"
           :placeholder="t('Filter by path, method, permission…')"
-          class="bg-surface-soft border border-border rounded-lg px-3 py-2 text-sm w-72 focus:outline-none focus:border-primary/60"
+          class="w-72"
         />
       </div>
     </header>
@@ -208,5 +269,30 @@ function formatSchema(s) {
 
       <p v-if="!filtered.length" class="text-center text-sm text-muted py-8 italic">{{ t('No matches.') }}</p>
     </div>
+
+    <BaseModal :open="previewOpen" size="xl" :title="t('OpenAPI 3.0 spec')" @update:open="previewOpen = $event">
+      <template #actions>
+        <BaseButton
+          variant="pill"
+          :icon="previewCopied ? 'mdiCheck' : 'mdiContentCopy'"
+          :icon-size="13"
+          :class="previewCopied && 'bg-success! border-success! text-black/80!'"
+          :disabled="!previewSpec"
+          @click="copyOpenapi"
+        >{{ previewCopied ? t('Copied') : t('Copy') }}</BaseButton>
+        <BaseButton
+          variant="pill"
+          icon="mdiDownload"
+          :icon-size="13"
+          :disabled="!previewSpec || downloadBusy"
+          @click="downloadOpenapi"
+        >openapi.json</BaseButton>
+      </template>
+
+      <div v-if="previewBusy" class="flex items-center justify-center py-12">
+        <LoadingSpinner />
+      </div>
+      <pre v-else-if="previewSpec" class="text-[11px] font-mono bg-surface rounded-lg p-3 overflow-x-auto leading-relaxed">{{ JSON.stringify(previewSpec, null, 2) }}</pre>
+    </BaseModal>
   </div>
 </template>

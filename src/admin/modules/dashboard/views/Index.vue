@@ -52,21 +52,21 @@ function formatDate(d) {
   return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
 }
 
-function relative(ts) {
-  if (!ts) return '—'
-  const diff = Date.now() - new Date(ts).getTime()
-  const min  = Math.floor(diff / 60_000)
-  if (min < 1)    return t('just now')
-  if (min < 60)   return t('{n} min ago', { n: min })
-  const h = Math.floor(min / 60)
-  if (h < 24)     return t('{n} h ago', { n: h })
-  const d = Math.floor(h / 24)
-  return t('{n} d ago', { n: d })
-}
+import { relativeTime } from '@/admin/composables/timelineFormat.js'
+function relative(ts) { return relativeTime(ts, t) }
 
-function shortHost(origin) {
-  try { return new URL(origin).host } catch { return origin }
-}
+const sitesColumns = [
+  { key: 'origin',   label: 'Origin',   minWidth: 180, truncate: true, titleFrom: s => s.origin },
+  { key: 'runs',     label: 'Runs',     minWidth: 60,  align: 'right' },
+  { key: 'errors',   label: 'Errors',   minWidth: 70,  align: 'right' },
+  { key: 'warnings', label: 'Warnings', minWidth: 80,  align: 'right' },
+]
+const topUsersColumns = [
+  { key: 'user',   label: 'User',      minWidth: 200 },
+  { key: 'events', label: 'Events',    minWidth: 70,  align: 'right' },
+  { key: 'checks', label: 'Checks',    minWidth: 70,  align: 'right' },
+  { key: 'seen',   label: 'Last seen', minWidth: 100, align: 'right' },
+]
 
 const oldestRefresh = computed(() => {
   const r = state.kpi?.lastRefresh ?? {}
@@ -103,70 +103,39 @@ const oldestRefresh = computed(() => {
     </div>
 
     <div v-else-if="state.kpi" class="space-y-6">
-      <!-- KPI tiles -->
-      <section class="grid grid-cols-4 gap-3">
-        <div class="bg-surface-soft border border-border rounded-xl p-4">
-          <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Active today') }}</div>
-          <div class="text-2xl font-bold tabular-nums mt-1">{{ formatNumber(state.kpi.today.activeUsers) }}</div>
-          <div class="text-[11px] text-muted mt-1">
-            {{ t('Avg 7 days') }}: <span class="tabular-nums">{{ formatNumber(state.kpi.avgDau7d) }}</span>
-          </div>
-        </div>
-        <div class="bg-surface-soft border border-border rounded-xl p-4">
-          <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('MAU (30d)') }}</div>
-          <div class="text-2xl font-bold tabular-nums mt-1">{{ formatNumber(state.kpi.mau) }}</div>
-          <div class="text-[11px] text-muted mt-1">
-            {{ t('of {n} total', { n: formatNumber(state.kpi.totalUsers) }) }}
-          </div>
-        </div>
-        <div class="bg-surface-soft border border-border rounded-xl p-4">
-          <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Sites tested (30d)') }}</div>
-          <div class="text-2xl font-bold tabular-nums mt-1">{{ formatNumber(state.kpi.sites30d) }}</div>
-          <div class="text-[11px] text-muted mt-1">{{ t('unique origins') }}</div>
-        </div>
-        <div class="bg-surface-soft border border-border rounded-xl p-4">
-          <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Module runs (30d)') }}</div>
-          <div class="text-2xl font-bold tabular-nums mt-1">{{ formatNumber(state.kpi.runs30d) }}</div>
-          <div class="text-[11px] text-muted mt-1">{{ t('events recorded') }}</div>
-        </div>
+      <section class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <KpiTile :label="t('Active today')" :value="formatNumber(state.kpi.today.activeUsers)"
+          :sublabel="`${t('Avg 7 days')}: ${formatNumber(state.kpi.avgDau7d)}`" />
+        <KpiTile :label="t('MAU (30d)')" :value="formatNumber(state.kpi.mau)"
+          :sublabel="t('of {n} total', { n: formatNumber(state.kpi.totalUsers) })" />
+        <KpiTile :label="t('Sites tested (30d)')" :value="formatNumber(state.kpi.sites30d)" :sublabel="t('unique origins')" />
+        <KpiTile :label="t('Module runs (30d)')" :value="formatNumber(state.kpi.runs30d)" :sublabel="t('events recorded')" />
       </section>
 
-      <!-- Tickets / Reports — clickable to jump straight to the filtered list -->
-      <section v-if="canReadReports" class="grid grid-cols-4 gap-3">
-        <button
+      <section v-if="canReadReports" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <KpiTile
+          :label="t('Open reports')"
+          :value="formatNumber(openReports)"
+          :tone="openReports > 0 ? 'error' : 'default'"
+          :sublabel="`${formatNumber(reportsState.counts?.open ?? 0)} ${t('open')} · ${formatNumber(reportsState.counts?.investigating ?? 0)} ${t('investigating')}`"
+          clickable
           @click="router.push({ name: 'admin-reports' })"
-          class="bg-surface-soft border rounded-xl p-4 text-left transition-colors hover:bg-surface-soft-hover"
-          :class="openReports > 0 ? 'border-error/40 hover:border-error/60' : 'border-border hover:border-primary/40'"
-        >
-          <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Open reports') }}</div>
-          <div class="text-2xl font-bold tabular-nums mt-1" :class="openReports > 0 && 'text-error'">
-            {{ formatNumber(openReports) }}
-          </div>
-          <div class="text-[11px] text-muted mt-1">
-            {{ formatNumber(reportsState.counts?.open ?? 0) }} {{ t('open') }} ·
-            {{ formatNumber(reportsState.counts?.investigating ?? 0) }} {{ t('investigating') }}
-          </div>
-        </button>
-        <div class="bg-surface-soft border border-border rounded-xl p-4">
-          <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Resolved') }}</div>
-          <div class="text-2xl font-bold tabular-nums mt-1 text-success">{{ formatNumber(reportsState.counts?.resolved ?? 0) }}</div>
-          <div class="text-[11px] text-muted mt-1">{{ t('all time') }}</div>
-        </div>
-        <div class="bg-surface-soft border border-border rounded-xl p-4">
-          <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t("Won't fix") }}</div>
-          <div class="text-2xl font-bold tabular-nums mt-1 text-muted">{{ formatNumber(reportsState.counts?.wont_fix ?? 0) }}</div>
-          <div class="text-[11px] text-muted mt-1">{{ t('all time') }}</div>
-        </div>
-        <button
+        />
+        <KpiTile :label="t('Resolved')" :value="formatNumber(reportsState.counts?.resolved ?? 0)" tone="success" :sublabel="t('all time')" />
+        <KpiTile :label="t(`Won't fix`)" :value="formatNumber(reportsState.counts?.wont_fix ?? 0)" tone="muted" :sublabel="t('all time')" />
+        <KpiTile
+          :label="t('Open ticket queue')"
+          tone="primary"
+          clickable
           @click="router.push({ name: 'admin-reports' })"
-          class="bg-primary/10 border border-primary/40 rounded-xl p-4 text-left transition-colors hover:bg-primary/15 flex flex-col"
         >
-          <div class="text-[10px] uppercase tracking-wide text-primary/70">{{ t('Open ticket queue') }}</div>
-          <div class="flex-1 flex items-center mt-1">
-            <Icon name="mdiArrowRight" :size="22" class="text-primary" />
-            <span class="text-sm font-semibold text-primary ml-2">{{ t('Go to reports') }}</span>
-          </div>
-        </button>
+          <template #value>
+            <div class="flex items-center text-sm font-semibold text-primary mt-1">
+              <Icon name="mdiArrowRight" :size="22" class="text-primary mr-2" />
+              {{ t('Go to reports') }}
+            </div>
+          </template>
+        </KpiTile>
       </section>
 
       <!-- Trend chart -->
@@ -176,15 +145,15 @@ const oldestRefresh = computed(() => {
             <h3 class="font-semibold text-sm">{{ t('Active users trend') }}</h3>
             <p class="text-[11px] text-muted">{{ t('Daily distinct users, last {n} days', { n: state.trendDays }) }}</p>
           </div>
-          <select
-            :value="state.trendDays"
-            @change="setTrendDays(Number($event.target.value))"
-            class="bg-surface border border-border rounded px-2 py-1 text-xs"
+          <SelectField
+            :model-value="state.trendDays"
+            dense
+            @update:modelValue="setTrendDays(Number($event))"
           >
             <option :value="7">{{ t('Last 7 days') }}</option>
             <option :value="30">{{ t('Last 30 days') }}</option>
             <option :value="90">{{ t('Last 90 days') }}</option>
-          </select>
+          </SelectField>
         </header>
         <div v-if="!state.trend.length" class="text-sm text-muted py-8 text-center">
           {{ t('No data in range.') }}
@@ -237,65 +206,41 @@ const oldestRefresh = computed(() => {
           </div>
         </section>
 
-        <section class="bg-surface-soft border border-border rounded-xl p-4">
+        <section>
           <h3 class="font-semibold text-sm mb-3">{{ t('Top sites by activity (30d)') }}</h3>
-          <div v-if="!state.sites.length" class="text-sm text-muted text-center py-6">
-            {{ t('No sites tracked yet.') }}
-          </div>
-          <table v-else class="w-full text-sm">
-            <thead class="text-[10px] uppercase tracking-wide text-muted/60">
-              <tr>
-                <th class="text-left font-medium pb-1">{{ t('Origin') }}</th>
-                <th class="text-right font-medium pb-1">{{ t('Runs') }}</th>
-                <th class="text-right font-medium pb-1">{{ t('Errors') }}</th>
-                <th class="text-right font-medium pb-1">{{ t('Warnings') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="s in state.sites" :key="s.origin" class="border-t border-border/30">
-                <td class="py-1.5 text-[11px] truncate max-w-[180px]" :title="s.origin">
-                  {{ shortHost(s.origin) }}
-                </td>
-                <td class="py-1.5 text-[11px] text-right tabular-nums">{{ formatNumber(s.run_count) }}</td>
-                <td class="py-1.5 text-[11px] text-right tabular-nums" :class="Number(s.error_total) > 0 && 'text-error'">
-                  {{ formatNumber(s.error_total) }}
-                </td>
-                <td class="py-1.5 text-[11px] text-right tabular-nums text-muted">{{ formatNumber(s.warning_total) }}</td>
-              </tr>
-            </tbody>
-          </table>
+          <DataTable
+            :rows="state.sites"
+            :columns="sitesColumns"
+            :empty-text="t('No sites tracked yet.')"
+            :row-key="s => s.origin"
+            dense
+            min-width="480px"
+          >
+            <template #cell-origin="{ row }"><CellOrigin :value="row.origin" /></template>
+            <template #cell-runs="{ row }"><CellNumber :value="row.run_count" /></template>
+            <template #cell-errors="{ row }"><CellNumber :value="row.error_total" error-when="> 0" /></template>
+            <template #cell-warnings="{ row }"><CellNumber :value="row.warning_total" muted-when=">= 0" /></template>
+          </DataTable>
         </section>
       </div>
 
       <!-- Activity stream -->
       <AdminActivityStream :limit="25" />
 
-      <!-- Top users -->
-      <section v-if="state.topUsers.length" class="bg-surface-soft border border-border rounded-xl p-4">
+      <section v-if="state.topUsers.length">
         <h3 class="font-semibold text-sm mb-3">{{ t('Most active users (30d)') }}</h3>
-        <table class="w-full text-sm">
-          <thead class="text-[10px] uppercase tracking-wide text-muted/60">
-            <tr>
-              <th class="text-left font-medium pb-1">{{ t('User') }}</th>
-              <th class="text-right font-medium pb-1">{{ t('Events') }}</th>
-              <th class="text-right font-medium pb-1">{{ t('Checks') }}</th>
-              <th class="text-right font-medium pb-1">{{ t('Last seen') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="u in state.topUsers" :key="u.user_id" class="border-t border-border/30">
-              <td class="py-1.5 text-[11px]">
-                <span class="font-medium">
-                  {{ u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : (u.email || u.user_id?.slice(0, 8)) }}
-                </span>
-                <span class="text-muted/60 ml-1">{{ u.email }}</span>
-              </td>
-              <td class="py-1.5 text-[11px] text-right tabular-nums">{{ formatNumber(u.event_count) }}</td>
-              <td class="py-1.5 text-[11px] text-right tabular-nums">{{ formatNumber(u.check_count) }}</td>
-              <td class="py-1.5 text-[11px] text-right text-muted">{{ relative(u.last_seen_at) }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <DataTable
+          :rows="state.topUsers"
+          :columns="topUsersColumns"
+          :row-key="u => u.user_id"
+          dense
+          min-width="600px"
+        >
+          <template #cell-user="{ row }"><CellUser :user="row" show-email /></template>
+          <template #cell-events="{ row }"><CellNumber :value="row.event_count" /></template>
+          <template #cell-checks="{ row }"><CellNumber :value="row.check_count" /></template>
+          <template #cell-seen="{ row }"><CellTimestamp :value="row.last_seen_at" mode="relative" /></template>
+        </DataTable>
       </section>
     </div>
   </div>

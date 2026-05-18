@@ -98,20 +98,10 @@ function relative(ts) {
 
     <div v-if="error" class="bg-error/10 border border-error/40 rounded-xl p-4 mb-4 text-sm text-error">{{ error }}</div>
 
-    <!-- Roll-up tiles -->
     <section class="grid grid-cols-3 gap-3 mb-6">
-      <div class="bg-surface-soft border border-border rounded-xl p-4">
-        <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Healthy') }}</div>
-        <div class="text-2xl font-bold tabular-nums mt-1 text-success">{{ okCount }}</div>
-      </div>
-      <div class="bg-surface-soft border border-border rounded-xl p-4">
-        <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Failing') }}</div>
-        <div class="text-2xl font-bold tabular-nums mt-1" :class="failCount ? 'text-error' : 'text-muted'">{{ failCount }}</div>
-      </div>
-      <div class="bg-surface-soft border border-border rounded-xl p-4">
-        <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Skipped') }}</div>
-        <div class="text-2xl font-bold tabular-nums mt-1 text-muted">{{ skipCount }}</div>
-      </div>
+      <KpiTile :label="t('Healthy')" :value="okCount"   tone="success" />
+      <KpiTile :label="t('Failing')" :value="failCount" :tone="failCount ? 'error' : 'muted'" />
+      <KpiTile :label="t('Skipped')" :value="skipCount" tone="muted" />
     </section>
 
     <!-- Per-service cards -->

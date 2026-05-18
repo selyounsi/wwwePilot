@@ -40,26 +40,15 @@ async function confirmRevoke() {
   finally { pendingRevoke.value = null }
 }
 
-function statusBadge(status) {
-  switch (status) {
-    case 'active':  return 'bg-success/15 text-success'
-    case 'expired': return 'bg-alert/15   text-alert'
-    case 'revoked': return 'bg-error/15   text-error'
-    default:        return 'bg-surface    text-muted'
-  }
-}
-function fmtDate(ts) { return ts ? new Date(ts).toLocaleString() : '—' }
-function relative(ts) {
-  if (!ts) return '—'
-  const diff = Date.now() - new Date(ts).getTime()
-  const min  = Math.floor(diff / 60_000)
-  if (min < 1)  return t('just now')
-  if (min < 60) return t('{n} min ago', { n: min })
-  const h = Math.floor(min / 60)
-  if (h < 24)   return t('{n} h ago', { n: h })
-  const d = Math.floor(h / 24)
-  return t('{n} d ago', { n: d })
-}
+const columns = [
+  { key: 'name',        label: 'Name',        minWidth: 160, truncate: true, titleFrom: r => r.name },
+  { key: 'prefix',      label: 'Prefix',      minWidth: 130 },
+  { key: 'permissions', label: 'Permissions', minWidth: 240 },
+  { key: 'status',      label: 'Status',      minWidth: 90 },
+  { key: 'lastUsed',    label: 'Last used',   minWidth: 110 },
+  { key: 'expires',     label: 'Expires',     minWidth: 150 },
+  { key: 'created',     label: 'Created',     minWidth: 110 },
+]
 </script>
 
 <template>
@@ -81,60 +70,51 @@ function relative(ts) {
       >{{ t('New token') }}</BaseButton>
     </header>
 
-    <div v-if="state.error" class="bg-error/10 border border-error/40 rounded-xl p-4 mb-4 text-sm text-error">{{ state.error }}</div>
-
-    <div v-if="state.loading && !state.tokens.length" class="flex items-center justify-center py-12"><LoadingSpinner /></div>
-
-    <div v-else class="bg-surface-soft border border-border rounded-xl overflow-hidden">
-      <table v-if="state.tokens.length" class="w-full text-sm">
-        <thead class="bg-surface text-[10px] uppercase tracking-wide text-muted">
-          <tr>
-            <th class="text-left px-4 py-2.5 font-medium">{{ t('Name') }}</th>
-            <th class="text-left px-2 py-2.5 font-medium">{{ t('Prefix') }}</th>
-            <th class="text-left px-2 py-2.5 font-medium">{{ t('Permissions') }}</th>
-            <th class="text-left px-2 py-2.5 font-medium">{{ t('Status') }}</th>
-            <th class="text-left px-2 py-2.5 font-medium">{{ t('Last used') }}</th>
-            <th class="text-left px-2 py-2.5 font-medium">{{ t('Expires') }}</th>
-            <th class="text-left px-2 py-2.5 font-medium">{{ t('Created') }}</th>
-            <th class="px-4 py-2.5"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="tok in state.tokens" :key="tok.id" class="border-t border-border/40">
-            <td class="px-4 py-2.5 text-[11px]">{{ tok.name }}</td>
-            <td class="px-2 py-2.5">
-              <code class="text-[10px] text-muted font-mono">sk_{{ tok.prefix }}…</code>
-            </td>
-            <td class="px-2 py-2.5">
-              <div class="flex flex-wrap gap-1 max-w-xs">
-                <span
-                  v-for="p in tok.permissions" :key="p"
-                  class="text-[10px] px-1.5 py-0.5 rounded"
-                  :class="p === '*' ? 'bg-error/15 text-error' : 'bg-primary/10 text-primary'"
-                >{{ p }}</span>
-              </div>
-            </td>
-            <td class="px-2 py-2.5">
-              <span class="text-[10px] px-1.5 py-0.5 rounded" :class="statusBadge(tok.status)">{{ t(tok.status) }}</span>
-            </td>
-            <td class="px-2 py-2.5 text-[10px] text-muted">{{ relative(tok.lastUsedAt) }}</td>
-            <td class="px-2 py-2.5 text-[10px] text-muted">{{ tok.expiresAt ? fmtDate(tok.expiresAt) : t('never') }}</td>
-            <td class="px-2 py-2.5 text-[10px] text-muted">{{ relative(tok.createdAt) }}</td>
-            <td class="px-4 py-2.5 text-right">
-              <button
-                v-if="canWrite && tok.status === 'active'"
-                class="p-1.5 rounded hover:bg-error/10 text-error/70 hover:text-error transition-colors"
-                :title="t('Revoke')"
-                @click="askRevoke(tok)"
-              >
-                <Icon name="mdiKeyRemove" :size="13" />
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <p v-else class="px-4 py-8 text-center text-sm text-muted">{{ t('No tokens yet.') }}</p>
-    </div>
+    <DataTable
+      :rows="state.tokens"
+      :columns="columns"
+      :loading="state.loading"
+      :error="state.error"
+      :empty-text="t('No tokens yet.')"
+      min-width="1100px"
+    >
+      <template #cell-name="{ row }">{{ row.name }}</template>
+      <template #cell-prefix="{ row }">
+        <code class="text-[10px] text-muted font-mono">sk_{{ row.prefix }}…</code>
+      </template>
+      <template #cell-permissions="{ row }">
+        <div class="flex flex-wrap gap-1 max-w-xs">
+          <span
+            v-for="p in row.permissions" :key="p"
+            class="text-[10px] px-1.5 py-0.5 rounded"
+            :class="p === '*' ? 'bg-error/15 text-error' : 'bg-primary/10 text-primary'"
+          >{{ p }}</span>
+        </div>
+      </template>
+      <template #cell-status="{ row }">
+        <CellBadge variant="status" :value="row.status" />
+      </template>
+      <template #cell-lastUsed="{ row }">
+        <CellTimestamp :value="row.lastUsedAt" mode="relative" />
+      </template>
+      <template #cell-expires="{ row }">
+        <CellTimestamp v-if="row.expiresAt" :value="row.expiresAt" mode="absolute" />
+        <span v-else class="text-[10px] text-muted/60">{{ t('never') }}</span>
+      </template>
+      <template #cell-created="{ row }">
+        <CellTimestamp :value="row.createdAt" mode="relative" />
+      </template>
+      <template #row-actions="{ row: tok }">
+        <button
+          v-if="canWrite && tok.status === 'active'"
+          class="p-1.5 rounded hover:bg-error/10 text-error/70 hover:text-error transition-colors"
+          :title="t('Revoke')"
+          @click="askRevoke(tok)"
+        >
+          <Icon name="mdiKeyRemove" :size="13" />
+        </button>
+      </template>
+    </DataTable>
 
     <ApiTokenCreateModal
       :open="createOpen"

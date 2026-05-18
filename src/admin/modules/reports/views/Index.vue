@@ -51,41 +51,20 @@ function downloadCSV() {
   })
 }
 
-function openReport(id) {
-  router.push({ name: 'admin-report-detail', params: { id } })
+function openReport(r) {
+  router.push({ name: 'admin-report-detail', params: { id: r.id } })
 }
 
-function formatTime(ts) { return new Date(ts).toLocaleString() }
-
-function userLabel(r) {
-  if (r.first_name && r.last_name) return `${r.first_name} ${r.last_name}`
-  return r.email || (r.user_id ? r.user_id.slice(0, 8) : '—')
-}
-
-function assigneeLabel(r) {
-  if (!r.assigned_to) return null
-  if (r.assignee_first_name && r.assignee_last_name) return `${r.assignee_first_name} ${r.assignee_last_name}`
-  return r.assignee_email || r.assigned_to.slice(0, 8)
-}
-
-function statusColor(s) {
-  switch (s) {
-    case 'open':          return 'bg-alert/15 text-alert'
-    case 'investigating': return 'bg-primary/15 text-primary'
-    case 'resolved':      return 'bg-success/15 text-success'
-    case 'wont_fix':      return 'bg-surface text-muted'
-    default:              return 'bg-surface text-light'
-  }
-}
-
-function severityColor(s) {
-  switch (s) {
-    case 'high':   return 'bg-error/15 text-error'
-    case 'medium': return 'bg-alert/15 text-alert'
-    case 'low':    return 'bg-surface text-muted'
-    default:       return 'bg-surface text-muted'
-  }
-}
+const columns = [
+  { key: 'type',     label: 'Type',        minWidth: 150 },
+  { key: 'title',    label: 'Title',       minWidth: 240, truncate: true, titleFrom: r => r.title },
+  { key: 'user',     label: 'User',        minWidth: 140 },
+  { key: 'assignee', label: 'Assigned to', minWidth: 140 },
+  { key: 'when',     label: 'When',        minWidth: 150 },
+  { key: 'severity', label: 'Severity',    minWidth: 90 },
+  { key: 'status',   label: 'Status',      minWidth: 110 },
+  { key: 'comments', label: 'Comments',    minWidth: 80, align: 'right' },
+]
 
 function categoryLabel(c) {
   switch (c) {
@@ -93,15 +72,6 @@ function categoryLabel(c) {
     case 'false_positive':  return t('False positive')
     case 'feature_request': return t('Feature request')
     default:                return t('Other')
-  }
-}
-
-function categoryColor(c) {
-  switch (c) {
-    case 'bug':             return 'bg-error/15   text-error'
-    case 'false_positive':  return 'bg-alert/15   text-alert'
-    case 'feature_request': return 'bg-primary/15 text-primary'
-    default:                return 'bg-surface    text-muted'
   }
 }
 
@@ -120,15 +90,6 @@ function scopeLabel(s) {
     case 'module':      return t('Module')
     case 'module_item': return t('Finding')
     default:            return s
-  }
-}
-
-function scopeColor(s) {
-  switch (s) {
-    case 'app':         return 'bg-primary/15 text-primary'
-    case 'module':      return 'bg-alert/15   text-alert'
-    case 'module_item': return 'bg-error/15   text-error'
-    default:            return 'bg-surface    text-muted'
   }
 }
 
@@ -161,12 +122,12 @@ const inflowMax = computed(() => {
 
 <template>
   <div class="p-6">
-    <header class="mb-6 flex items-start justify-between gap-3">
-      <div>
+    <header class="mb-6 flex items-start justify-between gap-3 flex-wrap">
+      <div class="min-w-0">
         <h2 class="text-xl font-bold">{{ t('Reports') }}</h2>
         <p class="text-xs text-muted mt-0.5">{{ t('User-submitted bug reports, feature requests and false-positive flags.') }}</p>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 shrink-0">
         <BaseButton
           variant="pill"
           :icon="statsOpen ? 'mdiChevronUp' : 'mdiChartBoxOutline'"
@@ -232,99 +193,84 @@ const inflowMax = computed(() => {
       </div>
     </section>
 
-    <section class="grid grid-cols-4 gap-3 mb-6">
-      <button
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <KpiTile
         v-for="(count, status) in state.counts" :key="status"
+        :label="t(status)"
+        :value="count"
+        :active="filterStatus === status"
+        clickable
         @click="filterStatus = status; applyFilter()"
-        class="bg-surface-soft border rounded-xl p-4 text-left transition-colors hover:bg-surface-soft-hover"
-        :class="filterStatus === status ? 'border-primary/60' : 'border-border'"
-      >
-        <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t(status) }}</div>
-        <div class="text-2xl font-bold tabular-nums mt-1">{{ count }}</div>
-      </button>
+      />
     </section>
 
-    <section class="bg-surface-soft border border-border rounded-xl">
-      <div class="px-4 py-3 border-b border-border/60 flex flex-wrap gap-2 items-center">
-        <select v-model="filterStatus" class="bg-surface border border-border rounded px-2 py-1.5 text-xs">
-          <option value="">{{ t('All statuses') }}</option>
-          <option value="open">{{ t('Open') }}</option>
-          <option value="investigating">{{ t('Investigating') }}</option>
-          <option value="resolved">{{ t('Resolved') }}</option>
-          <option value="wont_fix">{{ t("Won't fix") }}</option>
-        </select>
-        <select v-model="filterCategory" class="bg-surface border border-border rounded px-2 py-1.5 text-xs">
-          <option value="">{{ t('All categories') }}</option>
-          <option value="bug">{{ t('Bug') }}</option>
-          <option value="false_positive">{{ t('False positive') }}</option>
-          <option value="feature_request">{{ t('Feature request') }}</option>
-          <option value="other">{{ t('Other') }}</option>
-        </select>
-        <select v-model="filterScope" class="bg-surface border border-border rounded px-2 py-1.5 text-xs">
-          <option value="">{{ t('All scopes') }}</option>
-          <option value="app">{{ t('App-wide') }}</option>
-          <option value="module">{{ t('Module-scoped') }}</option>
-          <option value="module_item">{{ t('Item-scoped') }}</option>
-        </select>
+    <DataTable
+      :rows="state.reports"
+      :columns="columns"
+      :loading="state.loading"
+      :error="state.error"
+      :on-row-click="openReport"
+      :empty-text="t('No reports yet.')"
+      min-width="900px"
+    >
+      <template #toolbar>
+        <SelectField v-model="filterStatus" dense :options="[
+          { value: '',              label: 'All statuses' },
+          { value: 'open',          label: 'Open' },
+          { value: 'investigating', label: 'Investigating' },
+          { value: 'resolved',      label: 'Resolved' },
+          { value: 'wont_fix',      label: `Won't fix` },
+        ]" />
+        <SelectField v-model="filterCategory" dense :options="[
+          { value: '',                label: 'All categories' },
+          { value: 'bug',             label: 'Bug' },
+          { value: 'false_positive',  label: 'False positive' },
+          { value: 'feature_request', label: 'Feature request' },
+          { value: 'other',           label: 'Other' },
+        ]" />
+        <SelectField v-model="filterScope" dense :options="[
+          { value: '',            label: 'All scopes' },
+          { value: 'app',         label: 'App-wide' },
+          { value: 'module',      label: 'Module-scoped' },
+          { value: 'module_item', label: 'Item-scoped' },
+        ]" />
         <BaseButton variant="pill" class="bg-primary! border-primary! text-black/80!" @click="applyFilter">{{ t('Apply') }}</BaseButton>
-      </div>
+      </template>
 
-      <div v-if="state.loading" class="flex items-center justify-center py-12">
-        <LoadingSpinner />
-      </div>
+      <template #cell-type="{ row }">
+        <div class="inline-flex flex-col gap-1">
+          <CellBadge variant="scope" :value="row.scope" :icon="scopeIcon(row.scope)" :label="scopeLabel(row.scope)" />
+          <CellBadge variant="category" :value="row.category" :icon="categoryIcon(row.category)" :label="categoryLabel(row.category)" />
+        </div>
+      </template>
 
-      <div v-else-if="state.error" class="p-4 text-error text-sm">{{ state.error }}</div>
+      <template #cell-title="{ row }">
+        <span class="text-[11px]">{{ row.title }}</span>
+      </template>
 
-      <table v-else-if="state.reports.length" class="w-full text-sm">
-        <thead class="text-xs uppercase tracking-wide text-muted">
-          <tr>
-            <th class="text-left px-4 py-2 font-medium">{{ t('Type') }}</th>
-            <th class="text-left px-4 py-2 font-medium">{{ t('Title') }}</th>
-            <th class="text-left px-4 py-2 font-medium">{{ t('User') }}</th>
-            <th class="text-left px-4 py-2 font-medium">{{ t('Assigned to') }}</th>
-            <th class="text-left px-4 py-2 font-medium">{{ t('When') }}</th>
-            <th class="text-left px-4 py-2 font-medium">{{ t('Severity') }}</th>
-            <th class="text-left px-4 py-2 font-medium">{{ t('Status') }}</th>
-            <th class="text-right px-4 py-2 font-medium">{{ t('Comments') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="r in state.reports" :key="r.id"
-            @click="openReport(r.id)"
-            class="border-t border-border/40 hover:bg-surface-soft-hover cursor-pointer"
-          >
-            <td class="px-4 py-2 whitespace-nowrap">
-              <div class="inline-flex flex-col gap-1">
-                <span class="text-[10px] px-1.5 py-0.5 rounded inline-flex items-center gap-1 w-fit" :class="scopeColor(r.scope)">
-                  <Icon :name="scopeIcon(r.scope)" :size="11" />
-                  {{ scopeLabel(r.scope) }}
-                  <code v-if="r.module_id" class="ml-1 font-mono opacity-70">{{ r.module_id }}</code>
-                </span>
-                <span class="text-[10px] px-1.5 py-0.5 rounded inline-flex items-center gap-1 w-fit" :class="categoryColor(r.category)">
-                  <Icon :name="categoryIcon(r.category)" :size="11" />
-                  {{ categoryLabel(r.category) }}
-                </span>
-              </div>
-            </td>
-            <td class="px-4 py-2 text-[11px] max-w-80 truncate" :title="r.title">{{ r.title }}</td>
-            <td class="px-4 py-2 text-[11px]">{{ userLabel(r) }}</td>
-            <td class="px-4 py-2 text-[11px]">
-              <span v-if="assigneeLabel(r)">{{ assigneeLabel(r) }}</span>
-              <span v-else class="text-muted/60 italic">{{ t('Unassigned') }}</span>
-            </td>
-            <td class="px-4 py-2 text-[11px] text-muted whitespace-nowrap tabular-nums">{{ formatTime(r.created_at) }}</td>
-            <td class="px-4 py-2">
-              <span class="text-[10px] px-1.5 py-0.5 rounded" :class="severityColor(r.severity)">{{ t(r.severity) }}</span>
-            </td>
-            <td class="px-4 py-2">
-              <span class="text-[10px] px-1.5 py-0.5 rounded" :class="statusColor(r.status)">{{ t(r.status) }}</span>
-            </td>
-            <td class="px-4 py-2 text-[11px] text-right tabular-nums">{{ r.comment_count }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <p v-else class="px-4 py-8 text-center text-sm text-muted">{{ t('No reports yet.') }}</p>
-    </section>
+      <template #cell-user="{ row }">
+        <CellUser :user="row" />
+      </template>
+
+      <template #cell-assignee="{ row }">
+        <CellUser :user="row" prefix="assignee" :empty-label="t('Unassigned')" />
+      </template>
+
+      <template #cell-when="{ row }">
+        <CellTimestamp :value="row.created_at" mode="both" />
+      </template>
+
+      <template #cell-severity="{ row }">
+        <CellBadge variant="severity" :value="row.severity" />
+      </template>
+
+      <template #cell-status="{ row }">
+        <CellBadge variant="status" :value="row.status" />
+      </template>
+
+      <template #cell-comments="{ row }">
+        <CellNumber :value="row.comment_count" />
+      </template>
+    </DataTable>
   </div>
 </template>

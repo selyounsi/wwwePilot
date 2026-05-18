@@ -51,34 +51,6 @@ function userLabel(u) {
   return u.name || u.email || u.id.slice(0, 8)
 }
 
-function formatTime(ts) { return ts ? new Date(ts).toLocaleString() : '—' }
-
-function relative(ts) {
-  if (!ts) return '—'
-  const diff = Date.now() - new Date(ts).getTime()
-  const min  = Math.floor(diff / 60_000)
-  if (min < 1)  return t('just now')
-  if (min < 60) return t('{n} min ago', { n: min })
-  const h = Math.floor(min / 60)
-  if (h < 24)   return t('{n} h ago', { n: h })
-  const d = Math.floor(h / 24)
-  return t('{n} d ago', { n: d })
-}
-
-function shortHost(origin) {
-  try { return new URL(origin).host } catch { return origin }
-}
-
-function statusColor(s) {
-  switch (s) {
-    case 'running':   return 'bg-primary/15 text-primary'
-    case 'finished':  return 'bg-success/15 text-success'
-    case 'cancelled': return 'bg-alert/15  text-alert'
-    case 'aborted':   return 'bg-error/15  text-error'
-    default:          return 'bg-surface   text-light'
-  }
-}
-
 async function saveNote() {
   try {
     const result = await updateUser(id.value, { adminNote: noteDraft.value || null })
@@ -144,18 +116,35 @@ async function onDelete() {
   } catch (e) { toast.error(e.message) }
 }
 
-function openRun(runId) {
-  router.push({ name: 'admin-run-detail', params: { id: runId } })
-}
+function openRun(r)  { router.push({ name: 'admin-run-detail',  params: { id: r.id } }) }
+function openSite(s) { router.push({ name: 'admin-site-detail', params: { origin: encodeURIComponent(s.origin) } }) }
 
-function openSite(origin) {
-  router.push({ name: 'admin-site-detail', params: { origin: encodeURIComponent(origin) } })
-}
+const sitesColumns = [
+  { key: 'origin',   label: 'Origin',   minWidth: 200, truncate: true, titleFrom: s => s.origin },
+  { key: 'runs',     label: 'Runs',     minWidth: 70,  align: 'right' },
+  { key: 'errors',   label: 'Errors',   minWidth: 70,  align: 'right' },
+  { key: 'lastRun',  label: 'Last run', minWidth: 110, align: 'right' },
+]
+
+const runsColumns = [
+  { key: 'when',     label: 'When',     minWidth: 150 },
+  { key: 'origin',   label: 'Origin',   minWidth: 200, truncate: true, titleFrom: r => r.origin },
+  { key: 'kind',     label: 'Kind',     minWidth: 100 },
+  { key: 'status',   label: 'Status',   minWidth: 110 },
+  { key: 'errors',   label: 'Errors',   minWidth: 70, align: 'right' },
+  { key: 'warnings', label: 'Warnings', minWidth: 80, align: 'right' },
+]
+
+const eventsColumns = [
+  { key: 'when',   label: 'When',   minWidth: 150 },
+  { key: 'type',   label: 'Type',   minWidth: 200 },
+  { key: 'target', label: 'Target', minWidth: 200, truncate: true, titleFrom: e => e.target ?? '' },
+]
 </script>
 
 <template>
   <div class="p-6">
-    <header class="mb-6 flex items-center gap-3">
+    <header class="mb-6 flex items-center gap-3 flex-wrap">
       <BaseButton variant="pill" icon="mdiArrowLeft" :icon-size="13" @click="router.back()">
         {{ t('Back') }}
       </BaseButton>
@@ -163,7 +152,7 @@ function openSite(origin) {
         <h2 class="text-xl font-bold truncate">{{ userLabel(data?.user) }}</h2>
         <p class="text-[11px] text-muted font-mono truncate">{{ data?.user?.email }} · {{ id }}</p>
       </div>
-      <div v-if="canWriteUsers && data?.user && !data.user.isSuperAdmin" class="inline-flex gap-1">
+      <div v-if="canWriteUsers && data?.user && !data.user.isSuperAdmin" class="inline-flex gap-1 flex-wrap">
         <BaseButton
           v-if="data.user.suspendedAt"
           variant="pill"
@@ -197,9 +186,8 @@ function openSite(origin) {
     <div v-else-if="error" class="bg-error/10 border border-error/40 rounded-xl p-4 text-sm text-error">{{ error }}</div>
 
     <div v-else-if="data?.user" class="space-y-6">
-      <!-- Profile + status -->
-      <section class="bg-surface-soft border border-border rounded-xl p-4 grid grid-cols-4 gap-4">
-        <div class="col-span-1 flex items-center gap-3">
+      <section class="bg-surface-soft border border-border rounded-xl p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="col-span-2 md:col-span-1 flex items-center gap-3">
           <UserAvatar :user="data.user" :size="48" />
           <div class="min-w-0">
             <div class="font-semibold truncate">{{ userLabel(data.user) }}</div>
@@ -208,51 +196,38 @@ function openSite(origin) {
         </div>
         <div>
           <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Status') }}</div>
-          <div class="mt-1">
-            <span v-if="data.user.suspendedAt" class="text-[11px] px-1.5 py-0.5 rounded bg-error/15 text-error">{{ t('Suspended') }}</span>
-            <span v-else class="text-[11px] px-1.5 py-0.5 rounded bg-success/15 text-success">{{ t('Active') }}</span>
-            <span v-if="data.user.isSuperAdmin" class="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-primary/20 text-primary">{{ t('Superadmin') }}</span>
+          <div class="mt-1 flex flex-wrap gap-1">
+            <CellBadge v-if="data.user.suspendedAt" variant="status" value="suspended" />
+            <CellBadge v-else variant="status" value="active" />
+            <span v-if="data.user.isSuperAdmin" class="text-[10px] px-1.5 py-0.5 rounded bg-primary/20 text-primary">{{ t('Superadmin') }}</span>
           </div>
         </div>
         <div>
           <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('First login') }}</div>
-          <div class="mt-1 text-xs">{{ formatTime(data.user.firstLoginAt) }}</div>
+          <div class="mt-1 text-xs"><CellTimestamp :value="data.user.firstLoginAt" mode="absolute" /></div>
         </div>
         <div>
           <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Last seen') }}</div>
-          <div class="mt-1 text-xs">{{ relative(data.user.lastSeenAt) }}</div>
+          <div class="mt-1 text-xs"><CellTimestamp :value="data.user.lastSeenAt" mode="relative" /></div>
         </div>
-        <div v-if="data.user.companyName" class="col-span-4">
+        <div v-if="data.user.companyName" class="col-span-2 md:col-span-4">
           <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Company') }}</div>
           <div class="mt-1 text-sm">{{ data.user.companyName }}</div>
         </div>
       </section>
 
-      <!-- Activity KPIs -->
-      <section v-if="data.aggregate" class="grid grid-cols-4 gap-3">
-        <div class="bg-surface-soft border border-border rounded-xl p-4">
-          <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Total runs') }}</div>
-          <div class="text-2xl font-bold tabular-nums mt-1">{{ data.aggregate.run_count ?? 0 }}</div>
-          <div class="text-[11px] text-muted mt-1">
-            {{ data.aggregate.single_page_runs ?? 0 }} {{ t('single') }} · {{ data.aggregate.site_wide_runs ?? 0 }} {{ t('site-wide') }}
-          </div>
-        </div>
-        <div class="bg-surface-soft border border-border rounded-xl p-4">
-          <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Unique sites') }}</div>
-          <div class="text-2xl font-bold tabular-nums mt-1">{{ data.aggregate.unique_origins ?? 0 }}</div>
-        </div>
-        <div class="bg-surface-soft border border-border rounded-xl p-4">
-          <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Errors caught') }}</div>
-          <div class="text-2xl font-bold tabular-nums mt-1 text-error">{{ data.aggregate.error_total ?? 0 }}</div>
-        </div>
-        <div class="bg-surface-soft border border-border rounded-xl p-4">
-          <div class="text-[10px] uppercase tracking-wide text-muted/60">{{ t('Warnings caught') }}</div>
-          <div class="text-2xl font-bold tabular-nums mt-1">{{ data.aggregate.warning_total ?? 0 }}</div>
-        </div>
+      <section v-if="data.aggregate" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <KpiTile
+          :label="t('Total runs')"
+          :value="data.aggregate.run_count ?? 0"
+          :sublabel="`${data.aggregate.single_page_runs ?? 0} ${t('single')} · ${data.aggregate.site_wide_runs ?? 0} ${t('site-wide')}`"
+        />
+        <KpiTile :label="t('Unique sites')"   :value="data.aggregate.unique_origins ?? 0" />
+        <KpiTile :label="t('Errors caught')"  :value="data.aggregate.error_total ?? 0"   tone="error" />
+        <KpiTile :label="t('Warnings caught')" :value="data.aggregate.warning_total ?? 0" />
       </section>
 
-      <!-- Roles + admin note -->
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <section class="bg-surface-soft border border-border rounded-xl p-4">
           <header class="flex items-center justify-between mb-3">
             <h3 class="font-semibold text-sm">{{ t('Roles') }}</h3>
@@ -306,11 +281,10 @@ function openSite(origin) {
             </BaseButton>
           </header>
           <template v-if="editingNote">
-            <textarea
+            <TextareaField
               v-model="noteDraft"
-              rows="4"
+              :rows="4"
               :placeholder="t('Internal note about this user — not visible to the user themselves.')"
-              class="w-full bg-surface border border-border rounded px-2 py-1.5 text-sm resize-y focus:outline-none focus:border-primary/60"
             />
             <div class="mt-2 flex justify-end">
               <BaseButton variant="pill" class="bg-primary! border-primary! text-black/80!" @click="saveNote">{{ t('Save') }}</BaseButton>
@@ -321,99 +295,65 @@ function openSite(origin) {
         </section>
       </div>
 
-      <!-- Top sites -->
-      <section v-if="data.topSites?.length" class="bg-surface-soft border border-border rounded-xl">
-        <header class="px-4 py-3 border-b border-border/60">
-          <h3 class="font-semibold text-sm">{{ t('Top sites checked') }}</h3>
-        </header>
-        <table class="w-full text-sm">
-          <thead class="text-xs uppercase tracking-wide text-muted">
-            <tr>
-              <th class="text-left px-4 py-2 font-medium">{{ t('Origin') }}</th>
-              <th class="text-right px-4 py-2 font-medium">{{ t('Runs') }}</th>
-              <th class="text-right px-4 py-2 font-medium">{{ t('Errors') }}</th>
-              <th class="text-right px-4 py-2 font-medium">{{ t('Last run') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="s in data.topSites" :key="s.origin"
-              @click="openSite(s.origin)"
-              class="border-t border-border/30 hover:bg-surface-soft-hover cursor-pointer"
-            >
-              <td class="px-4 py-2 text-[11px]">{{ shortHost(s.origin) }}</td>
-              <td class="px-4 py-2 text-[11px] text-right tabular-nums">{{ s.run_count }}</td>
-              <td class="px-4 py-2 text-[11px] text-right tabular-nums" :class="s.error_total > 0 && 'text-error'">{{ s.error_total }}</td>
-              <td class="px-4 py-2 text-[11px] text-right text-muted">{{ relative(s.last_run_at) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
+      <div>
+        <h3 class="font-semibold text-sm mb-2">{{ t('Top sites checked') }}</h3>
+        <DataTable
+          :rows="data.topSites ?? []"
+          :columns="sitesColumns"
+          :on-row-click="openSite"
+          :empty-text="t('No sites yet.')"
+          :row-key="s => s.origin"
+          dense
+          min-width="600px"
+        >
+          <template #cell-origin="{ row }"><CellOrigin :value="row.origin" /></template>
+          <template #cell-runs="{ row }"><CellNumber :value="row.run_count" /></template>
+          <template #cell-errors="{ row }"><CellNumber :value="row.error_total" error-when="> 0" /></template>
+          <template #cell-lastRun="{ row }"><CellTimestamp :value="row.last_run_at" mode="relative" /></template>
+        </DataTable>
+      </div>
 
-      <!-- Recent runs -->
-      <section class="bg-surface-soft border border-border rounded-xl">
-        <header class="px-4 py-3 border-b border-border/60">
-          <h3 class="font-semibold text-sm">{{ t('Recent runs') }}</h3>
-        </header>
-        <table v-if="data.recentRuns?.length" class="w-full text-sm">
-          <thead class="text-xs uppercase tracking-wide text-muted">
-            <tr>
-              <th class="text-left px-4 py-2 font-medium">{{ t('When') }}</th>
-              <th class="text-left px-4 py-2 font-medium">{{ t('Origin') }}</th>
-              <th class="text-left px-4 py-2 font-medium">{{ t('Kind') }}</th>
-              <th class="text-left px-4 py-2 font-medium">{{ t('Status') }}</th>
-              <th class="text-right px-4 py-2 font-medium">{{ t('Errors') }}</th>
-              <th class="text-right px-4 py-2 font-medium">{{ t('Warnings') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="r in data.recentRuns" :key="r.id"
-              @click="openRun(r.id)"
-              class="border-t border-border/30 hover:bg-surface-soft-hover cursor-pointer"
-            >
-              <td class="px-4 py-2 text-[11px] text-muted whitespace-nowrap tabular-nums">{{ formatTime(r.started_at) }}</td>
-              <td class="px-4 py-2 text-[11px]">{{ shortHost(r.origin) }}</td>
-              <td class="px-4 py-2">
-                <span
-                  class="text-[10px] px-1.5 py-0.5 rounded"
-                  :class="r.kind === 'site-wide' ? 'bg-primary/15 text-primary' : 'bg-surface text-light'"
-                >{{ r.kind === 'site-wide' ? t('Site-wide') : t('Single') }}</span>
-              </td>
-              <td class="px-4 py-2">
-                <span class="text-[10px] px-1.5 py-0.5 rounded" :class="statusColor(r.status)">{{ r.status }}</span>
-              </td>
-              <td class="px-4 py-2 text-[11px] text-right tabular-nums" :class="r.total_errors > 0 && 'text-error'">{{ r.total_errors }}</td>
-              <td class="px-4 py-2 text-[11px] text-right tabular-nums text-muted">{{ r.total_warnings }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <p v-else class="px-4 py-6 text-center text-sm text-muted">{{ t('No runs by this user yet.') }}</p>
-      </section>
+      <div>
+        <h3 class="font-semibold text-sm mb-2">{{ t('Recent runs') }}</h3>
+        <DataTable
+          :rows="data.recentRuns ?? []"
+          :columns="runsColumns"
+          :on-row-click="openRun"
+          :empty-text="t('No runs by this user yet.')"
+          dense
+          min-width="900px"
+        >
+          <template #cell-when="{ row }"><CellTimestamp :value="row.started_at" mode="both" /></template>
+          <template #cell-origin="{ row }"><CellOrigin :value="row.origin" /></template>
+          <template #cell-kind="{ row }">
+            <CellBadge
+              :value="row.kind"
+              :label="row.kind === 'site-wide' ? t('Site-wide') : t('Single')"
+              :class-name="row.kind === 'site-wide' ? 'bg-primary/15 text-primary' : 'bg-surface text-light'"
+            />
+          </template>
+          <template #cell-status="{ row }"><CellBadge variant="status" :value="row.status" /></template>
+          <template #cell-errors="{ row }"><CellNumber :value="row.total_errors" error-when="> 0" /></template>
+          <template #cell-warnings="{ row }"><CellNumber :value="row.total_warnings" muted-when=">= 0" /></template>
+        </DataTable>
+      </div>
 
-      <!-- Raw activity events -->
       <details class="bg-surface-soft border border-border rounded-xl">
         <summary class="px-4 py-3 cursor-pointer text-sm font-semibold">
           {{ t('All recent activity events ({n})', { n: data.recentEvents?.length ?? 0 }) }}
         </summary>
-        <div class="px-4 py-3">
-          <table v-if="data.recentEvents?.length" class="w-full text-xs">
-            <thead class="text-[10px] uppercase tracking-wide text-muted/60">
-              <tr>
-                <th class="text-left font-medium pb-1">{{ t('When') }}</th>
-                <th class="text-left font-medium pb-1">{{ t('Type') }}</th>
-                <th class="text-left font-medium pb-1">{{ t('Target') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="e in data.recentEvents" :key="e.id" class="border-t border-border/20">
-                <td class="py-1 text-[10px] text-muted whitespace-nowrap tabular-nums">{{ formatTime(e.created_at) }}</td>
-                <td class="py-1 text-[10px]"><code>{{ e.type }}</code></td>
-                <td class="py-1 text-[10px] truncate max-w-100">{{ e.target ?? '—' }}</td>
-              </tr>
-            </tbody>
-          </table>
-          <p v-else class="text-sm text-muted text-center py-4">{{ t('No events yet.') }}</p>
+        <div class="p-3">
+          <DataTable
+            :rows="data.recentEvents ?? []"
+            :columns="eventsColumns"
+            :empty-text="t('No events yet.')"
+            dense
+            min-width="600px"
+          >
+            <template #cell-when="{ row }"><CellTimestamp :value="row.created_at" mode="both" /></template>
+            <template #cell-type="{ row }"><CellCode :value="row.type" /></template>
+            <template #cell-target="{ row }">{{ row.target ?? '—' }}</template>
+          </DataTable>
         </div>
       </details>
     </div>

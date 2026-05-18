@@ -99,6 +99,39 @@ Center-Modal, teleportiert zu `body`. Optional Notiz-Textarea.
 Wird aktuell beim Ignorieren von Issues genutzt — siehe
 [useIgnoreList](#useignorelist--ignorieren-von-issues).
 
+## Form-Felder + Layout — siehe [ui-forms.md](ui-forms.md)
+
+Standalone-Doku weil's viele Komponenten sind. Kurzfassung:
+
+- **`<FormField>`** — Text-Input (drei Densities: `dense` für Filter,
+  default für Forms, `loose` für Auth)
+- **`<SelectField>`** / **`<TextareaField>`** / **`<CheckboxField>`** —
+  gleiche Density-API
+- **`<BaseModal>`** — ersetzt 9 hand-gerollte `<Teleport>+<Transition>`
+  Stacks. Wraps for ConfirmDialog, ReportDialog, ApiToken*Modal
+- **`<BaseCard>`** — `bg-surface-soft border rounded-xl` (86 Vorkommen
+  davor!), Slots für Header / Actions / Footer
+- **`<PanelCard>`** — BaseCard mit separierter Header-Bar für
+  Listen/Tabellen-Body
+- **`<KpiTile>`** — die „große Zahl"-Tile aus den Admin-Dashboards
+- **`<ItemList>` / `<ItemListRow>`** — `divide-y` Listen mit optionalem
+  Remove-Button + Click-Selection
+- **`<TabNav>`** — horizontale Tab-Strip mit Count-Pills
+
+## `<DataTable>` + Cell-Components — Admin-Tabellen
+
+Generic Tabellen-Komponente plus Family aus Cell-Sub-Components
+(`<CellBadge>`, `<CellTimestamp>`, `<CellUser>`, `<CellOrigin>`,
+`<CellNumber>`, `<CellCode>`, `<CellTruncate>`). Ersetzt die
+ehemals duplizierten `<table>`-Blocks in allen 12 Admin-Tabellen.
+
+Volle Doku: [docs/ui-data-table.md](ui-data-table.md). Key-Features:
+
+- Horizontaler Scroll mit `min-width` — Page-Layout bleibt fixed
+- Zentralisierte Farb-Maps in `CellBadge.vue` (eine Datei = alle Pills)
+- Loading/Empty/Error-Branches eingebaut
+- Slots für Toolbar (Filter), Per-Column-Custom-Render und Row-Actions
+
 ## `useIgnoreList` — Ignorieren von Issues
 
 Persistenter Store unter Key `wp-ignored-issues`. Pro Origin + Modul eine

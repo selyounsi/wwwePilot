@@ -1,0 +1,15 @@
+{
+  "key":        "check-types",
+  "enabled":    true,
+  "permission": "admin.check-types.read",
+  "nav": {
+    "group": "webchecker",
+    "order": 20,
+    "icon":  "mdiClipboardListOutline",
+    "label": "Check types"
+  },
+  "routes": [
+    { "path": "check-types",     "name": "admin-check-types",        "view": "Index" },
+    { "path": "check-types/:id", "name": "admin-check-type-detail",  "view": "CheckTypeDetail" }
+  ]
+}
