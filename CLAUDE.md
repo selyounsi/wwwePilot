@@ -1,230 +1,246 @@
-# Claude Code Kontext
+# Claude Code Context — Extension
 
-Diese Datei wird beim Session-Start automatisch geladen — du musst Claude
-nichts mehr manuell erklären.
+This file auto-loads on session start when working in the `extension/`
+repo. Reply to the user in German (per their memory preference) but
+keep code and documentation in English.
 
-## Was ist das Repo?
+## What this repo is
 
-Inhouse-Chrome-Extension (Manifest V3, Side Panel) für die wwwe-Mitarbeiter.
-Vue 3 + Vite + Tailwind v4. Zwei Services:
-- **web-checker** — DOM-Audits (13 Module: accessibility, console, contrast,
-  headings, images, links, overview, performance, privacy, sitemap,
-  spellcheck, structured-data, validation) per Single-Page oder Site-Wide
-- **chatbot** — KI-Assistent mit Provider-Modulen (wwwe-Backend, Claude API)
+In-house Chrome extension (Manifest V3, Side Panel) for wwwe employees.
+Vue 3 + Vite + Tailwind v4. Two services:
 
-**Repo-Namen**: lokal `c:\Users\selyounsi\Desktop\wwweBar\extension`, auf
-GitHub `selyounsi/wwwePilot`. Backend-Repo separat: `selyounsi/wwwePilotBackend`.
+- **web-checker** — DOM audits (13 modules: accessibility, console,
+  contrast, headings, images, links, overview, performance, privacy,
+  sitemap, spellcheck, structured-data, validation) — single-page or
+  site-wide
+- **chatbot** — AI assistant with provider modules (wwwe backend,
+  Claude API)
 
-Volle Doku in [README.md](README.md) und [docs/](docs/). Wenn du anfängst:
-[docs/architecture.md](docs/architecture.md) für die Architektur und
-[docs/composables.md](docs/composables.md) für jeden einzelnen Composable.
+**Repo names**: locally `c:\Users\selyounsi\Desktop\wwweBar\extension`,
+on GitHub `selyounsi/wwwePilot`. Backend repo separate:
+`selyounsi/wwwePilotBackend`.
 
-## Single-Check vs Site-Check
+Full docs in [README.md](README.md) and [docs/](docs/). Recommended
+entry points: [docs/architecture.md](docs/architecture.md) for the
+high-level layout and [docs/composables.md](docs/composables.md) for
+every individual composable.
 
-Zwei UX-Modi die du verstehen musst:
+## Single-check vs site-check
 
-- **Single-Page-Check** — Mitarbeiter ist auf einer Seite, klickt im
-  Side-Panel „Prüfen". Module laufen alle in der aktuellen Tab und füllen
-  `useCheckStore`. Standard-Fall.
-- **Site-Check** — über sitemap.xml werden alle URLs gesammelt, der User
-  wählt Modul-Subset + URL-Subset, dann läuft jede URL sequenziell durch.
-  Ergebnisse landen in `useSiteCheckStore`. Im Done-Zustand kann zwischen
-  „Nach Seite" und „Nach Modul" gewechselt werden. Beim Klick auf eine
-  Seite wird die in neuem Tab geöffnet und der Single-Check-Store mit
-  den vorhandenen Resultaten hydriert — damit fühlt's sich an wie ein
-  frischer Single-Check.
+Two UX modes to understand:
 
-## Wichtige Konventionen
+- **Single-page check** — employee is on a page, clicks "Prüfen" in
+  the side panel. All modules run in the current tab and fill
+  `useCheckStore`. Standard case.
+- **Site-check** — sitemap.xml is fetched, all URLs collected; the
+  user picks a module subset + URL subset, then each URL runs
+  sequentially. Results land in `useSiteCheckStore`. In the done
+  state the user can switch between "by page" and "by module". Clicking
+  a page opens it in a new tab and hydrates the single-check store
+  with the existing results — so it feels like a fresh single-check.
 
-- **Strings über `t()` (Vue) bzw. `window.__t` (Page-Kontext)** — keine
-  hardcoded deutschen Strings. Translations: `translations/translations.json`
-  pro Ebene. Details: [docs/i18n.md](docs/i18n.md).
-- **Page-Kontext-Code (Web-Checker `index.js`) kein Modul-`import`** — wird
-  via `Function.toString()` serialisiert. Helper inline definieren oder via
-  `apiConfig`-Export.
-- **Modul-Convention**: `modules/<id>/views/Index.vue` (Detail) +
-  optional `views/SettingsView.vue`. Auto-Discovery via Glob. Details:
-  [docs/creating-a-module.md](docs/creating-a-module.md) und
+## Important conventions
+
+- **Strings via `t()` (Vue) or `window.__t` (page context)** — no
+  hardcoded German strings. Translations live in
+  `translations/translations.json` per layer. Details:
+  [docs/i18n.md](docs/i18n.md).
+- **Page-context code (web-checker `index.js`) cannot use module
+  imports** — it's serialised via `Function.toString()`. Define
+  helpers inline or via `apiConfig` exports.
+- **Module convention**: `modules/<id>/views/Index.vue` (detail) +
+  optional `views/SettingsView.vue`. Auto-discovery via glob. Details:
+  [docs/creating-a-module.md](docs/creating-a-module.md) and
   [docs/creating-a-service.md](docs/creating-a-service.md).
-- **Per-Item-Marker**: jeder Modul-Item muss `_meta: { tag, idx }` oder
-  `{ selector }` setzen, sonst kollidieren Marker bei Listen mit gleichen
-  Attributen (Galerien mit gleichem `alt` etc.).
-- **Settings persistieren** über `useModuleSettings(id, defaults)` (Modul) bzw.
-  service-eigene Composables (Service). Mechanik in
+- **Per-item markers**: every module item must set `_meta: { tag, idx }`
+  or `{ selector }`, otherwise markers collide on lists with identical
+  attributes (galleries with the same `alt` etc.).
+- **Settings persistence** via `useModuleSettings(id, defaults)`
+  (module) or service-owned composables (service). Mechanism in
   `composables/settings/createSettingsStore.js`.
-- **Code-Stil**: keine KI-Floskel-Kommentare, keine erklär-Kommentare zu
-  selbsterklärendem Code. Default = null Kommentare. Docblocks an
-  exportierten Funktionen sind OK wenn sie WHY erklären.
+- **Code style**: no AI-flavour comments, no explainer comments for
+  self-explanatory code. Default = no comments. Docblocks on exported
+  functions are fine if they explain WHY.
 
-## Update-System
+## Update system
 
-Die Extension hat ein Auto-Update-System gegen das Backend:
+The extension has an auto-update system against the backend:
 
-- **Bei JEDER Code-Änderung** muss `manifest.json#version` gebumpt
-  werden (z.B. `0.0.27` → `0.0.28`). `manifest.json` ist die **Single
-  Source of Truth** — `package.json#version` wird beim Vite-Start
-  automatisch synchronisiert via dem `syncPackageVersion`-Plugin in
-  [vite.config.js](vite.config.js). **Nicht manuell in package.json
-  bumpen.**
-- Backend baut auf jeden Push automatisch einen neuen Build und der
-  Webhook triggert das.
-- **`build-assets/update.bat`** (Windows) und **`build-assets/update.sh`**
-  (Mac/Linux) werden via `emit-update-script`-Plugin in `vite.config.js`
-  zur Build-Zeit mit der Backend-URL inlined nach `dist/` kopiert. `+x`-Bit
-  für `.sh` wird gesetzt.
-- **Background-Notification** ([src/background/versionCheck.js]
-  (src/background/versionCheck.js)) pollt `chrome.alarms` stündlich gegen
-  `/api/version` und feuert Desktop-Notifications bei neuer Version.
-- Doku: [docs/extension-versioning.md](docs/extension-versioning.md).
+- **For EVERY code change** bump `manifest.json#version` (e.g.
+  `0.0.27` → `0.0.28`). `manifest.json` is the **single source of
+  truth** — `package.json#version` is auto-synced on Vite start via
+  the `syncPackageVersion` plugin in [vite.config.js](vite.config.js).
+  **Do not bump package.json manually.**
+- Backend builds a new artefact on every push automatically; the
+  webhook triggers it.
+- **`build-assets/update.bat`** (Windows) and
+  **`build-assets/update.sh`** (Mac/Linux) are copied to `dist/` at
+  build time with the backend URL inlined, via the
+  `emit-update-script` plugin in `vite.config.js`. The `+x` bit on
+  the `.sh` is set automatically.
+- **Background notification**
+  ([src/background/versionCheck.js](src/background/versionCheck.js))
+  uses `chrome.alarms` to poll `/api/version` hourly and fires
+  desktop notifications on a new version.
+- Docs: [docs/extension-versioning.md](docs/extension-versioning.md).
 
-## Backend lokal (Docker)
+## Backend locally (Docker)
 
-Das Backend läuft im Docker-Container `wwwebar-ever-backend-1`, nicht
-als `npm run dev`. Source-Code ist ins Image gebacken (kein Volume-
-Mount). **Backend-Code-Änderungen erfordern Image-Rebuild**:
+The backend runs in the `wwwebar-ever-backend-1` Docker container,
+not as `npm run dev`. Source is baked into the image (no volume
+mount). **Backend code changes require an image rebuild**:
 
 ```bash
 cd ../backend
 docker compose up -d --build ever-backend
-docker logs --tail 30 wwwebar-ever-backend-1   # Migrations + Mount-Output prüfen
+docker logs --tail 30 wwwebar-ever-backend-1   # check migrations + mount
 ```
 
-Ohne `--build` greifen Schema-Migrations + neue Routes nicht und du
-bekommst 404. Das ist der Standard-Reflex wenn ein neuer Endpoint nicht
-erreichbar ist.
+Without `--build` neither schema migrations nor new routes take
+effect and you get 404 on the new endpoint. That's the default
+reflex when a new endpoint isn't reachable.
 
-## UI-Komponenten-Library
+## UI component library
 
-Globale, auto-registrierte Komponenten in `src/components/ui/`. Wenn
-du Tabellen, Modale, Form-Felder, KPI-Tiles, Cards oder Listen baust,
-benutze diese statt Raw-Tailwind:
+Globally auto-registered components under `src/components/ui/`. When
+building tables, modals, form fields, KPI tiles, cards or lists, use
+these instead of raw Tailwind:
 
-| Was | Komponente | Doku |
+| What | Component | Doc |
 |---|---|---|
-| Tabelle | `<DataTable>` + Cell-Helfer | [docs/ui-data-table.md](docs/ui-data-table.md) |
+| Table | `<DataTable>` + cell helpers | [docs/ui-data-table.md](docs/ui-data-table.md) |
 | Modal | `<BaseModal>` | [docs/ui-forms.md](docs/ui-forms.md) |
 | Card / Panel | `<BaseCard>`, `<PanelCard>` | [docs/ui-forms.md](docs/ui-forms.md) |
-| Form-Feld | `<FormField>`, `<SelectField>`, `<TextareaField>`, `<CheckboxField>` | [docs/ui-forms.md](docs/ui-forms.md) |
-| KPI-Tile | `<KpiTile>` | [docs/ui-forms.md](docs/ui-forms.md) |
-| Listen | `<ItemList>` + `<ItemListRow>` | [docs/ui-forms.md](docs/ui-forms.md) |
+| Form field | `<FormField>`, `<SelectField>`, `<TextareaField>`, `<CheckboxField>` | [docs/ui-forms.md](docs/ui-forms.md) |
+| KPI tile | `<KpiTile>` | [docs/ui-forms.md](docs/ui-forms.md) |
+| Lists | `<ItemList>` + `<ItemListRow>` | [docs/ui-forms.md](docs/ui-forms.md) |
 | Tabs | `<TabNav>` | [docs/ui-forms.md](docs/ui-forms.md) |
-| Info-Tooltip | `<InfoHint>` | [docs/ui-forms.md](docs/ui-forms.md) |
+| Info tooltip | `<InfoHint>` | [docs/ui-forms.md](docs/ui-forms.md) |
 
-Farb-Maps (status, severity, scope, category, kind, role) leben **alle**
-in `CellBadge.vue` — eine Datei, alle Pills.
+Colour maps (status, severity, scope, category, kind, role) live
+**all** inside `CellBadge.vue` — one file, all pills.
 
-## Identity-Modell
+## Identity model
 
-Sichtbarkeit auf Ressourcen (Check-Types, später andere) wird dreidimensional gefiltert:
+Visibility on resources (check-types, later others) is filtered three-
+dimensionally:
 
-- **Rollen** tragen Berechtigungen (RBAC)
-- **Gruppen** sind reine Org-Sammlungen ohne Permissions (Teams, Abteilungen)
-- **Users** können namentlich gelistet werden
+- **Roles** carry permissions (RBAC)
+- **Groups** are pure org collections without permissions (teams,
+  departments)
+- **Users** can be listed by name
 
-User sieht eine Ressource wenn **eine** der drei Bedingungen matcht
-(OR, nicht AND). Volle Details: [docs/groups.md](docs/groups.md),
+A user sees a resource when **any** of the three conditions matches
+(OR, not AND). Full details: [docs/groups.md](docs/groups.md),
 [docs/check-types.md](docs/check-types.md).
 
-## Build & Test-Workflow
+## Build & test workflow
 
 ```bash
-npm run dev      # Hot-Reload-Build → dist/ (für Live-Entwicklung)
-npm run build    # Production-Build → dist/ (für MCP-Tests, siehe unten)
+npm run dev      # hot-reload build → dist/ (for live development)
+npm run build    # production build → dist/ (for MCP tests, see below)
 ```
 
-Extension lädt man manuell in `chrome://extensions/` → „Entpackte Erweiterung
-laden" → `dist/`. Bei Code-Änderungen: dort auf Reload klicken (Dev-Build) oder
-neu builden + Reload (Prod-Build).
+Load the extension manually in `chrome://extensions/` → "Load unpacked"
+→ `dist/`. On code changes: click reload there (dev build) or rebuild
++ reload (prod build).
 
-## chrome-devtools-mcp (wenn verfügbar)
+## chrome-devtools-mcp (when available)
 
-Über die `.mcp.json` im Repo-Root ist [chrome-devtools-mcp]
-(https://github.com/ChromeDevTools/chrome-devtools-mcp) konfiguriert. Wenn
-der Server beim Session-Start vom Harness gemountet wurde, hast du Tools
-wie `install_extension`, `navigate_page`, `evaluate_script`,
-`list_console_messages`, `take_screenshot`, `lighthouse_audit`.
+Wired via `.mcp.json` in the repo root, pointing to
+[chrome-devtools-mcp](https://github.com/ChromeDevTools/chrome-devtools-mcp).
+When the server is mounted at session start, tools like
+`install_extension`, `navigate_page`, `evaluate_script`,
+`list_console_messages`, `take_screenshot`, `lighthouse_audit` are
+available.
 
-Standard-Flow für Live-Prüfung:
+Standard flow for live checks:
 
-1. `npm run build` falls `dist/` fehlt oder Code seit letztem Build geändert
+1. `npm run build` if `dist/` is missing or stale
 2. `install_extension({ path: "<absolute>/extension/dist" })`
-3. `new_page` + `navigate_page` zur Ziel-URL
-4. `trigger_extension_action` → Side Panel auf
-5. `evaluate_script` — Page-Kontext für DOM, oder Sidebar (`list_pages`
-   → Side-Panel-URL `chrome-extension://...`) für Composable-State
-6. `list_console_messages` für Errors/Warnings
-7. `take_screenshot` falls visueller Beweis sinnvoll
+3. `new_page` + `navigate_page` to the target URL
+4. `trigger_extension_action` → side panel open
+5. `evaluate_script` — page context for DOM, or sidebar
+   (`list_pages` → side-panel URL `chrome-extension://...`) for
+   composable state
+6. `list_console_messages` for errors / warnings
+7. `take_screenshot` if visual proof helps
 
-**Falls die Tools nicht da sind** (`ToolSearch` findet kein
-`mcp__chrome-devtools__*`): Server wurde beim Session-Init nicht
-verbunden. Kannst du nicht zur Laufzeit fixen — nur statisch im Code
-arbeiten, dem User sagen er soll testen, oder Session neu starten lassen.
+**If the tools aren't there** (`ToolSearch` finds no
+`mcp__chrome-devtools__*`): the server wasn't mounted at session
+init. Can't fix this at runtime — work statically in code, ask the
+user to test, or have them restart the session.
 
-Volle Anleitung + Fallstricke + alternative Setups in
+Full guide + pitfalls + alternative setups in
 [docs/dev-mcp.md](docs/dev-mcp.md).
 
-## Claude-Integration
+## Claude integration
 
-Eigenes Provider-Modul (`services/chatbot/modules/claude/`) plus
-zahlreiche One-Shot-Generatoren im Web-Checker. Komplette Übersicht:
-[docs/claude-actions.md](docs/claude-actions.md). Aktueller Stand:
+Own provider module (`services/chatbot/modules/claude/`) plus several
+one-shot generators in the web-checker. Full overview:
+[docs/claude-actions.md](docs/claude-actions.md). Current state:
 
-- **Item-Erklären** auf jedem ModuleItem mit Issue (per-Modul-System-Prompts
-  in jedem Modul's `index.js` als `export const claude = { ... }`)
-- **Site-Bericht** nach Site-Check
-- **Alt-Text** pro Bild (Vision)
-- **Meta-Description / Page-Title / OG-Tags** im Overview-Modul
-- **H1 generieren / verbessern** im Headings-Modul (HeadingStats)
-- **ARIA-Label** auf axe-Items mit name-missing-Rules
-- **JSON-LD-Schema** im Structured-Data-Modul
-- **DSGVO-Fix + Cookie-Banner + DSE-Snippet** im Privacy-Modul
-- **URL-Slug-Tippfehler-Check** im Overview-Modul
+- **Item-explain** on every ModuleItem with an issue (per-module
+  system prompts in each module's `index.js` as
+  `export const claude = { ... }`)
+- **Site report** after a site-check
+- **Alt text** per image (vision)
+- **Meta description / page title / og tags** in the overview module
+- **H1 generate / improve** in the headings module (HeadingStats)
+- **ARIA label** on axe items with name-missing rules
+- **JSON-LD schema** in the structured-data module
+- **GDPR fix + cookie banner + privacy-policy snippet** in the
+  privacy module
+- **URL slug typo check** in the overview module
 
-Alle gated via `useClaude().isAvailable` — Buttons rendern nur wenn Provider
-aktiv UND API-Key validiert.
+All gated via `useClaude().isAvailable` — buttons only render when
+the provider is active AND the API key is validated.
 
-## User-Memory (was bereits persistiert ist)
+## User memory (already persisted)
 
 ```
 ~/.claude/projects/c--Users-selyounsi-Desktop-wwweBar/memory/
 ```
 
-Aktuelle Einträge:
+Current entries:
 
-- **Test before committing** — nie unprompted committen, immer auf
-  Bestätigung warten dass User getestet hat
-- **Doc in MD files** — jede Code-Änderung muss mit einem MD-Doc-Update
-  oder neuem Doc in `docs/` gepaart sein
-- **Comments in English** — Code-Kommentare und JSDocs auf Englisch,
-  niemals Deutsch (UI-Strings sind weiter Deutsch via `t()`)
-- **Minimal comments** — Default = keine Kommentare; nur kurz wo WHY
-  nicht offensichtlich ist (Workaround, versteckte Constraint, etc.)
+- **Chat in German** — reply to the user in German; code/comments
+  stay English
+- **Test before committing** — never commit unprompted, wait for the
+  user to confirm they've tested
+- **Doc in MD files** — every code change pairs with an MD doc update
+  or a new doc under `docs/`
+- **Comments in English** — code comments and JSDocs in English,
+  never German (UI strings stay German via `t()`)
+- **Minimal comments** — default to no comments; only short ones
+  where the WHY isn't obvious (workaround, hidden constraint, etc.)
 
-Lies die Files für Volltext + Begründung. Beim Speichern eigener Memories
-das Pattern beachten (Frontmatter, eigene `.md`, Pointer in `MEMORY.md`).
+Read the files for full text + reasoning. When saving your own
+memories, follow the pattern (frontmatter, own `.md`, pointer in
+`MEMORY.md`).
 
-## Wenn du nicht weiter weißt
+## When stuck
 
-Erst lesen, dann fragen:
+Read first, then ask:
 
-| Thema | Doc |
+| Topic | Doc |
 |---|---|
-| Aufbau / Konzept | [docs/architecture.md](docs/architecture.md) |
-| Datei tut was? | [docs/composables.md](docs/composables.md) |
-| Modul-API (Page-Kontext-Helper) | [docs/module-api.md](docs/module-api.md) |
-| Neues Modul bauen | [docs/creating-a-module.md](docs/creating-a-module.md) |
-| Neuer Service | [docs/creating-a-service.md](docs/creating-a-service.md) |
-| Übersetzungssystem | [docs/i18n.md](docs/i18n.md) |
+| Layout / concept | [docs/architecture.md](docs/architecture.md) |
+| What does a file do? | [docs/composables.md](docs/composables.md) |
+| Module API (page-context helpers) | [docs/module-api.md](docs/module-api.md) |
+| Build a new module | [docs/creating-a-module.md](docs/creating-a-module.md) |
+| New service | [docs/creating-a-service.md](docs/creating-a-service.md) |
+| Translation system | [docs/i18n.md](docs/i18n.md) |
 | Login / OIDC | [docs/auth.md](docs/auth.md) |
-| Chatbot-Provider an/aus | [docs/chatbot-providers.md](docs/chatbot-providers.md) |
-| Claude-Aktionen (komplette Liste) | [docs/claude-actions.md](docs/claude-actions.md) |
-| Live-Editor-Bridge + CMS4-Erkennung | [docs/live-editor.md](docs/live-editor.md) |
-| Re-Check-Flow + Tab-Handling | [docs/check-flow.md](docs/check-flow.md) |
-| Check-Types (Profile + manuelle Tasks) | [docs/check-types.md](docs/check-types.md) |
-| Gruppen (Org-Sammlungen, kein RBAC) | [docs/groups.md](docs/groups.md) |
-| Globale UI-Bausteine | [docs/ui-components.md](docs/ui-components.md) |
-| Admin-Tabellen (`<DataTable>` + Cells) | [docs/ui-data-table.md](docs/ui-data-table.md) |
-| Form-Felder, Modal, Cards, KPI, Listen, Tabs | [docs/ui-forms.md](docs/ui-forms.md) |
-| Update-System + Notifications | [docs/extension-versioning.md](docs/extension-versioning.md) |
-| chrome-devtools-mcp Setup | [docs/dev-mcp.md](docs/dev-mcp.md) |
-| Was prüft Modul X im Detail | `services/web-checker/modules/<x>/README.md` |
+| Chatbot providers on/off | [docs/chatbot-providers.md](docs/chatbot-providers.md) |
+| Claude actions (full list) | [docs/claude-actions.md](docs/claude-actions.md) |
+| Live-editor bridge + CMS4 detection | [docs/live-editor.md](docs/live-editor.md) |
+| Re-check flow + tab handling | [docs/check-flow.md](docs/check-flow.md) |
+| Check-types (profiles + manual tasks) | [docs/check-types.md](docs/check-types.md) |
+| Groups (org collections, no RBAC) | [docs/groups.md](docs/groups.md) |
+| Global UI building blocks | [docs/ui-components.md](docs/ui-components.md) |
+| Admin tables (`<DataTable>` + cells) | [docs/ui-data-table.md](docs/ui-data-table.md) |
+| Form fields, modal, cards, KPI, lists, tabs | [docs/ui-forms.md](docs/ui-forms.md) |
+| Update system + notifications | [docs/extension-versioning.md](docs/extension-versioning.md) |
+| chrome-devtools-mcp setup | [docs/dev-mcp.md](docs/dev-mcp.md) |
+| What does module X check exactly | `services/web-checker/modules/<x>/README.md` |
