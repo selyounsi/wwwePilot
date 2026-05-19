@@ -3,7 +3,7 @@ import { apiJson } from '@/composables/auth/apiClient.js'
 import { API }     from '@/config/api.js'
 import { useFeatureFlags } from '@/composables/useFeatureFlags.js'
 
-const BASE = `${API.url}/check-types`
+const BASE = API.checkTypes.url
 
 /**
  * Web-checker side of the check-types feature. Talks to `/api/check-types/*`

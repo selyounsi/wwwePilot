@@ -6,6 +6,9 @@ import { useToast } from '@/composables/useToast.js'
 import { usePermissions } from '@/composables/usePermissions.js'
 import { useAdminCheckTypes } from '@/admin/modules/check-types/composables/useAdminCheckTypes.js'
 import { useAdminRoles } from '@/admin/modules/roles/composables/useAdminRoles.js'
+import { useAdminUsers } from '@/admin/modules/users/composables/useAdminUsers.js'
+import { useAdminGroups } from '@/admin/modules/groups/composables/useAdminGroups.js'
+import { useFeatureFlags } from '@/composables/useFeatureFlags.js'
 
 const route   = useRoute()
 const router  = useRouter()
@@ -17,6 +20,17 @@ const {
   addTask, updateTask, removeTask, reorderTasks,
 } = useAdminCheckTypes()
 const { state: rolesState, fetchAll: fetchRoles } = useAdminRoles()
+const { state: usersState, fetchAll: fetchUsers } = useAdminUsers()
+const { state: groupsState, fetchAll: fetchGroups } = useAdminGroups()
+const { isEnabled: isFlagEnabled } = useFeatureFlags()
+
+// True when the module is gated off via the global feature-flag system.
+// We still let the admin toggle it in the module set (the flag may flip
+// back on), but the pill is dimmed and gets an explicit lock icon so the
+// admin knows the module won't actually run right now.
+function isModuleGloballyOff(slug) {
+  return !isFlagEnabled(`module.web-checker.${slug}`)
+}
 
 // Canonical list of web-checker modules. Kept in sync with the
 // `module.web-checker.*` feature-flag seed in the backend. When a module
@@ -35,8 +49,13 @@ const id = computed(() => String(route.params.id ?? ''))
 // double-fetch on every keystroke. Synced from `state.current` on load.
 const draft = ref({
   name: '', slug: '', description: '',
-  moduleIds: [], roleIds: [], enabled: true,
+  moduleIds: [], roleIds: [], userIds: [], groupIds: [], enabled: true,
+  isDefault: false,
 })
+
+const userSearch = ref('')
+
+const isDefaultType = computed(() => draft.value.isDefault)
 const dirty = ref(false)
 const newTaskOpen = ref(false)
 const newTask     = ref({ label: '', description: '' })
@@ -53,7 +72,10 @@ async function load() {
       description: type.description ?? '',
       moduleIds:   [...(type.moduleIds ?? [])],
       roleIds:     [...(type.roleIds ?? [])],
+      userIds:     [...(type.userIds ?? [])],
+      groupIds:    [...(type.groupIds ?? [])],
       enabled:     type.enabled,
+      isDefault:   !!type.isDefault,
     }
     dirty.value = false
   } catch (e) {
@@ -63,7 +85,9 @@ async function load() {
 
 onMounted(() => {
   load()
-  if (!rolesState.roles.length) fetchRoles()
+  if (!rolesState.roles.length)  fetchRoles()
+  if (!usersState.users.length)  fetchUsers()
+  if (!groupsState.groups.length) fetchGroups()
 })
 watch(id, load)
 
@@ -81,6 +105,54 @@ function toggleRole(roleId) {
   dirty.value = true
 }
 
+function toggleUser(userId) {
+  const i = draft.value.userIds.indexOf(userId)
+  if (i >= 0) draft.value.userIds.splice(i, 1)
+  else        draft.value.userIds.push(userId)
+  dirty.value = true
+}
+
+function toggleGroup(groupId) {
+  const i = draft.value.groupIds.indexOf(groupId)
+  if (i >= 0) draft.value.groupIds.splice(i, 1)
+  else        draft.value.groupIds.push(groupId)
+  dirty.value = true
+}
+
+function userLabel(u) {
+  if (!u) return '—'
+  if (u.firstName && u.lastName) return `${u.firstName} ${u.lastName}`
+  return u.name || u.email || u.id.slice(0, 8)
+}
+
+// Selected users always shown at the top of the picker, the rest is
+// filtered by the search input. Limits to 50 results to keep the DOM
+// snappy when there are hundreds of users.
+const filteredUsers = computed(() => {
+  const q = userSearch.value.toLowerCase().trim()
+  const all = usersState.users ?? []
+  const selectedSet = new Set(draft.value.userIds)
+  const matches = q
+    ? all.filter(u =>
+        (u.email     ?? '').toLowerCase().includes(q) ||
+        (u.firstName ?? '').toLowerCase().includes(q) ||
+        (u.lastName  ?? '').toLowerCase().includes(q) ||
+        (u.name      ?? '').toLowerCase().includes(q),
+      )
+    : all
+  // Selected first, then the rest. De-dupe via id.
+  const seen = new Set()
+  const out = []
+  for (const id of draft.value.userIds) {
+    const u = all.find(x => x.id === id)
+    if (u && !seen.has(u.id)) { seen.add(u.id); out.push(u) }
+  }
+  for (const u of matches) {
+    if (!seen.has(u.id)) { seen.add(u.id); out.push(u) }
+  }
+  return { rows: out.slice(0, 50), total: out.length, selectedSet }
+})
+
 async function save() {
   try {
     await update(id.value, {
@@ -89,6 +161,8 @@ async function save() {
       description: draft.value.description || null,
       moduleIds:   draft.value.moduleIds,
       roleIds:     draft.value.roleIds,
+      userIds:     draft.value.userIds,
+      groupIds:    draft.value.groupIds,
       enabled:     draft.value.enabled,
     })
     toast.success(t('Check-type saved'))
@@ -157,7 +231,10 @@ watch(draft, () => { dirty.value = true }, { deep: true })
         {{ t('Back') }}
       </BaseButton>
       <div class="flex-1 min-w-0">
-        <h2 class="text-xl font-bold truncate">{{ draft.name || t('Check-type') }}</h2>
+        <h2 class="text-xl font-bold truncate flex items-center gap-2">
+          {{ draft.name || t('Check-type') }}
+          <span v-if="isDefaultType" class="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary font-normal">{{ t('Standard') }}</span>
+        </h2>
         <p class="text-[11px] text-muted font-mono truncate">{{ draft.slug }}</p>
       </div>
       <BaseButton
@@ -176,9 +253,21 @@ watch(draft, () => { dirty.value = true }, { deep: true })
       <BaseCard :title="t('Profile')" divided>
         <div class="space-y-3">
           <FormField v-model="draft.name" :label="t('Display name')" :disabled="!canWrite" />
-          <FormField v-model="draft.slug" mono :label="t('Slug')" :disabled="!canWrite" />
+          <FormField
+            v-model="draft.slug"
+            mono
+            :label="t('Slug')"
+            :disabled="!canWrite || isDefaultType"
+            :helper-text="isDefaultType ? t('Slug is locked for the default type.') : ''"
+          />
           <TextareaField v-model="draft.description" :rows="2" :label="t('Description (optional)')" :disabled="!canWrite" :placeholder="t('When to use this type, what it covers…')" />
-          <CheckboxField v-model="draft.enabled" :label="t('Enabled — auditors can pick this type')" :disabled="!canWrite" />
+          <CheckboxField
+            v-model="draft.enabled"
+            :label="isDefaultType
+              ? t('Show in the web-checker (uncheck to hide the default check)')
+              : t('Enabled — auditors can pick this type')"
+            :disabled="!canWrite"
+          />
         </div>
       </BaseCard>
 
@@ -186,34 +275,113 @@ watch(draft, () => { dirty.value = true }, { deep: true })
         <div class="flex flex-wrap gap-1.5">
           <button
             v-for="m in KNOWN_MODULES" :key="m"
-            class="text-[11px] px-2.5 py-1 rounded-full border transition-colors"
-            :class="draft.moduleIds.includes(m)
-              ? 'bg-primary text-black/80 border-primary'
-              : 'bg-surface border-border text-muted hover:bg-surface-soft-hover'"
+            class="text-[11px] px-2.5 py-1 rounded-full border transition-colors inline-flex items-center gap-1"
+            :class="[
+              draft.moduleIds.includes(m)
+                ? 'bg-primary text-black/80 border-primary'
+                : 'bg-surface border-border text-muted hover:bg-surface-soft-hover',
+              isModuleGloballyOff(m) && 'opacity-50',
+            ]"
             :disabled="!canWrite"
+            :title="isModuleGloballyOff(m) ? t('Feature flag off — module will be skipped at runtime') : null"
             @click="canWrite && toggleModule(m)"
-          >{{ m }}</button>
+          >
+            <Icon v-if="isModuleGloballyOff(m)" name="mdiLockOutline" :size="10" />
+            <span>{{ m }}</span>
+          </button>
         </div>
         <p v-if="!draft.moduleIds.length" class="mt-3 text-[10px] text-alert">
           <Icon name="mdiAlertCircleOutline" :size="11" class="inline -mt-0.5" />
           {{ t('No modules selected — picking this type in the web-checker will produce no automated results.') }}
         </p>
+        <p v-if="draft.moduleIds.some(m => isModuleGloballyOff(m))" class="mt-2 text-[10px] text-muted/70">
+          <Icon name="mdiLockOutline" :size="11" class="inline -mt-0.5" />
+          {{ t('Locked modules are currently disabled via feature-flags. They stay in the profile but are skipped at runtime until the flag is re-enabled.') }}
+        </p>
       </BaseCard>
 
-      <BaseCard :title="t('Visible to')" :subtitle="t('Empty = everyone. Pick roles to restrict the type to specific teams.')" divided>
-        <div v-if="rolesState.roles.length" class="flex flex-wrap gap-1.5">
-          <button
-            v-for="r in rolesState.roles" :key="r.id"
-            class="text-[11px] px-2.5 py-1 rounded-full border transition-colors"
-            :class="draft.roleIds.includes(r.id)
-              ? 'bg-primary text-black/80 border-primary'
-              : 'bg-surface border-border text-muted hover:bg-surface-soft-hover'"
-            :disabled="!canWrite"
-            @click="canWrite && toggleRole(r.id)"
-          >{{ r.name }}</button>
+      <BaseCard :title="t('Visible to')" :subtitle="t('Empty = everyone. Combine roles AND individual users to grant access — anyone matching either condition can pick this type.')" divided>
+        <div class="space-y-3">
+          <div>
+            <div class="text-[10px] uppercase tracking-wide text-muted/70 mb-1.5">{{ t('Roles') }}</div>
+            <div v-if="rolesState.roles.length" class="flex flex-wrap gap-1.5">
+              <button
+                v-for="r in rolesState.roles" :key="r.id"
+                class="text-[11px] px-2.5 py-1 rounded-full border transition-colors"
+                :class="draft.roleIds.includes(r.id)
+                  ? 'bg-primary text-black/80 border-primary'
+                  : 'bg-surface border-border text-muted hover:bg-surface-soft-hover'"
+                :disabled="!canWrite"
+                @click="canWrite && toggleRole(r.id)"
+              >{{ r.name }}</button>
+            </div>
+            <p v-else class="text-[11px] text-muted/60 italic">{{ t('No roles defined yet.') }}</p>
+          </div>
+
+          <div>
+            <div class="text-[10px] uppercase tracking-wide text-muted/70 mb-1.5">{{ t('Groups') }}</div>
+            <div v-if="groupsState.groups.length" class="flex flex-wrap gap-1.5">
+              <button
+                v-for="g in groupsState.groups" :key="g.id"
+                class="text-[11px] px-2.5 py-1 rounded-full border transition-colors inline-flex items-center gap-1"
+                :class="draft.groupIds.includes(g.id)
+                  ? 'bg-primary text-black/80 border-primary'
+                  : 'bg-surface border-border text-muted hover:bg-surface-soft-hover'"
+                :disabled="!canWrite"
+                @click="canWrite && toggleGroup(g.id)"
+              >
+                <Icon name="mdiAccountGroupOutline" :size="10" />
+                <span>{{ g.name }}</span>
+                <span class="text-[9px] opacity-70 tabular-nums">{{ g.memberCount }}</span>
+              </button>
+            </div>
+            <p v-else class="text-[11px] text-muted/60 italic">{{ t('No groups defined yet.') }}</p>
+          </div>
+
+          <div>
+            <div class="text-[10px] uppercase tracking-wide text-muted/70 mb-1.5 flex items-center justify-between gap-2">
+              <span>{{ t('Individual users') }}</span>
+              <span v-if="draft.userIds.length" class="text-muted/60 normal-case tracking-normal">
+                {{ t('{n} selected', { n: draft.userIds.length }) }}
+              </span>
+            </div>
+            <FormField
+              v-model="userSearch"
+              dense
+              prefix-icon="mdiMagnify"
+              :placeholder="t('Search by email or name…')"
+              :disabled="!canWrite"
+            />
+            <div class="mt-2 max-h-60 overflow-y-auto border border-border rounded-lg bg-surface divide-y divide-border/30">
+              <label
+                v-for="u in filteredUsers.rows" :key="u.id"
+                class="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-surface-soft-hover transition-colors"
+                :class="filteredUsers.selectedSet.has(u.id) && 'bg-primary/5'"
+              >
+                <input
+                  type="checkbox"
+                  :checked="filteredUsers.selectedSet.has(u.id)"
+                  :disabled="!canWrite"
+                  class="accent-primary"
+                  @change="toggleUser(u.id)"
+                />
+                <UserAvatar :user="u" :size="20" />
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs truncate">{{ userLabel(u) }}</div>
+                  <div v-if="u.email && u.email !== userLabel(u)" class="text-[10px] text-muted/60 truncate">{{ u.email }}</div>
+                </div>
+              </label>
+              <p v-if="!filteredUsers.rows.length" class="px-3 py-3 text-[11px] text-muted/60 italic text-center">
+                {{ userSearch.trim() ? t('No matching users.') : t('No users loaded yet.') }}
+              </p>
+            </div>
+            <p v-if="filteredUsers.total > filteredUsers.rows.length" class="mt-1 text-[10px] text-muted/60">
+              {{ t('Showing first {n} matches — refine the search to see more.', { n: filteredUsers.rows.length }) }}
+            </p>
+          </div>
         </div>
-        <p v-else class="text-[11px] text-muted/60 italic">{{ t('No roles defined yet.') }}</p>
-        <p v-if="!draft.roleIds.length" class="mt-3 text-[10px] text-muted">
+
+        <p v-if="!draft.roleIds.length && !draft.userIds.length && !draft.groupIds.length" class="mt-3 text-[10px] text-muted">
           <Icon name="mdiInformationOutline" :size="11" class="inline -mt-0.5" />
           {{ t('Visible to every authenticated user.') }}
         </p>

@@ -148,6 +148,20 @@ function openQuickSwitcher() {
   quickSwitcherRef.value?.open()
 }
 
+// Collapsible sidebar — toggled by the user, persisted per-browser so
+// the choice survives a reload. Default: expanded (the discovery-
+// friendly state for new admins).
+const COLLAPSED_KEY = 'admin-sidebar-collapsed'
+const collapsed = ref(loadCollapsed())
+function loadCollapsed() {
+  try { return localStorage.getItem(COLLAPSED_KEY) === '1' }
+  catch { return false }
+}
+function toggleSidebar() {
+  collapsed.value = !collapsed.value
+  try { localStorage.setItem(COLLAPSED_KEY, collapsed.value ? '1' : '0') } catch {}
+}
+
 const displayName = computed(() => {
   const u = authState.user
   if (!u) return ''
@@ -171,24 +185,51 @@ const roleLabels = computed(() => {
        to the viewport and ignores whatever min-height ancestors might
        set. Sidebar stays put, only the main column scrolls. -->
   <div class="fixed inset-0 bg-background flex overflow-hidden">
-    <aside class="w-64 bg-surface-soft border-r border-border flex flex-col shrink-0 h-full">
-      <div class="px-5 py-4 border-b border-border shrink-0">
-        <div class="flex items-center gap-2 mb-2">
-          <Icon name="mdiShieldCrownOutline" :size="20" class="text-primary shrink-0" />
-          <h1 class="text-lg font-bold leading-tight truncate flex-1">{{ t('Backend') }}</h1>
+    <aside
+      class="bg-surface-soft border-r border-border flex flex-col shrink-0 h-full transition-[width] duration-200 relative"
+      :class="collapsed ? 'w-14' : 'w-64'"
+    >
+      <!-- Floating toggle handle on the sidebar edge -->
+      <button
+        class="absolute -right-3 top-6 z-10 w-6 h-6 rounded-full bg-surface border border-border flex items-center justify-center text-muted hover:text-primary hover:border-primary/40 transition-colors"
+        :title="collapsed ? t('Expand sidebar') : t('Collapse sidebar')"
+        @click="toggleSidebar"
+      >
+        <Icon :name="collapsed ? 'mdiChevronRight' : 'mdiChevronLeft'" :size="13" />
+      </button>
+
+      <div class="border-b border-border shrink-0" :class="collapsed ? 'px-2 py-3' : 'px-5 py-4'">
+        <div v-if="collapsed" class="flex flex-col items-center gap-2">
+          <Icon name="mdiShieldCrownOutline" :size="20" class="text-primary" />
           <AdminNotificationBell />
-          <span v-if="version" class="text-[10px] font-mono text-muted/70 shrink-0">v{{ version }}</span>
         </div>
-        <div class="flex items-center gap-2">
-          <p class="text-xs text-light truncate flex-1 min-w-0">{{ displayName }}</p>
-          <span
-            v-for="r in roleLabels" :key="r"
-            class="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary shrink-0"
-          >{{ r }}</span>
-        </div>
+        <template v-else>
+          <div class="flex items-center gap-2 mb-2">
+            <Icon name="mdiShieldCrownOutline" :size="20" class="text-primary shrink-0" />
+            <h1 class="text-lg font-bold leading-tight truncate flex-1">{{ t('Backend') }}</h1>
+            <AdminNotificationBell />
+            <span v-if="version" class="text-[10px] font-mono text-muted/70 shrink-0">v{{ version }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <p class="text-xs text-light truncate flex-1 min-w-0">{{ displayName }}</p>
+            <span
+              v-for="r in roleLabels" :key="r"
+              class="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary shrink-0"
+            >{{ r }}</span>
+          </div>
+        </template>
       </div>
 
       <button
+        v-if="collapsed"
+        class="mx-2 mt-3 mb-1 shrink-0 flex items-center justify-center h-9 bg-surface border border-border rounded-lg text-muted hover:bg-surface-soft-hover transition-colors"
+        :title="t('Search…') + '  ⌘K'"
+        @click="openQuickSwitcher"
+      >
+        <Icon name="mdiMagnify" :size="14" />
+      </button>
+      <button
+        v-else
         class="mx-2 mt-3 mb-1 shrink-0 flex items-center gap-2 px-3 py-2 bg-surface border border-border rounded-lg text-left text-xs text-muted hover:bg-surface-soft-hover transition-colors"
         @click="openQuickSwitcher"
       >
@@ -197,73 +238,109 @@ const roleLabels = computed(() => {
         <kbd class="text-[9px] font-mono px-1 py-0.5 bg-background rounded border border-border">⌘K</kbd>
       </button>
 
-      <nav class="flex-1 px-2 py-3 overflow-y-auto min-h-0">
+      <nav class="flex-1 py-3 overflow-y-auto overflow-x-hidden min-h-0" :class="collapsed ? 'px-1.5' : 'px-2'">
         <template v-for="node in navTree">
           <!-- Top-level item -->
           <button
             v-if="node.type === 'item'"
             :key="`item-${node.key}`"
             @click="router.push(node.path)"
-            class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left"
-            :class="isActive(node.path)
-              ? 'bg-primary text-black/80 font-semibold'
-              : 'text-light hover:bg-surface-soft-hover'"
+            class="w-full flex items-center rounded-lg transition-colors text-left relative"
+            :class="[
+              collapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5',
+              isActive(node.path)
+                ? 'bg-primary text-black/80 font-semibold'
+                : 'text-light hover:bg-surface-soft-hover',
+            ]"
+            :title="collapsed ? node.name : null"
           >
             <Icon :name="node.icon" :size="16" />
-            <span class="text-sm flex-1">{{ node.name }}</span>
+            <span v-if="!collapsed" class="text-sm flex-1">{{ node.name }}</span>
             <span
-              v-if="node.badge"
+              v-if="node.badge && !collapsed"
               class="text-[10px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full min-w-5 text-center"
-              :class="isActive(node.path)
-                ? 'bg-black/20 text-black/80'
-                : 'bg-error/20 text-error'"
+              :class="isActive(node.path) ? 'bg-black/20 text-black/80' : 'bg-error/20 text-error'"
             >{{ node.badge }}</span>
+            <span
+              v-else-if="node.badge && collapsed"
+              class="absolute top-1 right-1 w-2 h-2 rounded-full bg-error"
+            />
           </button>
 
-          <!-- Group with sub-items -->
-          <div v-else :key="`group-${node.key}`">
-            <button
-              @click="toggleGroup(node.key)"
-              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors"
-              :class="isGroupActive(node)
-                ? 'text-primary font-semibold'
-                : 'text-light hover:bg-surface-soft-hover'"
-            >
-              <Icon :name="node.icon" :size="16" />
-              <span class="text-sm flex-1">{{ node.label }}</span>
-              <Icon
-                :name="isGroupOpen(node) ? 'mdiChevronDown' : 'mdiChevronRight'"
-                :size="14"
-                class="opacity-60"
-              />
-            </button>
-
-            <div v-show="isGroupOpen(node)" class="pl-3 mt-0.5 space-y-0.5">
+          <!-- Group with sub-items: collapsed mode flattens the children
+               into vertically-stacked icons (no header, separator between
+               groups). Expanded mode keeps the original toggle behaviour. -->
+          <div v-else :key="`group-${node.key}`" :class="collapsed && 'border-t border-border/30 my-1 pt-1 first:border-t-0 first:my-0 first:pt-0'">
+            <template v-if="collapsed">
               <button
                 v-for="sub in node.items" :key="sub.key"
                 @click="router.push(sub.path)"
-                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left"
+                :title="`${node.label} · ${sub.name}`"
+                class="w-full flex items-center justify-center px-2 py-2 rounded-lg transition-colors relative"
                 :class="isActive(sub.path)
-                  ? 'bg-primary text-black/80 font-semibold'
+                  ? 'bg-primary text-black/80'
                   : 'text-light hover:bg-surface-soft-hover'"
               >
                 <Icon :name="sub.icon" :size="14" />
-                <span class="text-sm flex-1">{{ sub.name }}</span>
                 <span
                   v-if="sub.badge"
-                  class="text-[10px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full min-w-5 text-center"
-                  :class="isActive(sub.path)
-                    ? 'bg-black/20 text-black/80'
-                    : 'bg-error/20 text-error'"
-                >{{ sub.badge }}</span>
+                  class="absolute top-1 right-1 w-2 h-2 rounded-full bg-error"
+                />
               </button>
-            </div>
+            </template>
+            <template v-else>
+              <button
+                @click="toggleGroup(node.key)"
+                class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors"
+                :class="isGroupActive(node)
+                  ? 'text-primary font-semibold'
+                  : 'text-light hover:bg-surface-soft-hover'"
+              >
+                <Icon :name="node.icon" :size="16" />
+                <span class="text-sm flex-1">{{ node.label }}</span>
+                <Icon
+                  :name="isGroupOpen(node) ? 'mdiChevronDown' : 'mdiChevronRight'"
+                  :size="14"
+                  class="opacity-60"
+                />
+              </button>
+
+              <div v-show="isGroupOpen(node)" class="pl-3 mt-0.5 space-y-0.5">
+                <button
+                  v-for="sub in node.items" :key="sub.key"
+                  @click="router.push(sub.path)"
+                  class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left"
+                  :class="isActive(sub.path)
+                    ? 'bg-primary text-black/80 font-semibold'
+                    : 'text-light hover:bg-surface-soft-hover'"
+                >
+                  <Icon :name="sub.icon" :size="14" />
+                  <span class="text-sm flex-1">{{ sub.name }}</span>
+                  <span
+                    v-if="sub.badge"
+                    class="text-[10px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full min-w-5 text-center"
+                    :class="isActive(sub.path)
+                      ? 'bg-black/20 text-black/80'
+                      : 'bg-error/20 text-error'"
+                  >{{ sub.badge }}</span>
+                </button>
+              </div>
+            </template>
           </div>
         </template>
       </nav>
 
-      <div class="px-3 py-3 border-t border-border shrink-0">
+      <div class="border-t border-border shrink-0" :class="collapsed ? 'px-1.5 py-2' : 'px-3 py-3'">
+        <button
+          v-if="collapsed"
+          class="w-full flex items-center justify-center h-9 rounded-lg text-muted hover:text-error hover:bg-error/10 transition-colors"
+          :title="t('Close admin tab')"
+          @click="closeTab"
+        >
+          <Icon name="mdiClose" :size="14" />
+        </button>
         <BaseButton
+          v-else
           variant="ghost"
           icon="mdiClose"
           :icon-size="13"

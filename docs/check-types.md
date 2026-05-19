@@ -8,6 +8,31 @@ Admin-defined audit profiles for the web-checker. A profile bundles:
   kommentiert (z.B. „Impressum vorhanden", „DSE aktuell")
 - **Rollen-Sichtbarkeit** — wer den Type im Web-Checker auswählen darf
 
+## Der Standard-Check als Type
+
+Beim ersten Boot legt Migration `0011_default_check_type.sql` einen
+„Standard-Check"-Type mit Slug `default` und allen 13 Modulen an
+(`is_default = true`). Damit ist auch der Voll-Check ein regulärer
+Type — der Admin kann:
+
+- die Modul-Auswahl reduzieren (z.B. Performance rausnehmen weil es
+  PageSpeed-Quota frisst)
+- manuelle Tasks anhängen die bei jedem Standard-Audit erscheinen
+- Rollen-Gating setzen
+- ihn deaktivieren (`enabled = false`) → er verschwindet aus dem
+  Web-Checker-Dropdown
+
+Geschützt durch Backend-Guards:
+- DELETE auf den Default-Type liefert `409 default_protected`
+- PATCH erlaubt alles außer `slug` (Slug bleibt `default`)
+- höchstens ein Row mit `is_default = true` (partielles Unique-Index)
+
+Im Web-Checker erscheint der Default-Type mit einem ★-Prefix im
+Dropdown und ist initial vorausgewählt. Wenn der Admin ihn deaktiviert
+und keine anderen Types existieren, ist das Dropdown leer — der
+Web-Checker fällt dann auf den Legacy-Modus zurück (alle Module, kein
+Type).
+
 ## Warum
 
 Vorher: jeder User hat seine eigene Modul-Toggle-Auswahl. Die Agentur hat
@@ -64,8 +89,22 @@ keine Type-Select-Box, keine Manuelle-Checkliste.
 | GET    | `/states?url=&typeId=`     | Persisted task-states for a URL |
 | PUT    | `/states/:taskId`          | Upsert one task-state (checkbox + comment) |
 
-Role-Gating: leeres `role_ids`-Array = sichtbar für alle. Sonst muss der
-User mindestens eine der Rollen tragen. Superadmin sieht immer alles.
+**Sichtbarkeits-Regel** (Backend `canSeeType` in `routes.js`):
+
+- `role_ids = {}` UND `user_ids = {}` UND `group_ids = {}` → sichtbar für alle authentifizierten User
+- sonst sichtbar wenn eine der folgenden Bedingungen erfüllt ist:
+  - User-ID ist in `user_ids`
+  - User trägt mindestens eine Rolle aus `role_ids`
+  - User ist Mitglied einer Gruppe in `group_ids`
+- Superadmin sieht immer alles
+
+So kannst du z.B. „Pre-Launch-Audit" gleichzeitig auf Rolle „QA-Team",
+eine Team-Gruppe und zwei namentlich genannte Department-Leads
+beschränken — die drei Dimensionen werden mit ODER kombiniert.
+
+Gruppen werden im eigenen Admin-Modul verwaltet
+([docs/groups.md](groups.md)) und über `user.appGroups` aus dem JWT
+gelesen (gesetzt von `resolveUserGroups` in der Auth-Pipeline).
 
 ## Frontend — Admin
 

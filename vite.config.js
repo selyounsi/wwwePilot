@@ -53,6 +53,35 @@ function autoMdiIcons() {
   }
 }
 
+/**
+ * Mirrors `manifest.json#version` into `package.json#version` whenever Vite
+ * starts (dev OR build). `manifest.json` stays the single source of truth
+ * because the backend's auto-update flow keys off it; the `package.json`
+ * field is just kept in sync for npm-side tooling and IDE hints.
+ */
+function syncPackageVersion() {
+  return {
+    name: 'sync-package-version',
+    configResolved() {
+      try {
+        const manifestVer = JSON.parse(fs.readFileSync('manifest.json', 'utf-8')).version
+        const pkgPath = 'package.json'
+        const pkgText = fs.readFileSync(pkgPath, 'utf-8')
+        const pkg     = JSON.parse(pkgText)
+        if (pkg.version === manifestVer) return
+        // Indent-preserving rewrite — keep whatever style the file already uses.
+        const indentMatch = pkgText.match(/^([ \t]+)"/m)
+        const indent      = indentMatch ? indentMatch[1] : '  '
+        pkg.version = manifestVer
+        fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, indent) + '\n')
+        console.log(`[sync] package.json version → ${manifestVer}`)
+      } catch (e) {
+        console.warn('[sync] could not sync package.json version:', e.message)
+      }
+    },
+  }
+}
+
 function copyAxe() {
   const src       = 'node_modules/axe-core/axe.min.js'
   const localeSrc = 'node_modules/axe-core/locales/de.json'
@@ -82,6 +111,7 @@ export default defineConfig(({ mode }) => {
     },
   },
   plugins: [
+    syncPackageVersion(),
     autoMdiIcons(),
     tailwindcss(),
     vue(),

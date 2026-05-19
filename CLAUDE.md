@@ -60,9 +60,14 @@ Zwei UX-Modi die du verstehen musst:
 
 Die Extension hat ein Auto-Update-System gegen das Backend:
 
-- **Bei JEDER Code-Änderung** muss `manifest.json` version gebumpt werden
-  (z.B. `0.0.27` → `0.0.28`). Backend baut auf jeden Push automatisch
-  einen neuen Build und der Webhook triggert das.
+- **Bei JEDER Code-Änderung** muss `manifest.json#version` gebumpt
+  werden (z.B. `0.0.27` → `0.0.28`). `manifest.json` ist die **Single
+  Source of Truth** — `package.json#version` wird beim Vite-Start
+  automatisch synchronisiert via dem `syncPackageVersion`-Plugin in
+  [vite.config.js](vite.config.js). **Nicht manuell in package.json
+  bumpen.**
+- Backend baut auf jeden Push automatisch einen neuen Build und der
+  Webhook triggert das.
 - **`build-assets/update.bat`** (Windows) und **`build-assets/update.sh`**
   (Mac/Linux) werden via `emit-update-script`-Plugin in `vite.config.js`
   zur Build-Zeit mit der Backend-URL inlined nach `dist/` kopiert. `+x`-Bit
@@ -71,6 +76,54 @@ Die Extension hat ein Auto-Update-System gegen das Backend:
   (src/background/versionCheck.js)) pollt `chrome.alarms` stündlich gegen
   `/api/version` und feuert Desktop-Notifications bei neuer Version.
 - Doku: [docs/extension-versioning.md](docs/extension-versioning.md).
+
+## Backend lokal (Docker)
+
+Das Backend läuft im Docker-Container `wwwebar-ever-backend-1`, nicht
+als `npm run dev`. Source-Code ist ins Image gebacken (kein Volume-
+Mount). **Backend-Code-Änderungen erfordern Image-Rebuild**:
+
+```bash
+cd ../backend
+docker compose up -d --build ever-backend
+docker logs --tail 30 wwwebar-ever-backend-1   # Migrations + Mount-Output prüfen
+```
+
+Ohne `--build` greifen Schema-Migrations + neue Routes nicht und du
+bekommst 404. Das ist der Standard-Reflex wenn ein neuer Endpoint nicht
+erreichbar ist.
+
+## UI-Komponenten-Library
+
+Globale, auto-registrierte Komponenten in `src/components/ui/`. Wenn
+du Tabellen, Modale, Form-Felder, KPI-Tiles, Cards oder Listen baust,
+benutze diese statt Raw-Tailwind:
+
+| Was | Komponente | Doku |
+|---|---|---|
+| Tabelle | `<DataTable>` + Cell-Helfer | [docs/ui-data-table.md](docs/ui-data-table.md) |
+| Modal | `<BaseModal>` | [docs/ui-forms.md](docs/ui-forms.md) |
+| Card / Panel | `<BaseCard>`, `<PanelCard>` | [docs/ui-forms.md](docs/ui-forms.md) |
+| Form-Feld | `<FormField>`, `<SelectField>`, `<TextareaField>`, `<CheckboxField>` | [docs/ui-forms.md](docs/ui-forms.md) |
+| KPI-Tile | `<KpiTile>` | [docs/ui-forms.md](docs/ui-forms.md) |
+| Listen | `<ItemList>` + `<ItemListRow>` | [docs/ui-forms.md](docs/ui-forms.md) |
+| Tabs | `<TabNav>` | [docs/ui-forms.md](docs/ui-forms.md) |
+| Info-Tooltip | `<InfoHint>` | [docs/ui-forms.md](docs/ui-forms.md) |
+
+Farb-Maps (status, severity, scope, category, kind, role) leben **alle**
+in `CellBadge.vue` — eine Datei, alle Pills.
+
+## Identity-Modell
+
+Sichtbarkeit auf Ressourcen (Check-Types, später andere) wird dreidimensional gefiltert:
+
+- **Rollen** tragen Berechtigungen (RBAC)
+- **Gruppen** sind reine Org-Sammlungen ohne Permissions (Teams, Abteilungen)
+- **Users** können namentlich gelistet werden
+
+User sieht eine Ressource wenn **eine** der drei Bedingungen matcht
+(OR, nicht AND). Volle Details: [docs/groups.md](docs/groups.md),
+[docs/check-types.md](docs/check-types.md).
 
 ## Build & Test-Workflow
 
@@ -168,6 +221,7 @@ Erst lesen, dann fragen:
 | Live-Editor-Bridge + CMS4-Erkennung | [docs/live-editor.md](docs/live-editor.md) |
 | Re-Check-Flow + Tab-Handling | [docs/check-flow.md](docs/check-flow.md) |
 | Check-Types (Profile + manuelle Tasks) | [docs/check-types.md](docs/check-types.md) |
+| Gruppen (Org-Sammlungen, kein RBAC) | [docs/groups.md](docs/groups.md) |
 | Globale UI-Bausteine | [docs/ui-components.md](docs/ui-components.md) |
 | Admin-Tabellen (`<DataTable>` + Cells) | [docs/ui-data-table.md](docs/ui-data-table.md) |
 | Form-Felder, Modal, Cards, KPI, Listen, Tabs | [docs/ui-forms.md](docs/ui-forms.md) |

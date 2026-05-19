@@ -29,16 +29,29 @@ const checkTypes = useCheckTypes()
 // admin has decided the bundle.
 const selectedSlug = ref('')
 
-onMounted(() => {
-  checkTypes.fetchAvailable()
+onMounted(async () => {
+  await checkTypes.fetchAvailable()
+  // Auto-select: default type if present, otherwise the only available
+  // type, otherwise nothing. Covers the "single profile" case where
+  // showing a dropdown with one entry would be pointless.
+  if (!selectedSlug.value) {
+    const def   = checkTypes.state.available.find(t => t.isDefault)
+    const fallback = checkTypes.state.available[0]
+    if (def)            selectedSlug.value = def.slug
+    else if (fallback)  selectedSlug.value = fallback.slug
+  }
 })
 
 watch(selectedSlug, async (slug) => {
   await checkTypes.selectType(slug)
 })
 
+// Hide the selector when there's nothing meaningful to pick:
+//   - feature off
+//   - no types at all
+//   - exactly one type (it's already active, dropdown would just say so)
 const showTypeSelector = computed(() =>
-  checkTypes.isCheckTypesEnabled() && checkTypes.state.available.length > 0,
+  checkTypes.isCheckTypesEnabled() && checkTypes.state.available.length > 1,
 )
 
 const activeType = computed(() => checkTypes.state.active)
@@ -113,9 +126,9 @@ const hasCheck = computed(() => !!state.checkedTabId)
           {{ t('Check type') }}
         </label>
         <SelectField v-model="selectedSlug" dense full-width>
-          <option value="">{{ t('— Full check (all modules) —') }}</option>
+          <option value="" disabled>{{ t('— please pick a profile —') }}</option>
           <option v-for="ct in checkTypes.state.available" :key="ct.id" :value="ct.slug">
-            {{ ct.name }}
+            {{ ct.isDefault ? `★ ${ct.name}` : ct.name }}
           </option>
         </SelectField>
         <p v-if="activeType?.type?.description" class="mt-1 text-[10px] text-muted/70">

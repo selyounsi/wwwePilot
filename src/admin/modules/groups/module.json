@@ -1,0 +1,14 @@
+{
+  "key":        "groups",
+  "enabled":    true,
+  "permission": "admin.groups.read",
+  "nav": {
+    "order": 45,
+    "icon":  "mdiAccountGroupOutline",
+    "label": "Groups"
+  },
+  "routes": [
+    { "path": "groups",     "name": "admin-groups",        "view": "Index" },
+    { "path": "groups/:id", "name": "admin-group-detail",  "view": "GroupDetail" }
+  ]
+}

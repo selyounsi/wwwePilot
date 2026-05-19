@@ -13,6 +13,14 @@ Desktop-Notification (Klick öffnet die Sidebar direkt im Updates-View).
 | `chrome.runtime.getManifest().version` | Aktuell installierte Version |
 | `GET /api/version` (Backend) | Latest verfügbare Version + Download-URL |
 
+## Version-Bumps
+
+`manifest.json#version` ist die **Single Source of Truth** — sie wird auch
+vom Backend-Auto-Update gelesen. `package.json#version` wird beim Vite-
+Start (`dev` oder `build`) automatisch synchronisiert via
+[`syncPackageVersion`-Plugin in vite.config.js](../vite.config.js). Du
+musst also nur in `manifest.json` bumpen, der Rest fließt nach.
+
 `compareVersions()` macht Standard semver-ish Vergleich (Major.Minor.Patch,
 keine Prereleases).
 

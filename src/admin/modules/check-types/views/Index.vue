@@ -110,7 +110,10 @@ function openDetail(type) {
     >
       <template #cell-name="{ row }">
         <div class="min-w-0">
-          <div class="font-medium truncate">{{ row.name }}</div>
+          <div class="font-medium truncate flex items-center gap-1.5">
+            <span class="truncate">{{ row.name }}</span>
+            <span v-if="row.isDefault" class="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary shrink-0">{{ t('Standard') }}</span>
+          </div>
           <code class="text-[10px] text-muted/60 font-mono">{{ row.slug }}</code>
         </div>
       </template>
@@ -127,11 +130,25 @@ function openDetail(type) {
       </template>
 
       <template #cell-roles="{ row }">
-        <div v-if="row.roleIds?.length" class="flex flex-wrap gap-1">
+        <div v-if="row.roleIds?.length || row.userIds?.length || row.groupIds?.length" class="flex flex-wrap gap-1 items-center">
           <span
-            v-for="r in row.roleIds" :key="r"
+            v-for="r in row.roleIds ?? []" :key="`r-${r}`"
             class="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary"
           >{{ roleLabel(r) }}</span>
+          <span
+            v-for="g in row.groupIds ?? []" :key="`g-${g}`"
+            class="text-[10px] px-1.5 py-0.5 rounded bg-alert/15 text-alert inline-flex items-center gap-1"
+          >
+            <Icon name="mdiAccountGroupOutline" :size="10" />
+            {{ g }}
+          </span>
+          <span
+            v-if="row.userIds?.length"
+            class="text-[10px] px-1.5 py-0.5 rounded bg-surface text-muted inline-flex items-center gap-1"
+          >
+            <Icon name="mdiAccountMultipleOutline" :size="10" />
+            {{ t('{n} users', { n: row.userIds.length }) }}
+          </span>
         </div>
         <span v-else class="text-[10px] text-muted/60 italic">{{ t('everyone') }}</span>
       </template>
@@ -146,12 +163,20 @@ function openDetail(type) {
 
       <template #row-actions="{ row }">
         <BaseButton
-          v-if="canWrite()"
+          v-if="canWrite() && !row.isDefault"
           variant="icon-error"
           icon="mdiDelete"
           :icon-size="16"
           :tooltip="t('Delete')"
           @click="onDelete(row)"
+        />
+        <BaseButton
+          v-else-if="canWrite() && row.isDefault"
+          variant="icon"
+          icon="mdiLockOutline"
+          :icon-size="16"
+          :tooltip="t('Default type — cannot be deleted, disable instead')"
+          disabled
         />
       </template>
     </DataTable>

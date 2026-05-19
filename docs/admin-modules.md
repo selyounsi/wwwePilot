@@ -99,6 +99,11 @@ folder on next build, no central edit needed.
   user's choice persists in `localStorage` under `admin-nav-expanded-groups`.
   Groups whose current sub-route is active are force-expanded so deep links
   never land on a hidden item.
+- **Sidebar collapse**: a small chevron-handle on the right edge of the
+  sidebar shrinks it from 256px → 56px (icons-only). In collapsed mode
+  groups are flattened to a vertically-stacked icon strip with a
+  separator between groups; badges become a red dot in the corner.
+  State persists in `localStorage` under `admin-sidebar-collapsed`.
 
 ## Badges
 

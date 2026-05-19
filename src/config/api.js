@@ -42,6 +42,9 @@ export const API = {
   reports: {
     url: `${BACKEND}/api/reports`,
   },
+  checkTypes: {
+    url: `${BACKEND}/api/check-types`,
+  },
   admin: {
     url: `${BACKEND}/api/admin`,
   },
