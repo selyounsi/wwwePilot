@@ -45,6 +45,12 @@ export const API = {
   checkTypes: {
     url: `${BACKEND}/api/check-types`,
   },
+  quickInfo: {
+    url: `${BACKEND}/api/quick-info`,
+  },
+  quickLinks: {
+    url: `${BACKEND}/api/quick-links`,
+  },
   admin: {
     url: `${BACKEND}/api/admin`,
   },

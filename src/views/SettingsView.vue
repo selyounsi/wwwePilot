@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n }          from '@/composables/i18n/useI18n.js'
 import { useServiceLoader } from '@/composables/loaders/useServiceLoader.js'
 import { useUiSettings }    from '@/composables/settings/useUiSettings.js'
+import { useStartPage }     from '@/composables/settings/useStartPage.js'
 import { useAuth }          from '@/composables/auth/useAuth.js'
 import { apiJson }          from '@/composables/auth/apiClient.js'
 import { useToast }         from '@/composables/useToast.js'
@@ -21,6 +22,11 @@ const {
   default: zoomDefault,
   incrementZoom, decrementZoom, resetZoom,
 } = useUiSettings()
+const {
+  state:   startPageState,
+  options: startPageOptions,
+  setToken: setStartPageToken,
+} = useStartPage()
 const { state: authState, logout } = useAuth()
 const { canAccessAdmin } = usePermissions()
 const { openDialog: openReportDialog } = useReports()
@@ -144,6 +150,29 @@ const servicesWithSettings = computed(() => {
             >
               {{ code.toUpperCase() }}
             </button>
+          </div>
+        </div>
+
+        <div class="bg-surface-soft border border-border rounded-xl overflow-hidden">
+          <div class="px-3 py-2.5 border-b border-border/60 flex items-center gap-2">
+            <Icon name="mdiHomeOutline" :size="14" class="text-muted shrink-0" />
+            <span class="text-xs font-medium text-light">{{ t('Start page') }}</span>
+          </div>
+          <div class="px-3 py-3 flex flex-col gap-2">
+            <p class="text-[11px] text-muted leading-snug">
+              {{ t('Where the sidebar opens by default. Falls back to the dashboard when the chosen target gets disabled in the backend.') }}
+            </p>
+            <select
+              :value="startPageState.token"
+              class="w-full rounded-lg border border-border bg-surface text-xs text-light px-2.5 py-2 focus:outline-none focus:border-primary/50"
+              @change="setStartPageToken($event.target.value)"
+            >
+              <option
+                v-for="opt in startPageOptions"
+                :key="opt.value"
+                :value="opt.value"
+              >{{ opt.depth ? `    • ${opt.label}` : opt.label }}</option>
+            </select>
           </div>
         </div>
 

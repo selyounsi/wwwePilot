@@ -1,0 +1,14 @@
+{
+  "key":        "quick-info",
+  "enabled":    true,
+  "permission": "admin.quick-info.read",
+  "nav": {
+    "order": 60,
+    "icon":  "mdiClipboardTextOutline",
+    "label": "Quick info"
+  },
+  "routes": [
+    { "path": "quick-info",     "name": "admin-quick-info",        "view": "Index" },
+    { "path": "quick-info/:id", "name": "admin-quick-info-detail", "view": "ProfileDetail" }
+  ]
+}

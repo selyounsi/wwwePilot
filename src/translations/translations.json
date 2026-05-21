@@ -30,6 +30,10 @@
     "General settings": "Allgemeine Einstellungen",
     "Service settings": "Service-Einstellungen",
 
+    "Start page": "Startseite",
+    "Where the sidebar opens by default. Falls back to the dashboard when the chosen target gets disabled in the backend.": "Was beim Öffnen der Sidebar zuerst erscheint. Fällt aufs Dashboard zurück, wenn das gewählte Ziel im Backend deaktiviert wurde.",
+    "Dashboard": "Dashboard",
+
     "Zoom level": "Zoom-Stufe",
     "Scales only the sidebar — independent of the browser zoom (Ctrl +/-).": "Skaliert nur die Sidebar — unabhängig vom Browser-Zoom (Strg +/-).",
     "Decrease zoom": "Zoom verkleinern",

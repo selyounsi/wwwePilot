@@ -1,0 +1,7 @@
+{
+  "name": "Quick Info",
+  "description": "Page-specific quick view",
+  "icon": "mdiClipboardTextOutline",
+  "active": true,
+  "order": 30
+}

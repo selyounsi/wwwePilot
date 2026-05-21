@@ -1,0 +1,14 @@
+{
+  "key":        "quick-links",
+  "enabled":    true,
+  "permission": "admin.quick-links.read",
+  "nav": {
+    "order": 65,
+    "icon":  "mdiLinkVariant",
+    "label": "Quick links"
+  },
+  "routes": [
+    { "path": "quick-links",     "name": "admin-quick-links",        "view": "Index" },
+    { "path": "quick-links/:id", "name": "admin-quick-links-detail", "view": "LinkDetail" }
+  ]
+}

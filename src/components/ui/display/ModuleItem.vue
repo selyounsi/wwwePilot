@@ -1,5 +1,5 @@
 <script setup>
-import { ref, inject, computed, useSlots } from 'vue'
+import { ref, inject, computed, watch, useSlots } from 'vue'
 import { useRouter } from 'vue-router'
 import { highlightElement } from '@/composables/highlight/index.js'
 import { useChat } from '@/services/chatbot/composables/useChat.js'
@@ -57,19 +57,32 @@ const { add: addIgnore, remove: removeIgnore, getNote: getIgnoreNote } = useIgno
 const ignoreConfirmOpen = ref(false)
 const {
   editorTab,
+  isCms4Site,
   focusItem:        focusInLiveEditor,
   requestEditable:  requestLiveEditable,
   getEditable:      getLiveEditable,
 } = useLiveEditorBridge()
 
+// Queue the editability probe whenever we have a real LE tab — kept out of
+// the computed below so re-evaluations don't trigger redundant requests.
+// `requestLiveEditable` itself dedupes by item key, watch is just the trigger.
+watch(
+  [editorTab, () => props.item],
+  () => { if (editorTab.value) requestLiveEditable(props.item) },
+  { immediate: true },
+)
+
 const isLiveEditable = computed(() => {
-  if (!editorTab.value) return false
-  requestLiveEditable(props.item)
+  if (!isCms4Site.value)  return false
+  if (!editorTab.value)   return false
   return getLiveEditable(props.item) === true
 })
 
-async function showInLiveEditor() {
-  await focusInLiveEditor(props.item)
+// Fire-and-forget — the executeScript inside focusItem can take a second or
+// two on heavy LE pages, awaiting it here blocks the click handler and the
+// sidebar feels frozen. Errors surface via the bridge's own toast.
+function showInLiveEditor() {
+  focusInLiveEditor(props.item)
 }
 const origin = computed(() => {
   try { return new URL(checkStore.state.checkedUrl ?? '').origin } catch { return null }

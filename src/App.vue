@@ -5,6 +5,8 @@ import { useModuleLoader } from '@/composables/loaders/useModuleLoader.js'
 import { useTabWatcher }   from '@/services/web-checker/composables/useTabWatcher.js'
 import { useToast }        from '@/composables/useToast.js'
 import { useI18n }         from '@/composables/i18n/useI18n.js'
+import { useStartPage, whenStartPageHydrated } from '@/composables/settings/useStartPage.js'
+import { whenFeatureFlagsReady } from '@/composables/useFeatureFlags.js'
 
 const router = useRouter()
 const route  = useRoute()
@@ -36,11 +38,30 @@ watch(() => route.fullPath, () => {
   }, 250))
 }, { immediate: true })
 
-onMounted(() => {
-  if (isAdminContext.value) return
+// Read the raw URL hash on first paint. `useRoute()` can momentarily be on
+// '/' before vue-router resolves the hash, which used to fool the admin
+// guard below and trigger the start-page redirect inside admin / settings
+// / module tabs.
+const initialPath = (window.location.hash.replace(/^#/, '') || '/').split('?')[0]
+
+onMounted(async () => {
+  if (isAdminContext.value || initialPath.startsWith('/admin')) return
   start()
   port = chrome.runtime.connect({ name: 'sidebar' })
   chrome.runtime.onMessage.addListener(onOverlayClick)
+
+  // Initial-route redirect: only fire when the sidebar truly opened on '/'
+  // (its default). Anything else means the user navigated explicitly — admin
+  // tab, deep-link from a notification, share URL — and we must not hijack
+  // that. If the saved target is disabled / removed,
+  // `resolveAvailablePath` falls back to '/' and we skip the redirect.
+  if (initialPath !== '/') return
+  await whenStartPageHydrated()
+  await whenFeatureFlagsReady()
+  const target = useStartPage().resolveAvailablePath()
+  if (target && target !== '/' && router.currentRoute.value.path === '/') {
+    router.replace(target)
+  }
 })
 
 onUnmounted(() => {

@@ -1,8 +1,10 @@
-import { ref, watch } from 'vue'
-import { useCheckStore } from '@/services/web-checker/composables/useCheckStore.js'
-import { useAppConfig }  from '@/composables/useAppConfig.js'
+import { ref, computed, watch } from 'vue'
+import { useCheckStore }    from '@/services/web-checker/composables/useCheckStore.js'
+import { useAppConfig }     from '@/composables/useAppConfig.js'
+import { usePageDetector }  from '@/composables/usePageDetector.js'
 
-const { state: appConfig } = useAppConfig()
+const { state: appConfig }       = useAppConfig()
+const { state: detectorState }   = usePageDetector()
 
 function editorHostPatterns() {
   const cfg = appConfig.liveEditor
@@ -41,6 +43,10 @@ function isEditorHost(host) {
 
 async function findEditorTabFor(checkedUrl) {
   if (!checkedUrl) return null
+  // The Live Editor only exists for CMS4 — skip the tab walk on cms3 / wp /
+  // everpress / unknown to keep the sidebar snappy and avoid speculative
+  // `executeScript` calls on every unrelated tab.
+  if (detectorState.cms && detectorState.cms !== 'cms4') return null
   let auditDomain
   try { auditDomain = new URL(checkedUrl).hostname } catch { return null }
 
@@ -402,6 +408,19 @@ function initOnce() {
     refreshEditorTab()
   })
 
+  // Patterns come from /api/config/links which loads async after auth. Until
+  // the response lands `editorHostPatterns()` returns []. Re-run the lookup
+  // once the config fills in, otherwise the bridge stays blind on first paint.
+  watch(
+    () => `${appConfig.liveEditor.cms4Staging}|${appConfig.liveEditor.cms4ProdHost}`,
+    () => refreshEditorTab(),
+  )
+
+  // Detector resolves the CMS asynchronously too — re-evaluate when it lands
+  // so a freshly-detected cms4 site picks up an already-open LE tab, and a
+  // cms3 / wp site cleanly drops any stale editorTab reference.
+  watch(() => detectorState.cms, () => refreshEditorTab())
+
   // when the LE tab itself changes (opened/closed/different domain) the
   // cached editability is stale — drop it.
   watch(editorTab, () => {
@@ -417,6 +436,14 @@ function initOnce() {
   chrome.tabs?.onRemoved?.addListener(() => refreshEditorTab())
   chrome.tabs?.onCreated?.addListener(() => refreshEditorTab())
 }
+
+// Reactive flag for UI: tells item components whether the audit target is a
+// CMS4 site at all. Defaults to `true` while the detector is still pending
+// (`cms === null`) so the pencil doesn't flash off → on during first paint.
+const isCms4Site = computed(() => {
+  const cms = detectorState.cms
+  return cms === null || cms === 'cms4'
+})
 
 export function useLiveEditorBridge() {
   initOnce()
@@ -446,6 +473,7 @@ export function useLiveEditorBridge() {
 
   return {
     editorTab,
+    isCms4Site,
     focusItem,
     refresh: refreshEditorTab,
     requestEditable,

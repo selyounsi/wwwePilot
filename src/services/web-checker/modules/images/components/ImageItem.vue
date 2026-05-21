@@ -1,5 +1,5 @@
 <script setup>
-import { computed, inject, ref } from 'vue'
+import { computed, inject, ref, watch } from 'vue'
 import { useI18n }            from '@/composables/i18n/useI18n.js'
 import { useClaude }          from '@/services/chatbot/modules/claude/composables/useClaude.js'
 import { useLiveEditorBridge } from '@/composables/liveEditor/useLiveEditorBridge.js'
@@ -16,11 +16,20 @@ const showAltText    = actions.altText    !== false
 
 const {
   editorTab,
+  isCms4Site,
   focusItem:        focusInLiveEditor,
   requestEditable:  requestLiveEditable,
   getEditable:      getLiveEditable,
   openEditor:       openLiveEditor,
 } = useLiveEditorBridge()
+
+// Queue editability probe outside the computed below — same reason as in
+// ModuleItem: keep the computed pure so re-renders don't re-fire requests.
+watch(
+  [editorTab, () => props.item],
+  () => { if (editorTab.value) requestLiveEditable(props.item) },
+  { immediate: true },
+)
 
 const normalized = computed(() => ({
   ...props.item,
@@ -51,13 +60,17 @@ const hasAltIssue = computed(() => {
   )
 })
 
-// Live-Editor pencil state for image items: always shown, behavior + tooltip
-// follow availability of the LE tab and whether THIS image is editable inside it.
+// Live-Editor pencil state for image items: hidden entirely on non-CMS4
+// audit targets (a CMS3 / WP image has no chance of landing in the LE);
+// otherwise the three known states.
+//   focus → LE open + image editable
+//   open  → LE not open yet, click opens it
+//   inert → LE open but image is outside an editable wrapper
 const liveEditorState = computed(() => {
-  if (!editorTab.value) return 'open'                          // no LE → click opens one
-  requestLiveEditable(props.item)
-  if (getLiveEditable(props.item) === true) return 'focus'     // LE open + editable → focus it
-  return 'inert'                                                // LE open but element not editable in CMS4
+  if (!isCms4Site.value)                     return 'hidden'
+  if (!editorTab.value)                      return 'open'
+  if (getLiveEditable(props.item) === true)  return 'focus'
+  return 'inert'
 })
 
 const liveEditorTooltip = computed(() => {
@@ -66,10 +79,12 @@ const liveEditorTooltip = computed(() => {
   return t('Element not editable in Live Editor')
 })
 
-async function handleLiveEditor() {
-  if (liveEditorState.value === 'focus') return focusInLiveEditor(props.item)
-  if (liveEditorState.value === 'open')  return openLiveEditor()
-  // 'inert' → disabled, no-op
+// Fire-and-forget — focusInLiveEditor's executeScript can take a moment on
+// heavy LE pages, awaiting it freezes the click handler.
+function handleLiveEditor() {
+  if (liveEditorState.value === 'focus') focusInLiveEditor(props.item)
+  else if (liveEditorState.value === 'open') openLiveEditor()
+  // 'inert' / 'hidden' → no-op
 }
 
 const altOpen    = ref(false)
@@ -118,7 +133,7 @@ async function generateAlt() {
     <ModuleItem :item="normalized" variant="box" hide-editor-button>
       <template #leading-actions>
         <BaseButton
-          v-if="showLiveEditor"
+          v-if="showLiveEditor && liveEditorState !== 'hidden'"
           variant="icon"
           icon="mdiPencilOutline"
           :icon-size="13"
