@@ -35,6 +35,11 @@ async function load() {
     memberIds.value = new Set((members ?? []).map(m => m.id))
     dirty.value = false
   } catch (e) {
+    if (e.status === 404) {
+      toast.error(t('Group not found — it may have been deleted.'))
+      router.push({ name: 'admin-groups' })
+      return
+    }
     toast.error(e.message)
   }
 }
@@ -85,14 +90,24 @@ const filteredUsers = computed(() => {
 
 async function save() {
   try {
+    // Atomic PATCH — name + description + members in one transaction-backed
+    // call. Avoids the previous footgun where members were silently dropped
+    // if the prior PATCH succeeded but the follow-up PUT failed.
     await update(id.value, {
       name:        draft.value.name,
       description: draft.value.description || null,
+      userIds:     [...memberIds.value],
     })
-    await setMembers(id.value, [...memberIds.value])
     dirty.value = false
     toast.success(t('Group saved'))
-  } catch (e) { toast.error(e.message) }
+  } catch (e) {
+    if (e.status === 404) {
+      toast.error(t('Group not found — it may have been deleted.'))
+      router.push({ name: 'admin-groups' })
+      return
+    }
+    toast.error(e.message)
+  }
 }
 </script>
 
