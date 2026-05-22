@@ -60,7 +60,10 @@ onMounted(async () => {
   await whenFeatureFlagsReady()
   const target = useStartPage().resolveAvailablePath()
   if (target && target !== '/' && router.currentRoute.value.path === '/') {
-    router.replace(target)
+    // push (not replace) — keeps '/' in history so the AppHeader back arrow
+    // and the browser's back button both stay functional. Replace would
+    // leave the user stranded on the target page with no way back.
+    router.push(target)
   }
 })
 

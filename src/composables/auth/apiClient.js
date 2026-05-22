@@ -51,12 +51,29 @@ export async function apiFetch(url, options = {}) {
   return res
 }
 
-/** JSON convenience — throws on !ok with the `message` field from the response. */
+/**
+ * JSON convenience — throws on !ok with a human-friendly message. Priority:
+ *   1. server's `message` field
+ *   2. flattened Zod-issues from `defineRoute()`'s `invalid_body` / `invalid_query`
+ *   3. `error` field
+ *   4. plain HTTP status fallback
+ *
+ * The full `data` payload is attached as `err.data` for callers that want
+ * structured access.
+ */
 export async function apiJson(url, options = {}) {
   const res  = await apiFetch(url, options)
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
-    const err = new Error(data.message ?? `HTTP ${res.status}`)
+    let message = data.message
+    if (!message && Array.isArray(data.issues) && data.issues.length) {
+      message = data.issues
+        .map(i => i.path?.length ? `${i.path.join('.')}: ${i.message}` : i.message)
+        .filter(Boolean).join('; ')
+    }
+    if (!message && data.error) message = data.error
+    if (!message)               message = `HTTP ${res.status}`
+    const err = new Error(message)
     err.status = res.status
     err.data   = data
     throw err

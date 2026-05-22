@@ -56,6 +56,16 @@ function tokenToPath(token) {
   return '/'
 }
 
+/**
+ * Services whose module routes render as full standalone pages (own AppHeader,
+ * own scroll container). Modules under other services are typically embedded
+ * inside the service's HomeView — landing on `/service/<svc>/module/<mod>`
+ * directly would skip the wrapping header and break navigation.
+ * Web-checker modules use ModulePage which has its own AppHeader; chatbot
+ * modules are content-only and need the service shell around them.
+ */
+const STANDALONE_MODULE_SERVICES = new Set(['web-checker'])
+
 function isTokenAvailable(token, { services, isEnabled }) {
   if (token === 'dashboard') return true
   if (token.startsWith('service:')) {
@@ -66,6 +76,7 @@ function isTokenAvailable(token, { services, isEnabled }) {
   if (token.startsWith('module:')) {
     const [svc, mod] = token.slice('module:'.length).split(':')
     if (!svc || !mod) return false
+    if (!STANDALONE_MODULE_SERVICES.has(svc)) return false
     if (!isEnabled(`service.${svc}`)) return false
     if (!isEnabled(`module.${svc}.${mod}`)) return false
     // Also require that the module is actually discovered (folder present).
@@ -93,6 +104,9 @@ export function useStartPage() {
         label: t(svc.name),
         depth: 0,
       })
+      // Skip modules of services whose routes embed the module inside the
+      // service shell — see STANDALONE_MODULE_SERVICES.
+      if (!STANDALONE_MODULE_SERVICES.has(svc.id)) continue
       const { modules } = useModuleLoader(svc.id)
       for (const mod of modules) {
         out.push({

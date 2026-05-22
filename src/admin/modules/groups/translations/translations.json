@@ -22,6 +22,8 @@
     "Display name":                                                                                                   "Anzeigename",
     "Slug (URL-safe identifier — auto-generated if empty)":                                                           "Slug (URL-sicherer Identifier — wird leer gelassen automatisch generiert)",
     "Slug already in use":                                                                                            "Slug bereits vergeben",
+    "Slug must be 2–64 characters long.":                                                                             "Slug muss 2–64 Zeichen lang sein.",
+    "Slug may only contain lowercase letters, digits and hyphens.":                                                   "Slug darf nur Kleinbuchstaben, Ziffern und Bindestriche enthalten.",
     "Create + edit":                                                                                                  "Erstellen + bearbeiten",
     "Save changes":                                                                                                   "Änderungen speichern",
     "Saved":                                                                                                          "Gespeichert",

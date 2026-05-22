@@ -34,6 +34,18 @@ function openCreate() {
 async function submitCreate() {
   if (!draft.value.name.trim()) return
   const id = draft.value.id.trim() || slugify(draft.value.name)
+
+  // Mirror the backend slug rule (`^[a-z0-9-]+$`, 2-64) client-side so the
+  // user gets a precise hint instead of an opaque 400 from the server.
+  if (id.length < 2 || id.length > 64) {
+    toast.error(t('Slug must be 2–64 characters long.'))
+    return
+  }
+  if (!/^[a-z0-9-]+$/.test(id)) {
+    toast.error(t('Slug may only contain lowercase letters, digits and hyphens.'))
+    return
+  }
+
   try {
     const group = await create({
       id,
