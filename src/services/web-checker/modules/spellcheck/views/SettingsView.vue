@@ -39,7 +39,7 @@ function remove(word) {
             <input
               v-model="newWord"
               type="text"
-              :placeholder="t('e.g. wwwe, Anthropic, Schönfeldt')"
+              :placeholder="t('e.g. EverWise, Anthropic, Schönfeldt')"
               class="flex-1 bg-surface border border-border text-light text-xs rounded-lg px-3 py-2 outline-none focus:border-primary/50 placeholder:text-muted/40 font-mono"
             />
             <button

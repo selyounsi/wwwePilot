@@ -26,7 +26,7 @@ Vollständiger Vertrag für Modul-Autoren. Schnellstart in
   // Legacy `allowChatBot: false` wird respektiert wenn `actions.chatbot` nicht gesetzt ist.
   "actions": {
     "liveEditor":    true,           // mdiPencilOutline — im Live-Editor öffnen
-    "chatbot":       true,           // mdiRobot — im wwwe-Chat analysieren
+    "chatbot":       true,           // mdiRobot — im EverWise-Chat analysieren
     "claudeExplain": true,           // mdiAutoFix — mit Claude erklären
     "ignore":        true,           // mdiEyeOffOutline — Hinweis ignorieren
     "altText":       true            // mdiTagTextOutline — nur Image-Modul
@@ -146,7 +146,7 @@ import MyItem from '../components/MyItem.vue'
 </template>
 ```
 
-**Chatbot-Provider:** Empty-State-Komponente — siehe `chatbot/modules/wwwe/views/Index.vue` und `chatbot/modules/claude/views/Index.vue`.
+**Chatbot-Provider:** Empty-State-Komponente — siehe `chatbot/modules/everwise/views/Index.vue` und `chatbot/modules/claude/views/Index.vue`.
 
 ---
 

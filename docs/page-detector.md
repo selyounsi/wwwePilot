@@ -21,7 +21,7 @@ await detect({ force: true })        // bypass the 60s cache
 state = {
   loading,            // bool
   url,                // detected URL
-  isOurSite,          // bool | null — a wwwe / securewebsystems hosted site
+  isOurSite,          // bool | null — a EverWise / securewebsystems hosted site
   cms,                // 'cms3' | 'cms4' | 'everpress' | 'wordpress' | 'unknown' | null
   version,            // framework version string | null
   generator,          // <meta name=generator> content | null

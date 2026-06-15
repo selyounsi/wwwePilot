@@ -13,12 +13,12 @@ Vue 3 + Vite + Tailwind v4. Two services:
   contrast, headings, images, links, overview, performance, privacy,
   sitemap, spellcheck, structured-data, validation) — single-page or
   site-wide
-- **chatbot** — AI assistant with provider modules (wwwe backend,
+- **chatbot** — AI assistant with provider modules (EverWise backend,
   Claude API)
 
-**Repo location**: locally `c:\Users\selyounsi\Desktop\wwweBar\extension`.
-On GitHub the repos are still under the old slugs `selyounsi/wwwePilot`
-and `selyounsi/wwwePilotBackend` — they'll be renamed to **EverWise**
+**Repo location**: locally `c:\Users\selyounsi\Desktop\EverWise\extension`.
+On GitHub the repos are still under the old slugs `selyounsi/EverWise`
+and `selyounsi/EverWiseBackend` — they'll be renamed to **EverWise**
 soon, but the URLs are still the old ones for now.
 
 Full docs in [README.md](README.md) and [docs/](docs/). Recommended
@@ -87,14 +87,14 @@ The extension has an auto-update system against the backend:
 
 ## Backend locally (Docker)
 
-The backend runs in the `wwwebar-ever-backend-1` Docker container,
+The backend runs in the `everwise-ever-backend-1` Docker container,
 not as `npm run dev`. Source is baked into the image (no volume
 mount). **Backend code changes require an image rebuild**:
 
 ```bash
 cd ../backend
 docker compose up -d --build ever-backend
-docker logs --tail 30 wwwebar-ever-backend-1   # check migrations + mount
+docker logs --tail 30 everwise-ever-backend-1   # check migrations + mount
 ```
 
 Without `--build` neither schema migrations nor new routes take
@@ -200,7 +200,7 @@ the provider is active AND the API key is validated.
 ## User memory (already persisted)
 
 ```
-~/.claude/projects/c--Users-selyounsi-Desktop-wwweBar/memory/
+~/.claude/projects/c--Users-selyounsi-Desktop-EverWise/memory/
 ```
 
 Current entries:

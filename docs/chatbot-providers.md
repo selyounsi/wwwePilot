@@ -1,6 +1,6 @@
 # Chatbot-Provider
 
-Die Chat-Service-Architektur erlaubt mehrere Provider parallel (aktuell `wwwe`
+Die Chat-Service-Architektur erlaubt mehrere Provider parallel (aktuell `everwise`
 und `claude`). Jeder Provider lebt unter
 `src/services/chatbot/modules/<id>/` und folgt dem Provider-Modul-Vertrag in
 [module-api.md](./module-api.md#chatbot-provider-modul).

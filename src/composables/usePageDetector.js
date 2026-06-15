@@ -2,7 +2,7 @@ import { reactive } from 'vue'
 
 /**
  * Central page detector. Figures out, for any open tab:
- *   - whether it is one of *our* hosted sites (wwwe / securewebsystems),
+ *   - whether it is one of *our* hosted sites (EverWise / securewebsystems),
  *   - which framework it runs (CMS3, CMS4, EverPress-on-WordPress, plain
  *     WordPress, or unknown),
  *   - the framework version when the page exposes it.
@@ -28,7 +28,7 @@ const state = reactive({
   isOurSite: null,    // bool | null (null = not yet detected)
   cms:       null,    // 'cms3' | 'cms4' | 'everpress' | 'wordpress' | 'unknown' | null
   version:   null,    // framework version string | null
-  counterId: null,    // wwwe usecurez counter id (k=...) on our sites
+  counterId: null,    // EverWise usecurez counter id (k=...) on our sites
   generator: null,    // <meta name=generator> content
   signals:   null,    // raw detection signals (for debugging / power tools)
   error:     null,

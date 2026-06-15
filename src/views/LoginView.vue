@@ -57,7 +57,7 @@ const errorBody = computed(() => {
 const errorHints = computed(() => {
   if (error.value?.kind !== 'network') return []
   return [
-    t('VPN not connected — start the wwwe VPN and retry'),
+    t('VPN not connected — start the EverWise VPN and retry'),
     t('Backend offline — try again in a moment'),
     t('Firewall is blocking the request — check with IT'),
   ]
@@ -91,13 +91,13 @@ async function onLogin() {
       <div class="flex flex-col items-center gap-3 text-center">
         <Icon name="mdiAccountCircleOutline" :size="48" class="text-muted/50" />
         <p class="text-sm text-light max-w-xs">
-          {{ t('You will be redirected to the wwwe sign-in page in a new window.') }}
+          {{ t('You will be redirected to the EverWise sign-in page in a new window.') }}
         </p>
       </div>
 
       <BaseButton :loading="busy" @click="onLogin">
         <template #loading>{{ t('Opening sign-in…') }}</template>
-        {{ t('Sign in with wwwe account') }}
+        {{ t('Sign in with EverWise account') }}
       </BaseButton>
 
       <div

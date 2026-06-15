@@ -8,7 +8,7 @@ Input-Layout, Verlaufs-Verwaltung) angefasst werden muss.
 
 | Provider | Modul | Logik |
 |---|---|---|
-| **wwwe** | [`modules/wwwe/`](modules/wwwe/) | `fetch` an die wwwe-Chat-API (Backend, Default `localhost:3000`). Antwortet auf Working-Guide- und Projekttypen-Fragen. |
+| **EverWise** | [`modules/everwise/`](modules/everwise/) | `fetch` an die EverWise-Chat-API (Backend, Default `localhost:3000`). Antwortet auf Working-Guide- und Projekttypen-Fragen. |
 | **Claude** | [`modules/claude/`](modules/claude/) | `fetch` an Anthropics API mit eigenem API-Key. Key wird über die Modul-Settings-Page gesetzt — kein Modal mehr. |
 
 Toggle oben unter dem AppHeader wechselt zwischen den Providern. Jeder Provider

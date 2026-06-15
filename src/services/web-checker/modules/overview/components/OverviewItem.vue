@@ -135,7 +135,7 @@ async function generateMetaTitle() {
     const result = await claude.run({
       max_tokens: 100,
       system: 'Du schreibst SEO-Page-Titles auf Deutsch (das <title>-Tag). ' +
-              'Gib NUR den Titel zurück — keine Erklärungen, keine Anführungszeichen, kein Brand-Suffix wie "| wwwe". ' +
+              'Gib NUR den Titel zurück — keine Erklärungen, keine Anführungszeichen, kein Brand-Suffix wie "| EverWise". ' +
               '30–60 Zeichen. Hauptkeyword voran, klares Nutzenversprechen, keine Marketing-Floskeln.',
       messages: [{ role: 'user', content: userMessage }],
     })

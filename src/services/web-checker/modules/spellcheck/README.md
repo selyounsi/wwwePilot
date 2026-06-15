@@ -1,7 +1,7 @@
 # Spellcheck-Modul
 
 Rechtschreib-, Grammatik- und SEO-Prüfung für die geladene Seite. Backend ist
-die wwwe SpellCheck-App, die intern LanguageTool + projekteigenes Wörterbuch
+die EverWise SpellCheck-App, die intern LanguageTool + projekteigenes Wörterbuch
 fährt.
 
 ## Was geprüft wird
@@ -27,7 +27,7 @@ Was passiert auf der Seite:
 
 ```
 [Seiten-Kontext]                  [Service Worker]              [Backend]
- index.js (check)                  background.js                 wwwe SpellCheck-App
+ index.js (check)                  background.js                 EverWise SpellCheck-App
  ├── DOM → text + images       →   CHECK_SPELLING handler   →   POST /api/spellcheck/check
  ├── runInBackground(...)                                    ←   { matches: [...] }
  ├── Span-Injektion                ↑

@@ -1,7 +1,7 @@
 # Admin Spellcheck-Modul
 
 Verwaltet Domain-Wörterbücher, ignorierte Fehler und Komplett-Site-Checks
-gegen die wwwe SpellCheck-App API. Liegt unter `/admin/spellcheck`,
+gegen die EverWise SpellCheck-App API. Liegt unter `/admin/spellcheck`,
 sortiert in der Sidebar in der Web-checker-Gruppe.
 
 ## Backend

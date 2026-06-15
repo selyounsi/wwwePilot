@@ -4,11 +4,11 @@ Wie sich User in der Extension einloggen — kompakt, mit den nötigen Schritten
 
 ## Was ist OIDC und warum
 
-**OpenID Connect** ist ein Standard für „Login mit zentralem Account". Statt dass jede Anwendung eigene Passwörter speichert, vertraut sie einem Identity Provider (bei uns **EverAuth**). Vorteil: ein Account, ein Login-Erlebnis für alle wwwe-Tools (panel, vault, …).
+**OpenID Connect** ist ein Standard für „Login mit zentralem Account". Statt dass jede Anwendung eigene Passwörter speichert, vertraut sie einem Identity Provider (bei uns **EverAuth**). Vorteil: ein Account, ein Login-Erlebnis für alle EverWise-Tools (panel, vault, …).
 
 Die Extension ist ein **OIDC Client** (eine Anwendung, die einen User über EverAuth authentifiziert). Konkret heißt das:
 
-1. User klickt im Side Panel auf „Mit wwwe-Account anmelden"
+1. User klickt im Side Panel auf „Mit EverWise-Account anmelden"
 2. Browser öffnet die EverAuth-Login-Seite
 3. EverAuth prüft Credentials (intern via viscomp)
 4. EverAuth schickt einen Authorization-Code zurück an unser Backend
@@ -21,7 +21,7 @@ Die Extension ist ein **OIDC Client** (eine Anwendung, die einen User über Ever
 | URL | Wofür |
 |---|---|
 | [panel.everapps.io](https://panel.everapps.io) | Admin-UI für EverAuth — User, Sessions, OIDC-Clients verwalten |
-| [auth.everapps.io](https://auth.everapps.io) (prod) | Identity Provider — kennt alle wwwe-User |
+| [auth.everapps.io](https://auth.everapps.io) (prod) | Identity Provider — kennt alle EverWise-User |
 | [auth.everapps.dev](https://auth.everapps.dev) (dev) | Dev-Spiegel des Providers, gleiche API |
 | [vault.everapps.io](https://vault.everapps.io) | Passwort-Tresor für Client-Secrets, Tokens, etc. |
 
@@ -100,7 +100,7 @@ curl https://<subdomain>.<domain>/api/auth/config
 Wenn `OIDC_ISSUER_URL` leer ist, schaltet das Backend in einen **Stub-Modus**:
 
 - `/api/auth/login` redirected sofort zum Callback mit Fake-Code
-- Backend gibt einen Fake-User-JWT zurück (`stub@wwwe.de`)
+- Backend gibt einen Fake-User-JWT zurück (`stub@everwise.de`)
 - Kein Provider, kein Browser-Login
 
 Praktisch für lokales Frontend-Testing ohne IT-Aufwand. In Produktion **immer** echte Werte setzen, sonst kann sich jeder als beliebiger User einloggen.
@@ -110,7 +110,7 @@ Praktisch für lokales Frontend-Testing ohne IT-Aufwand. In Produktion **immer**
 ```
 Extension (Side Panel)
   │
-  │ 1. Klick auf "Mit wwwe-Account anmelden"
+  │ 1. Klick auf "Mit EverWise-Account anmelden"
   │    chrome.identity.launchWebAuthFlow(authUrl)
   ▼
 Backend  GET /api/auth/login?ext_redirect=…
@@ -209,7 +209,7 @@ Die Karte zeigt nur bei `network` die Ursachenliste — bei den anderen Fällen 
 |---|---|
 | [src/composables/auth/useAuth.js](../src/composables/auth/useAuth.js) | Reactive User-State, login()/logout()/refresh(), persistiert in `chrome.storage.local` unter `wp-auth` |
 | [src/composables/auth/apiClient.js](../src/composables/auth/apiClient.js) | `apiFetch`-Wrapper: hängt Bearer-Header dran, retry mit Refresh bei 401 |
-| [src/views/LoginView.vue](../src/views/LoginView.vue) | Login-Maske mit dem „Mit wwwe-Account anmelden"-Button |
+| [src/views/LoginView.vue](../src/views/LoginView.vue) | Login-Maske mit dem „Mit EverWise-Account anmelden"-Button |
 | [src/router/index.js](../src/router/index.js) | `beforeEach`-Guard: alle Routes außer `/login` brauchen `isAuthenticated` |
 | Backend `routes/auth.js` | Pre-Logout, Callback, Token-Exchange, App-JWT-Signing |
 | Backend `auth/oidcClient.js` | Discovery + Custom Basic Auth |

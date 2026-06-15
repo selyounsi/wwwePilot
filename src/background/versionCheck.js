@@ -5,7 +5,7 @@ import { compareVersions } from '@/utils/version.js'
 const ALARM_NAME       = 'version-check'
 const POLL_PERIOD_MIN  = 60
 const NOTIFIED_KEY     = 'version-check.notified-version'
-const NOTIFICATION_ID  = 'wwwe-extension-update'
+const NOTIFICATION_ID  = 'everwise-extension-update'
 
 async function fetchLatest() {
   try {

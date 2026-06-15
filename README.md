@@ -10,7 +10,7 @@ vereinfachen — Qualitätsprüfung, KI-Hilfe, mehrsprachig (EN/DE).
 | Service | Pfad | Was tut er? |
 |---|---|---|
 | **Web Checker** | [`src/services/web-checker/`](src/services/web-checker/README.md) | Prüft die offene Seite auf SEO, Bilder, Links, Kontrast, Headings, Performance, strukturierte Daten, Rechtschreibung, HTML-Validität, Barrierefreiheit, Privacy/Cookie-Maskierung, Console/Network-Errors, Sitemap-Coverage. Single-Page und sitemap-basierter Site-Wide-Check. Brücke zum CMS4 Live-Editor: Klick auf Audit-Items springt direkt zum CMS-Element. |
-| **KI-Assistent** | [`src/services/chatbot/`](src/services/chatbot/README.md) | Chat-Interface mit zwei Providern: wwwe-Backend und Claude (eigener API-Key). Im Web-Checker via "Im Chat analysieren"-Button auf jedem Item ansprechbar. |
+| **KI-Assistent** | [`src/services/chatbot/`](src/services/chatbot/README.md) | Chat-Interface mit zwei Providern: EverWise-Backend und Claude (eigener API-Key). Im Web-Checker via "Im Chat analysieren"-Button auf jedem Item ansprechbar. |
 
 Sobald du einen weiteren Service unter `src/services/<id>/` anlegst, taucht er
 automatisch im Dashboard und im Burger-Menü auf — siehe
@@ -48,7 +48,7 @@ VITE_BACKEND_URL=https://example.com
 
 ### Backend (optional)
 
-Spellcheck, PageSpeed und der wwwe-Chatbot brauchen ein eigenes Backend
+Spellcheck, PageSpeed und der EverWise-Chatbot brauchen ein eigenes Backend
 (separates Projekt). Ohne Backend funktionieren alle DOM-basierten Module
 trotzdem (Headings, Images, Links, Contrast, Validation, Accessibility, ...).
 

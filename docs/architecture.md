@@ -199,7 +199,7 @@ Click-to-Highlight funktioniert.
 ```
 HomeView Input → useChat.send(text)
   └→ activeModule.checker({ text, history, chatId })
-       ├→ wwwe → fetch wwwe-Backend → { reply } | { error }
+       ├→ EverWise → fetch EverWise-Backend → { reply } | { error }
        └→ claude → chrome.runtime.sendMessage('CLAUDE_CHAT')
                     └→ modules/claude/background.js → fetch Anthropic API → { reply } | { error }
   └→ useChat.push('assistant', reply)
@@ -207,7 +207,7 @@ HomeView Input → useChat.send(text)
 
 ## Live-Editor-Brücke
 
-Wenn der wwwe CMS4 Live-Editor (`le-cms4.*`) für die geprüfte Domain in einem
+Wenn der EverWise CMS4 Live-Editor (`le-cms4.*`) für die geprüfte Domain in einem
 zweiten Tab offen ist, taucht auf jedem editierbaren Audit-Item ein Stift-Icon
 auf. Klick → LE-Tab kommt nach vorn, das LE-Iframe scrollt zum Element, das
 CMS4-Wrapper-Element wird kurz orange umrandet (gestrichelt grau für rein

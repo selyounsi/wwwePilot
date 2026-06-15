@@ -16,7 +16,7 @@ Performance-Traces, Lighthouse-Audits, Console-Messages, Network-Inspection,
 Extension-Management. Steuert Chrome via Puppeteer + CDP.
 
 Konkret heißt das: **du kannst Claude Code bitten, "lade die Extension, öffne
-wwwe.de, klicke das Side-Panel auf, starte einen Web-Check, schaue dir die
+everwise.de, klicke das Side-Panel auf, starte einen Web-Check, schaue dir die
 Console an" — und das passiert wirklich.**
 
 ## Setup
@@ -78,7 +78,7 @@ Tool) damit Chrome die neue Version greift.
 
 Beispiel-Prompt:
 
-> Installiere die Extension aus `extension/dist`, öffne https://wwwe.de in einem
+> Installiere die Extension aus `extension/dist`, öffne https://everwise.de in einem
 > neuen Tab, öffne das Side Panel, starte einen Web-Check, lass mich die
 > Headings-Ergebnisse sehen, und gib mir Console-Errors falls welche da sind.
 
@@ -107,7 +107,7 @@ Beispiel-Prompt:
 Unser eigenes Performance-Modul nutzt PageSpeed Insights über das Backend.
 chrome-devtools-mcp hat einen lokalen `lighthouse_audit`. Beispiel-Prompt:
 
-> Audite https://wwwe.de mit Lighthouse für Mobile, dann starte unser
+> Audite https://everwise.de mit Lighthouse für Mobile, dann starte unser
 > Performance-Modul auf der gleichen Seite und sag mir, wo die Ergebnisse
 > auseinandergehen.
 
@@ -132,7 +132,7 @@ in den Sidebar-Kontext schauen.
 Sehen, was das Spellcheck-Modul oder Performance-Modul wirklich an das Backend
 schickt:
 
-> Starte einen Web-Check auf https://wwwe.de, fang alle Requests an
+> Starte einen Web-Check auf https://everwise.de, fang alle Requests an
 > `localhost:3000` ab, zeig mir Headers + Response-Body von dem
 > /api/spellcheck Call.
 
@@ -140,7 +140,7 @@ schickt:
 
 ### E) Site-Wide-Check live debuggen
 
-> Öffne wwwe.de, starte den Site-Wide-Check, mach alle 2 Sekunden einen
+> Öffne everwise.de, starte den Site-Wide-Check, mach alle 2 Sekunden einen
 > Screenshot vom Side Panel, und sag mir, wann der gepinnte Background-Tab
 > geöffnet wird.
 

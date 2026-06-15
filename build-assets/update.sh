@@ -8,7 +8,7 @@ pause() { read -n 1 -s -r -p "Beliebige Taste zum Schliessen..."; echo; }
 
 if [ ! -f "manifest.json" ]; then
     echo
-    echo "[wwweBar Update] ABBRUCH: manifest.json nicht gefunden."
+    echo "[EverWise Update] ABBRUCH: manifest.json nicht gefunden."
     echo "Aktueller Ordner: $(pwd)"
     echo "Die Datei muss im Chrome-Extension-Ordner liegen."
     echo
@@ -18,7 +18,7 @@ fi
 
 if [[ "$BACKEND_URL" != https://* ]]; then
     echo
-    echo "[wwweBar Update] ABBRUCH: Backend-URL ist nicht HTTPS oder nicht gesetzt."
+    echo "[EverWise Update] ABBRUCH: Backend-URL ist nicht HTTPS oder nicht gesetzt."
     echo "URL: $BACKEND_URL"
     echo
     pause
@@ -26,7 +26,7 @@ if [[ "$BACKEND_URL" != https://* ]]; then
 fi
 
 echo
-echo "[wwweBar Update] Hole neueste Version von $BACKEND_URL/api/version"
+echo "[EverWise Update] Hole neueste Version von $BACKEND_URL/api/version"
 if ! curl -s -f "$BACKEND_URL/api/version" -o version.tmp; then
     echo "Backend nicht erreichbar."
     rm -f version.tmp
@@ -43,7 +43,7 @@ if [ -z "$VERSION" ]; then
     exit 1
 fi
 
-echo "[wwweBar Update] Lade $VERSION.zip ..."
+echo "[EverWise Update] Lade $VERSION.zip ..."
 if ! curl -L -f -o update.zip "$BACKEND_URL/api/version/download/$VERSION"; then
     echo "Download fehlgeschlagen."
     pause
@@ -52,16 +52,16 @@ fi
 
 if ! unzip -l update.zip | grep -q "manifest.json"; then
     echo
-    echo "[wwweBar Update] ABBRUCH: ZIP enthaelt keine manifest.json."
+    echo "[EverWise Update] ABBRUCH: ZIP enthaelt keine manifest.json."
     rm -f update.zip
     pause
     exit 1
 fi
 
-echo "[wwweBar Update] Loesche alte Dateien..."
+echo "[EverWise Update] Loesche alte Dateien..."
 find . -mindepth 1 -maxdepth 1 ! -name "update.sh" ! -name "update.zip" -exec rm -rf {} +
 
-echo "[wwweBar Update] Entpacke..."
+echo "[EverWise Update] Entpacke..."
 if ! unzip -q update.zip; then
     echo "Entpacken fehlgeschlagen."
     pause

@@ -55,7 +55,7 @@ async function fetchLinks(cms, { force = false } = {}) {
 }
 
 /**
- * Hosts containing these segments are wwwe demo / staging environments
+ * Hosts containing these segments are EverWise demo / staging environments
  * that wear a slug like `<name>-<tld>` in their first label. The matching
  * live domain is recovered by turning the last `-` into `.`.
  *   selyounsi-demosite-com.duess5.dfsweb.site → selyounsi-demosite.com

@@ -127,7 +127,7 @@ und cleant beim `onUnmounted` automatisch auf.
 
 ### `liveEditor/useLiveEditorDetector.js`
 
-Erkennt, ob der aktive Tab ein wwwe-Live-Editor ist und ob die geöffnete Page
+Erkennt, ob der aktive Tab ein EverWise-Live-Editor ist und ob die geöffnete Page
 zur ursprünglich geprüften URL gehört. Sucht im DOM nach `leConfig.website.domain`
 + `leConfig.pagePath`, normalisiert Pfade (Trailing-Slash, `/index`-Suffix,
 2-Letter-Sprach-Prefix).

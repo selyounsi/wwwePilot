@@ -2,7 +2,7 @@
 
 Der Claude-Provider hat zwei Rollen:
 
-1. **Conversational Chatbot** im Chat-Tab — wie der wwwe-Chatbot, nur ein
+1. **Conversational Chatbot** im Chat-Tab — wie der EverWise-Chatbot, nur ein
    anderer Backend-Anbieter. Standard-Provider-Modul-Vertrag.
 2. **One-Shot-Aktionen** auf Items im gesamten Web-Checker — eigene
    Drawer-UI, keine Conversation. Hier dokumentiert.
@@ -154,6 +154,6 @@ validation — alle im jeweiligen `modules/<id>/index.js`.
 
 - Kein Streaming — alle Antworten sind one-shot.
 - Keine Conversation auf Items — wer Folgefragen stellen will, soll den
-  „Im wwwe-Chat analysieren"-Button (Roboter-Icon) nehmen. Der wwwe-Chatbot ist
+  „Im EverWise-Chat analysieren"-Button (Roboter-Icon) nehmen. Der EverWise-Chatbot ist
   ein RAG mit Wiki-Hits, geeignet für Multi-Turn.
 - Kein Tool-Use, keine Function-Calling.

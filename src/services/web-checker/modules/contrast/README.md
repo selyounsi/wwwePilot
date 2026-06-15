@@ -26,7 +26,7 @@ button, figcaption, blockquote, small, b, strong`):
 
 ## AccessibilityBar-Integration (BFSG-Modus)
 
-Wenn die Seite die wwwe `AccessibilityBar` (`window.accessibility`) ausliefert
+Wenn die Seite die EverWise `AccessibilityBar` (`window.accessibility`) ausliefert
 und der `contrast`-Service konfiguriert ist, prüft der Checker im
 **Hochkontrast-Modus** statt im Default-Theme — denn das ist der für
 BFSG/WCAG-Compliance relevante Zustand.

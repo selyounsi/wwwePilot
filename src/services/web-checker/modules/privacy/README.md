@@ -1,7 +1,7 @@
 # Privacy-Modul
 
 Prüft ob Cookie-/Tracking-Elemente (iframes, Scripts, Bilder) **maskiert**
-sind — d.h. nicht ohne User-Consent geladen werden. wwwe-CMS-Seiten
+sind — d.h. nicht ohne User-Consent geladen werden. EverWise-CMS-Seiten
 implementieren das via [privacyControl](../../../../). Modul-Resultate
 respektieren bereits gegebene Consents (Maps schon akzeptiert ⇒ legitim).
 
@@ -12,7 +12,7 @@ nicht nur eine fixe Whitelist. Same-Origin-Elemente werden ignoriert (die
 sind privacyControl-irrelevant). Inline-Scripts ohne `src` und Elemente
 ohne URL werden übersprungen.
 
-`IGNORED_HOST_PATTERNS` (in `index.js`) blendet wwwe-eigene Drittanbieter-
+`IGNORED_HOST_PATTERNS` (in `index.js`) blendet EverWise-eigene Drittanbieter-
 Hosts wie `meinebewertungen` aus.
 
 Items bekommen einen Type-Prefix im Title: `[IFRAME]`, `[SCRIPT]` oder
