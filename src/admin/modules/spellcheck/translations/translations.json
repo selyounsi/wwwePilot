@@ -30,7 +30,7 @@
     "New word to whitelist…":                                                                                                  "Neues Wort whitelisten…",
     "Force":                                                                                                                   "Erzwingen",
     "Add anyway":                                                                                                              "Trotzdem aufnehmen",
-    "force.help":                                                                                                              "Normalerweise prüft LanguageTool jedes Wort vor dem Hinzufügen und lehnt unbekannte oder als Tippfehler erkannte Wörter ab. Mit dieser Option wird das Wort trotzdem ins Wörterbuch aufgenommen. Nutze das für Markennamen (z.B. „wwwePilot“), Eigennamen oder Fachbegriffe, die LanguageTool nicht kennt.",
+    "force.help":                                                                                                              "Normalerweise prüft LanguageTool jedes Wort vor dem Hinzufügen und lehnt unbekannte oder als Tippfehler erkannte Wörter ab. Mit dieser Option wird das Wort trotzdem ins Wörterbuch aufgenommen. Nutze das für Markennamen (z.B. „EverWise“), Eigennamen oder Fachbegriffe, die LanguageTool nicht kennt.",
     "Word added":                                                                                                              "Wort hinzugefügt",
     "Word removed":                                                                                                            "Wort entfernt",
     "Word rejected by LanguageTool.":                                                                                          "Wort von LanguageTool abgelehnt.",

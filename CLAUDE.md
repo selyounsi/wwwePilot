@@ -6,7 +6,7 @@ keep code and documentation in English.
 
 ## What this repo is
 
-In-house Chrome extension (Manifest V3, Side Panel) for wwwe employees.
+**EverWise** — an in-house Chrome extension (Manifest V3, Side Panel).
 Vue 3 + Vite + Tailwind v4. Two services:
 
 - **web-checker** — DOM audits (13 modules: accessibility, console,
@@ -16,9 +16,10 @@ Vue 3 + Vite + Tailwind v4. Two services:
 - **chatbot** — AI assistant with provider modules (wwwe backend,
   Claude API)
 
-**Repo names**: locally `c:\Users\selyounsi\Desktop\wwweBar\extension`,
-on GitHub `selyounsi/wwwePilot`. Backend repo separate:
-`selyounsi/wwwePilotBackend`.
+**Repo location**: locally `c:\Users\selyounsi\Desktop\wwweBar\extension`.
+On GitHub the repos are still under the old slugs `selyounsi/wwwePilot`
+and `selyounsi/wwwePilotBackend` — they'll be renamed to **EverWise**
+soon, but the URLs are still the old ones for now.
 
 Full docs in [README.md](README.md) and [docs/](docs/). Recommended
 entry points: [docs/architecture.md](docs/architecture.md) for the

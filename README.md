@@ -1,7 +1,7 @@
-# Extension
+# EverWise Extension
 
-Inhouse Chrome Extension (Manifest V3, Side Panel) für die wwwe-Mitarbeiter.
-Der Anzeigename wird zur Build-Zeit aus `VITE_APP_NAME` (`.env`) bezogen.
+Inhouse Chrome Extension (Manifest V3, Side Panel). Der Anzeigename wird
+zur Build-Zeit aus `VITE_APP_NAME` (`.env`) bezogen.
 Sidebar mit mehreren Services, die die tägliche Arbeit an Webseiten
 vereinfachen — Qualitätsprüfung, KI-Hilfe, mehrsprachig (EN/DE).
 
