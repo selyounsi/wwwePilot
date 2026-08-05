@@ -12,7 +12,8 @@ dist
 dist-ssr
 .env
 *.local
-.claude
+.claude/*
+!.claude/skills
 
 # auto-copied from node_modules at build time
 public/axe.min.js
