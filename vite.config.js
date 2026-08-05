@@ -146,9 +146,10 @@ export default defineConfig(({ mode }) => {
   ],
   server: {
     cors: true,
-    port: 5173,
+    // VITE_DEV_PORT avoids clashes with other Vite projects; hmr.clientPort must match
+    port: Number(process.env.VITE_DEV_PORT ?? 5173),
     strictPort: true,
-    hmr: { clientPort: 5173 },
+    hmr: { clientPort: Number(process.env.VITE_DEV_PORT ?? 5173) },
   },
   build: {
     rollupOptions: {

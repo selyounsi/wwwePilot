@@ -16,10 +16,10 @@ Vue 3 + Vite + Tailwind v4. Two services:
 - **chatbot** — AI assistant with provider modules (EverWise backend,
   Claude API)
 
-**Repo location**: locally `c:\Users\selyounsi\Desktop\EverWise\extension`.
-On GitHub the repos are still under the old slugs `selyounsi/EverWise`
-and `selyounsi/EverWiseBackend` — they'll be renamed to **EverWise**
-soon, but the URLs are still the old ones for now.
+**Repo location**: locally under the multi-repo root (folder currently
+named `wwweBar`), sibling of `../backend/`. GitHub slugs:
+`selyounsi/EverWise` (this repo) and `selyounsi/EverWiseBackend`,
+renamed from the old `wwwePilot*` names.
 
 Full docs in [README.md](README.md) and [docs/](docs/). Recommended
 entry points: [docs/architecture.md](docs/architecture.md) for the

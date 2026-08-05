@@ -51,26 +51,25 @@ Der Server startet automatisch, sobald Claude Code ihn das erste Mal benutzt
   bis Chrome 149 nur mit Pipe-Connection (also nicht mit `--browserUrl` /
   `--wsEndpoint` — siehe ["an laufendes Chrome andocken"](#alternative-an-laufendes-chrome-andocken)).
 
-### 3. Extension bauen — **`npm run dev` empfohlen**
+### 3. Extension bauen — `npm run build` reicht
 
 ```bash
 cd extension
+npm run build      # produziert dist/, kein Watch — für MCP-Tests ausreichend
+# ODER für Iteration:
 npm run dev        # HMR-Build, dist/ bleibt mit Watch-Modus aktuell
-# ODER einmalig:
-npm run build      # produziert dist/, kein Watch
 ```
 
-> **Wichtig für Live-Tests via MCP:** Lass `npm run dev` laufen, nicht nur
-> einmalig bauen. **Empirie (2026-04-30):** mit reinem Prod-Build aus
-> `npm run build` schlossen sich `chrome-extension://`-Pages (Side Panel +
-> Extension-Tab) sofort beim CDP-Touch (`select_page`, `take_snapshot`,
-> `evaluate_script` → "page has been closed"). Mit laufendem `npm run dev`
-> bleiben sie stabil und sind voll inspizierbar. Vermutlich hält der HMR-
-> Websocket das Document über den Debugger-Attach hinweg am Leben.
+> **Empirie-Update (2026-08-05):** Prod-Build-Pages (Side Panel +
+> Extension-Tab) bleiben beim CDP-Touch inzwischen stabil — kompletter
+> Check-Flow inkl. `select_page`, `take_snapshot`, `evaluate_script`,
+> `take_screenshot` verifiziert. Die frühere Beobachtung (2026-04-30,
+> "page has been closed" ohne laufenden HMR-Watcher) ist mit aktuellem
+> chrome-devtools-mcp/Chrome nicht mehr reproduzierbar.
 
-Bei Code-Änderungen mit `npm run dev`: Vite schreibt `dist/` automatisch neu;
-in Claude Code dann *"reload chrome-devtools extension"* (`reload_extension`-
-Tool) damit Chrome die neue Version greift.
+`npm run dev` lohnt sich weiterhin beim Iterieren: Vite schreibt `dist/`
+bei Code-Änderungen automatisch neu; danach reicht `reload_extension`
+statt build + uninstall/install.
 
 ## Use-Cases
 
@@ -84,12 +83,12 @@ Beispiel-Prompt:
 
 **Standard-Flow** (alle 10 Module inkl. Backend-abhängige):
 
-1. `npm run dev` muss laufen (siehe Setup #3)
+1. `dist/` bauen (`npm run build` reicht, siehe Setup #3)
 2. `install_extension({path: "<absolut>/extension/dist"})`
 3. `new_page` zur Ziel-URL → Page A
 4. `select_page(A)` → `trigger_extension_action(id)` öffnet das Side Panel als
    eigene Page B (chrome-extension://...)
-5. `select_page(B)` (mit Dev-Build stabil; mit Prod-Build closed sich die Page)
+5. `select_page(B)`
 6. `take_snapshot(verbose: true)` — Card-Container suchen: **die `StaticText`-
    Einträge sind nicht klickbar**, du brauchst die wrapping `generic`-uid
    (z.B. `4_19` für die "Web Checker"-Karte, nicht `1_7` für den Text)
@@ -98,9 +97,6 @@ Beispiel-Prompt:
 9. `wait_for(["error","warning","Fehler","Warnung","OK"])` mit Timeout 30-60s
 10. Drill-down in einzelne Module: `click(<modul-card-uid>)`
 11. Zurück: `click(<button "Web Checker">)` aus dem Breadcrumb
-
-**Wichtig:** Side-Panel-Page selektieren funktioniert nur mit laufendem
-`npm run dev`. Mit reinem Prod-Build → "selected page has been closed".
 
 ### B) Performance-Modul gegen Lighthouse vergleichen
 
@@ -193,11 +189,19 @@ Logins, …), siehe nächster Abschnitt.
 
 **5. Side Panel / Extension-Page schließt sich beim CDP-Touch.**
 Symptom: `select_page(<chrome-extension://...>)` oder `take_snapshot` →
-*"selected page has been closed"*. Ursache: Prod-Build aus `npm run build`
-ohne laufenden HMR-Watcher. **Fix:** `npm run dev` starten und Extension
-reloaden (`reload_extension`). Mit dem HMR-Build bleiben Side-Panel- und
-Extension-Tab-Pages stabil für Inspektion. Empirisch verifiziert
-2026-04-30 — siehe Setup #3.
+*"selected page has been closed"*. Trat 2026-04-30 mit Prod-Builds auf,
+ist seit 2026-08-05 mit aktuellem chrome-devtools-mcp/Chrome nicht mehr
+reproduzierbar (siehe Setup #3). Falls es doch wieder auftritt:
+`npm run dev` starten und `reload_extension` — der HMR-Websocket hielt
+die Pages damals zuverlässig am Leben.
+
+**5b. Port 5173 ist von einem anderen Vite-Projekt belegt.**
+`vite.config.js` pinnt Port 5173 mit `strictPort: true` — laufen parallel
+andere Vite-Projekte (z.B. ServMade), schlägt `npm run dev` mit *"Port
+5173 is already in use"* fehl. Fix: `VITE_DEV_PORT=5176 npm run dev` —
+die Env-Var setzt Server-Port **und** `hmr.clientPort` zusammen (beide
+müssen matchen, der HMR-Client läuft in `chrome-extension://`-Pages und
+verbindet sich auf exakt diesen Port). Empirisch verifiziert 2026-08-05.
 
 **6. Service-Worker-Target-IDs sind instabil.**
 `evaluate_script({serviceWorkerId: "sw-N"})` schlägt oft mit *"No target with
