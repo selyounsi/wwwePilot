@@ -24,9 +24,11 @@ Claude → Zahnrad → „Wie komme ich an einen API-Key?".
 3. **Zu den Schlüsseln:** „Organisationseinstellungen" → **API-Schlüssel**
    (Direktlink: [platform.claude.com/settings/keys](https://platform.claude.com/settings/keys)).
 4. **Schlüssel erstellen** (Button oben rechts: **„+ Schlüssel erstellen"**).
-5. **Arbeitsbereich wählen.** Es gibt mehrere (z. B. *Default* und
-   *Claude Code*) — nimm den für die Extension vorgesehenen. Der Arbeitsbereich
-   entscheidet über Limits und Kostenzuordnung.
+5. **Arbeitsbereich: `Default`.** Die Liste zeigt zwei Einträge, *Default* und
+   *Claude Code*. Für die Extension immer **Default** — *Claude Code* bleibt
+   dem Terminal-Werkzeug vorbehalten. Der Arbeitsbereich entscheidet über
+   Limits und Kostenzuordnung; so bleiben Extension- und Claude-Code-Verbrauch
+   getrennt auswertbar.
 6. **Namen vergeben**, der später wiedererkennbar ist, z. B.
    `everwise-extension-<dein-name>`.
 7. **Schlüssel kopieren** — er wird **nur einmal** angezeigt. Danach zeigt die
@@ -57,6 +59,41 @@ Claude → Zahnrad → „Wie komme ich an einen API-Key?".
   Problem, sondern das Budget bzw. Limit des Arbeitsbereichs
   („Organisationseinstellungen → Limits"). Melde dich bei der Person, die die
   Organisation verwaltet.
+
+## „Ich habe doch schon einen Schlüssel für Claude Code"
+
+Dann **trotzdem einen neuen für die Extension erstellen** — pro Werkzeug ein
+eigener Schlüssel. Gründe:
+
+- **Widerrufen ohne Kollateralschaden:** Ein geteilter Schlüssel lässt sich
+  nicht für die Extension sperren, ohne gleichzeitig Claude Code lahmzulegen.
+- **Verbrauch zuordnen:** Extension-Schlüssel in *Default*, Claude-Code-Schlüssel
+  in *Claude Code* — dann zeigt die Console pro Arbeitsbereich, was welches
+  Werkzeug verbraucht hat. Ein gemeinsamer Schlüssel vermischt das unauflösbar.
+
+**Die Anzahl ist nicht begrenzt.** Dass in der Auswahlliste nur zwei Einträge
+stehen, heißt nicht „maximal zwei Schlüssel" — das sind die beiden
+**Arbeitsbereiche** der Organisation. Pro Arbeitsbereich lassen sich beliebig
+viele Schlüssel anlegen. Neue Arbeitsbereiche anzulegen ist allerdings
+Org-Admins vorbehalten.
+
+Falls du einen bestehenden Schlüssel suchst: In VS Code kann er in der
+`settings.json` unter `claudeCode.environmentVariables` als
+`ANTHROPIC_API_KEY=…` stehen. **Das ist eher ein Grund zum Aufräumen als eine
+Fundgrube:**
+
+- Die Datei liegt im Klartext auf der Platte, und wenn **Settings Sync**
+  aktiv ist, wird sie in dein Microsoft-Konto synchronisiert — der Schlüssel
+  landet damit auf jedem Gerät, an dem du dich in VS Code anmeldest.
+- Claude Code braucht diesen Eintrag normalerweise nicht: Ohne
+  `ANTHROPIC_API_KEY` nutzt es die eigenen, sicher gespeicherten
+  Anmeldedaten (Keychain bzw. `.credentials.json`).
+- Ein gesetzter `ANTHROPIC_API_KEY` wird von Claude Code **bevorzugt** vor dem
+  normalen Login benutzt. Wer sich wundert, über welchen Zugang abgerechnet
+  wird: `/status` in Claude Code zeigt die aktive Auth-Methode.
+
+Empfehlung: Eintrag entfernen, den betroffenen Schlüssel in der Console
+widerrufen und für jedes Werkzeug einen frischen erstellen.
 
 ## Warum kein „Mit Claude anmelden"-Button?
 

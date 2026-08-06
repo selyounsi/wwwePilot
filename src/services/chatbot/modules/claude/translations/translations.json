@@ -48,7 +48,7 @@
     "Open platform.claude.com and sign in with your company account (SSO).": "platform.claude.com öffnen und mit dem Firmen-Account anmelden (SSO).",
     "Check the account menu at the bottom left: the company organisation must be selected.": "Im Account-Menü unten links prüfen: die Firmen-Organisation muss ausgewählt sein.",
     "Go to Organisation settings → API keys.": "Zu „Organisationseinstellungen → API-Schlüssel\" gehen.",
-    "Choose \"Create key\", pick the intended workspace and give it a recognisable name, e.g. \"EverWise Extension\".": "Auf „Schlüssel erstellen\" klicken, den vorgesehenen Arbeitsbereich wählen und einen wiedererkennbaren Namen vergeben, z. B. „EverWise Extension\".",
+    "Choose \"Create key\", select the \"Default\" workspace and give the key a recognisable name, e.g. \"EverWise Extension\".": "Auf „Schlüssel erstellen\" klicken, als Arbeitsbereich „Default\" wählen und einen wiedererkennbaren Namen vergeben, z. B. „EverWise – Vorname\".",
     "Usage is billed to the company organisation — no private payment method and no personal Anthropic account needed.": "Die Nutzung läuft über die Firmen-Organisation – kein privates Zahlungsmittel und kein eigener Anthropic-Account nötig."
   },
   "en": {}

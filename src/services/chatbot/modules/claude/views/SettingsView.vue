@@ -24,7 +24,7 @@ const guideSteps = [
   'Open platform.claude.com and sign in with your company account (SSO).',
   'Check the account menu at the bottom left: the company organisation must be selected.',
   'Go to Organisation settings → API keys.',
-  'Choose "Create key", pick the intended workspace and give it a recognisable name, e.g. "EverWise Extension".',
+  'Choose "Create key", select the "Default" workspace and give the key a recognisable name, e.g. "EverWise Extension".',
   'Copy the key — it is shown only once. Then paste it below and save.',
 ]
 
