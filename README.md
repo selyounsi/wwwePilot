@@ -88,6 +88,7 @@ extension/
 
 | Datei | Inhalt |
 |---|---|
+| [docs/claude-api-key.md](docs/claude-api-key.md) | **Für Mitarbeitende:** Claude-API-Key anlegen und in der Extension hinterlegen |
 | [docs/architecture.md](docs/architecture.md) | Aufbau, Kontexte, Auto-Discovery, Settings/i18n-System, Datenflüsse |
 | [docs/composables.md](docs/composables.md) | Alle Composables/Stores einzeln erklärt |
 | [docs/creating-a-service.md](docs/creating-a-service.md) | Neuen Service anlegen (Step-by-Step) |

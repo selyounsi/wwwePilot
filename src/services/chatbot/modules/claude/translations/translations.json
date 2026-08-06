@@ -7,7 +7,6 @@
     "What do these SEO errors mean?": "Was bedeuten diese SEO-Fehler?",
     "Add API key to use Claude": "API-Key hinterlegen, um Claude zu nutzen",
     "Claude API Key": "Claude API-Key",
-    "Get your key from console.anthropic.com and paste it here.": "Hol dir deinen Key auf console.anthropic.com und füge ihn hier ein.",
     "API key is saved": "API-Key ist gespeichert",
     "New API key": "Neuer API-Key",
     "Enter API key": "API-Key eingeben",
@@ -39,7 +38,18 @@
     "Check the headings on the current page.": "Prüfe die Überschriften der aktuellen Seite.",
     "Show me the meta description of this page.": "Zeig mir die Meta-Description dieser Seite.",
     "Back to {host}": "Zurück zu {host}",
-    "Back to tab": "Zurück zum Tab"
+    "Back to tab": "Zurück zum Tab",
+    "How do I get an API key?": "Wie komme ich an einen API-Key?",
+    "Open platform.claude.com and sign up with your work e-mail (or sign in if you already have an account).": "Auf platform.claude.com mit deiner Arbeits-E-Mail registrieren (oder anmelden, falls du schon einen Account hast).",
+    "Add credit under Billing — without it the key exists but every request fails.": "Unter „Billing\" Guthaben aufladen – ohne Guthaben existiert der Key, aber jede Anfrage schlägt fehl.",
+    "Go to Settings → API keys and choose \"Create Key\".": "Unter „Settings → API keys\" auf „Create Key\" klicken.",
+    "Give it a name you recognise later, e.g. \"EverWise Extension\".": "Einen wiedererkennbaren Namen vergeben, z. B. „EverWise Extension\".",
+    "Copy the key — it is shown only once. Then paste it below and save.": "Key kopieren – er wird nur einmal angezeigt. Dann unten einfügen und speichern.",
+    "An API key needs its own credit — a Claude Pro or Max subscription does not include API usage.": "Ein API-Key braucht eigenes Guthaben – ein Claude-Pro- oder Max-Abo deckt die API-Nutzung nicht ab.",
+    "Open API keys page": "API-Keys-Seite öffnen",
+    "The key stays on this computer (browser storage) and is only sent to Anthropic.": "Der Key bleibt auf diesem Rechner (Browser-Speicher) und wird ausschließlich an Anthropic gesendet.",
+    "Test now": "Jetzt testen",
+    "Testing…": "Teste…"
   },
   "en": {}
 }

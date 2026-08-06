@@ -15,6 +15,23 @@ const saving   = ref(false)
 const testing  = ref(false)
 const masked   = ref(true)
 
+const CONSOLE_KEYS_URL = 'https://platform.claude.com/settings/keys'
+
+// Collapsed once a key is saved — the guide is onboarding, not daily reading.
+const guideOpen = ref(!keyExists.value)
+
+const guideSteps = [
+  'Open platform.claude.com and sign up with your work e-mail (or sign in if you already have an account).',
+  'Add credit under Billing — without it the key exists but every request fails.',
+  'Go to Settings → API keys and choose "Create Key".',
+  'Give it a name you recognise later, e.g. "EverWise Extension".',
+  'Copy the key — it is shown only once. Then paste it below and save.',
+]
+
+function openConsole() {
+  chrome.tabs.create({ url: CONSOLE_KEYS_URL })
+}
+
 async function save() {
   const key = input.value.trim()
   if (!key) return
@@ -78,9 +95,45 @@ async function remove() {
             </BaseButton>
           </div>
 
-          <p v-else class="text-[11px] text-muted leading-snug">
-            {{ t('Get your key from console.anthropic.com and paste it here.') }}
-          </p>
+          <div class="rounded-xl border border-border bg-background overflow-hidden">
+            <button
+              type="button"
+              class="w-full px-3 py-2 flex items-center gap-2 text-left hover:bg-surface-soft-hover transition-colors"
+              @click="guideOpen = !guideOpen"
+            >
+              <Icon name="mdiHelpCircleOutline" :size="14" class="text-primary shrink-0" />
+              <span class="flex-1 text-xs font-medium text-light">{{ t('How do I get an API key?') }}</span>
+              <Icon :name="guideOpen ? 'mdiChevronUp' : 'mdiChevronDown'" :size="15" class="text-muted shrink-0" />
+            </button>
+
+            <div v-if="guideOpen" class="px-3 pb-3 pt-1 flex flex-col gap-2.5 border-t border-border/60">
+              <ol class="flex flex-col gap-2.5">
+                <li v-for="(step, i) in guideSteps" :key="step" class="flex gap-2.5">
+                  <span class="w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] font-semibold flex items-center justify-center shrink-0 mt-0.5">{{ i + 1 }}</span>
+                  <span class="text-[11px] text-muted leading-snug">{{ t(step) }}</span>
+                </li>
+              </ol>
+
+              <div class="flex items-start gap-2 rounded-xl bg-alert/5 border border-alert/25 px-2.5 py-2">
+                <Icon name="mdiInformationOutline" :size="13" class="text-alert shrink-0 mt-0.5" />
+                <span class="text-[11px] text-alert/90 leading-snug">
+                  {{ t('An API key needs its own credit — a Claude Pro or Max subscription does not include API usage.') }}
+                </span>
+              </div>
+
+              <BaseButton
+                variant="pill"
+                icon="mdiOpenInNew"
+                :icon-size="12"
+                class="self-start"
+                @click="openConsole"
+              >{{ t('Open API keys page') }}</BaseButton>
+
+              <p class="text-[11px] text-muted/70 leading-snug">
+                {{ t('The key stays on this computer (browser storage) and is only sent to Anthropic.') }}
+              </p>
+            </div>
+          </div>
 
           <div class="flex flex-col gap-1.5">
             <label class="text-xs text-muted">{{ keyExists ? t('New API key') : t('Enter API key') }}</label>

@@ -235,6 +235,7 @@ Read first, then ask:
 | Login / OIDC | [docs/auth.md](docs/auth.md) |
 | Chatbot providers on/off | [docs/chatbot-providers.md](docs/chatbot-providers.md) |
 | Claude actions (full list) | [docs/claude-actions.md](docs/claude-actions.md) |
+| Claude API key onboarding (employee-facing) | [docs/claude-api-key.md](docs/claude-api-key.md) |
 | Live-editor bridge + CMS4 detection | [docs/live-editor.md](docs/live-editor.md) |
 | Re-check flow + tab handling | [docs/check-flow.md](docs/check-flow.md) |
 | Check-types (profiles + manual tasks) | [docs/check-types.md](docs/check-types.md) |
