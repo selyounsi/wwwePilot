@@ -40,16 +40,16 @@
     "Back to {host}": "Zurück zu {host}",
     "Back to tab": "Zurück zum Tab",
     "How do I get an API key?": "Wie komme ich an einen API-Key?",
-    "Open platform.claude.com and sign up with your work e-mail (or sign in if you already have an account).": "Auf platform.claude.com mit deiner Arbeits-E-Mail registrieren (oder anmelden, falls du schon einen Account hast).",
-    "Add credit under Billing — without it the key exists but every request fails.": "Unter „Billing\" Guthaben aufladen – ohne Guthaben existiert der Key, aber jede Anfrage schlägt fehl.",
-    "Go to Settings → API keys and choose \"Create Key\".": "Unter „Settings → API keys\" auf „Create Key\" klicken.",
-    "Give it a name you recognise later, e.g. \"EverWise Extension\".": "Einen wiedererkennbaren Namen vergeben, z. B. „EverWise Extension\".",
     "Copy the key — it is shown only once. Then paste it below and save.": "Key kopieren – er wird nur einmal angezeigt. Dann unten einfügen und speichern.",
-    "An API key needs its own credit — a Claude Pro or Max subscription does not include API usage.": "Ein API-Key braucht eigenes Guthaben – ein Claude-Pro- oder Max-Abo deckt die API-Nutzung nicht ab.",
     "Open API keys page": "API-Keys-Seite öffnen",
     "The key stays on this computer (browser storage) and is only sent to Anthropic.": "Der Key bleibt auf diesem Rechner (Browser-Speicher) und wird ausschließlich an Anthropic gesendet.",
     "Test now": "Jetzt testen",
-    "Testing…": "Teste…"
+    "Testing…": "Teste…",
+    "Open platform.claude.com and sign in with your company account (SSO).": "platform.claude.com öffnen und mit dem Firmen-Account anmelden (SSO).",
+    "Check the account menu at the bottom left: the company organisation must be selected.": "Im Account-Menü unten links prüfen: die Firmen-Organisation muss ausgewählt sein.",
+    "Go to Organisation settings → API keys.": "Zu „Organisationseinstellungen → API-Schlüssel\" gehen.",
+    "Choose \"Create key\", pick the intended workspace and give it a recognisable name, e.g. \"EverWise Extension\".": "Auf „Schlüssel erstellen\" klicken, den vorgesehenen Arbeitsbereich wählen und einen wiedererkennbaren Namen vergeben, z. B. „EverWise Extension\".",
+    "Usage is billed to the company organisation — no private payment method and no personal Anthropic account needed.": "Die Nutzung läuft über die Firmen-Organisation – kein privates Zahlungsmittel und kein eigener Anthropic-Account nötig."
   },
   "en": {}
 }

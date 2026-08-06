@@ -21,10 +21,10 @@ const CONSOLE_KEYS_URL = 'https://platform.claude.com/settings/keys'
 const guideOpen = ref(!keyExists.value)
 
 const guideSteps = [
-  'Open platform.claude.com and sign up with your work e-mail (or sign in if you already have an account).',
-  'Add credit under Billing — without it the key exists but every request fails.',
-  'Go to Settings → API keys and choose "Create Key".',
-  'Give it a name you recognise later, e.g. "EverWise Extension".',
+  'Open platform.claude.com and sign in with your company account (SSO).',
+  'Check the account menu at the bottom left: the company organisation must be selected.',
+  'Go to Organisation settings → API keys.',
+  'Choose "Create key", pick the intended workspace and give it a recognisable name, e.g. "EverWise Extension".',
   'Copy the key — it is shown only once. Then paste it below and save.',
 ]
 
@@ -114,10 +114,10 @@ async function remove() {
                 </li>
               </ol>
 
-              <div class="flex items-start gap-2 rounded-xl bg-alert/5 border border-alert/25 px-2.5 py-2">
-                <Icon name="mdiInformationOutline" :size="13" class="text-alert shrink-0 mt-0.5" />
-                <span class="text-[11px] text-alert/90 leading-snug">
-                  {{ t('An API key needs its own credit — a Claude Pro or Max subscription does not include API usage.') }}
+              <div class="flex items-start gap-2 rounded-xl bg-primary/5 border border-primary/25 px-2.5 py-2">
+                <Icon name="mdiInformationOutline" :size="13" class="text-primary shrink-0 mt-0.5" />
+                <span class="text-[11px] text-muted leading-snug">
+                  {{ t('Usage is billed to the company organisation — no private payment method and no personal Anthropic account needed.') }}
                 </span>
               </div>
 
