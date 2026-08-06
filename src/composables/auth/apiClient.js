@@ -1,4 +1,4 @@
-import { useAuth, whenAuthHydrated } from './useAuth.js'
+import { useAuth, whenAuthHydrated, isAccessTokenExpired, canRefresh } from './useAuth.js'
 import { reportFailure, reportSuccess } from '@/composables/useBackendStatus.js'
 
 /**
@@ -20,6 +20,13 @@ export async function apiFetch(url, options = {}) {
       headers.set('Content-Type', 'application/json')
     }
     return fetch(url, { ...options, headers })
+  }
+
+  // Refresh before sending rather than after a 401. The expiry check otherwise
+  // only runs at hydration, so any panel session outliving the 15-minute access
+  // token had to fail one request first.
+  if (isAccessTokenExpired() && canRefresh()) {
+    await auth.refresh()
   }
 
   let res
@@ -65,6 +72,14 @@ export async function apiJson(url, options = {}) {
   const res  = await apiFetch(url, options)
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
+    // A surviving 401 means the refresh path already failed — surface that
+    // instead of the raw "jwt expired", which reads like a bug to the user.
+    if (res.status === 401 && ['token_expired', 'invalid_token', 'token_revoked'].includes(data.error)) {
+      const err = new Error('Your session has expired. Please sign in again.')
+      err.status = 401
+      err.data   = data
+      throw err
+    }
     let message = data.message
     if (!message && Array.isArray(data.issues) && data.issues.length) {
       message = data.issues

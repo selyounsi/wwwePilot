@@ -208,10 +208,40 @@ Die Karte zeigt nur bei `network` die Ursachenliste — bei den anderen Fällen 
 | Datei | Zweck |
 |---|---|
 | [src/composables/auth/useAuth.js](../src/composables/auth/useAuth.js) | Reactive User-State, login()/logout()/refresh(), persistiert in `chrome.storage.local` unter `wp-auth` |
-| [src/composables/auth/apiClient.js](../src/composables/auth/apiClient.js) | `apiFetch`-Wrapper: hängt Bearer-Header dran, retry mit Refresh bei 401 |
+| [src/composables/auth/apiClient.js](../src/composables/auth/apiClient.js) | `apiFetch`-Wrapper: hängt Bearer-Header dran, refresht **proaktiv** vor dem Request und retryt bei 401 |
 | [src/views/LoginView.vue](../src/views/LoginView.vue) | Login-Maske mit dem „Mit EverWise-Account anmelden"-Button |
 | [src/router/index.js](../src/router/index.js) | `beforeEach`-Guard: alle Routes außer `/login` brauchen `isAuthenticated` |
 | Backend `routes/auth.js` | Pre-Logout, Callback, Token-Exchange, App-JWT-Signing |
 | Backend `auth/oidcClient.js` | Discovery + Custom Basic Auth |
 
 Backend-Doku separat: [backend/README.md](../../backend/README.md) — Routen-Übersicht, ENV-Vars, Onboarding-Schritte.
+
+## Token-Refresh: drei Fallstricke (behoben 0.0.118)
+
+Symptom war ein rohes `{"error":"token_expired","message":"jwt expired"}` im
+UI, das auch nach Wartezeit nicht mehr wegging. Drei Ursachen, alle
+extension-seitig — das Backend liefert korrekt 401 und `/api/auth/refresh`
+funktioniert auch im Stub-Modus:
+
+1. **`refresh()` löschte die Session bei *jedem* `!res.ok`** — also auch bei
+   500/502/504 oder einer HTML-Antwort von Traefik. Ein kurzer Backend-Hänger
+   vernichtete damit das 7-Tage-Refresh-Token, und ab dann schlug **jeder**
+   Call dauerhaft mit `token_expired` fehl, bis man sich manuell neu anmeldete.
+   Jetzt: `clear()` nur bei 401/403 (echtes Token-Urteil eines erreichbaren
+   Servers).
+2. **Kein proaktiver Refresh.** Der Ablauf-Check lief nur bei der Hydration,
+   d.h. jede Panel-Session über 15 Minuten musste erst einen Request an die
+   Wand fahren. `apiFetch` refresht jetzt *vor* dem Request, wenn der
+   Access-Token abgelaufen ist und ein gültiger Refresh-Token existiert
+   (`isAccessTokenExpired()` / `canRefresh()`).
+3. **Rohe Server-Meldung im UI.** Ein überlebender 401 mit
+   `token_expired`/`invalid_token`/`token_revoked` wird in `apiJson` jetzt zu
+   „Your session has expired. Please sign in again." — vorher stand dort das
+   technische `jwt expired`.
+
+Zusätzlich abgesichert: eine 200-Antwort ohne beide Tokens wird verworfen,
+statt den unrettbaren Zustand „accessToken ohne refreshToken" zu persistieren.
+
+Nebenwirkung, die man kennen sollte: `clear()` wird über
+`chrome.storage.onChanged` in **alle** Kontexte gespiegelt — ein 401 im
+Service Worker loggt also auch ein offenes Side Panel aus.

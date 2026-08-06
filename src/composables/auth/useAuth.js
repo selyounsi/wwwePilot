@@ -153,13 +153,19 @@ async function refresh() {
       })
       reportSuccess()
       if (!res.ok) {
-        // Don't clear the refresh token on network errors — only on a
-        // real 401 from a reachable server. Network outages should be
-        // recoverable without the user having to re-login.
-        clear()
+        // Only a token verdict from a reachable server invalidates the session.
+        // 5xx / proxy errors used to land here too and wiped the 7-day refresh
+        // token, so a brief backend hiccup logged everyone out permanently.
+        if (res.status === 401 || res.status === 403) clear()
         return null
       }
       const data = await res.json()
+      // A 200 without both tokens would leave accessToken-without-refreshToken —
+      // the one state where no further refresh is possible.
+      if (!data?.accessToken || !data?.refreshToken) {
+        clear()
+        return null
+      }
       state.accessToken  = data.accessToken
       state.refreshToken = data.refreshToken
       state.user         = data.user
@@ -190,4 +196,14 @@ export function useAuth() {
 /** Sync getter for service-worker and page context. */
 export function getCurrentAccessToken() {
   return state.accessToken
+}
+
+/** True when the access token is missing or (nearly) expired. */
+export function isAccessTokenExpired() {
+  return isExpired(state.accessToken)
+}
+
+/** True when a refresh could still succeed. */
+export function canRefresh() {
+  return Boolean(state.refreshToken) && !isExpired(state.refreshToken)
 }
