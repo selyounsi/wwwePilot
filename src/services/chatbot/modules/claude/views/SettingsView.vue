@@ -3,10 +3,12 @@ import { ref } from 'vue'
 import { useI18n } from '@/composables/i18n/useI18n.js'
 import { useToast } from '@/composables/useToast.js'
 import { useClaudeSettings } from '../composables/useClaudeSettings.js'
+import { useModuleSettings } from '@/composables/settings/useModuleSettings.js'
 
 const { t } = useI18n()
 const toast = useToast()
 const { keyExists, saveKey, deleteKey, validateKey } = useClaudeSettings()
+const moduleSettings = useModuleSettings('claude', { cmsToolsEnabled: true })
 
 const input    = ref('')
 const saving   = ref(false)
@@ -121,6 +123,26 @@ async function remove() {
               @click="remove"
             />
           </div>
+        </div>
+      </div>
+
+      <div class="bg-surface-soft border border-border rounded-xl overflow-hidden">
+        <div class="px-3 py-2.5 border-b border-border/60 flex items-center gap-2">
+          <Icon name="mdiToyBrickOutline" :size="14" class="text-muted shrink-0" />
+          <span class="text-xs font-medium text-light">{{ t('CMS tools') }}</span>
+        </div>
+        <div class="px-3 py-3 flex items-center justify-between gap-3">
+          <p class="text-[11px] text-muted leading-snug">
+            {{ t('Let the chat use the CMS4 live editor directly (read and edit pages via MCP). Requires login.') }}
+          </p>
+          <BaseButton
+            variant="pill"
+            class="shrink-0"
+            :class="moduleSettings.cmsToolsEnabled ? 'bg-primary! border-primary! text-black/80!' : ''"
+            @click="moduleSettings.cmsToolsEnabled = !moduleSettings.cmsToolsEnabled"
+          >
+            {{ moduleSettings.cmsToolsEnabled ? t('Enabled') : t('Disabled') }}
+          </BaseButton>
         </div>
       </div>
 

@@ -3,12 +3,13 @@ import { ref, nextTick, watch, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useChat } from '../composables/useChat.js'
 import { useI18n } from '@/composables/i18n/useI18n.js'
+import { useActiveTab, focusOrOpenTab } from '@/composables/useActiveTab.js'
 import ProviderToggle from '../components/ProviderToggle.vue'
 
 const {
   modules, enabledModules, anyEnabled,
-  chats, activeChat, activeModule, messages, isLoading, activeProvider,
-  send, clear, newChat, switchChat, deleteChat, copyMessage, setProvider,
+  chats, activeChat, activeModule, messages, isLoading, activeProvider, canStop,
+  send, stop, clear, newChat, switchChat, deleteChat, copyMessage, setProvider,
 } = useChat()
 const { t } = useI18n()
 const router = useRouter()
@@ -24,6 +25,22 @@ const nearLimit   = computed(() => charCount.value > charLimit * 0.8)
 const accentStyle = computed(() => ({
   backgroundColor: activeModule.value?.accentColor ?? 'var(--color-primary)',
 }))
+
+const { tabUrl } = useActiveTab()
+const activeTabHost = computed(() => {
+  try { return tabUrl.value ? new URL(tabUrl.value).host : '' } catch { return '' }
+})
+const boundHost = computed(() => activeChat.value?.capabilities?.pinnedHost || activeTabHost.value)
+const tabDrifted = computed(() => {
+  const pinned = activeChat.value?.capabilities?.pinnedHost
+  return Boolean(pinned && activeTabHost.value && activeTabHost.value !== pinned)
+})
+
+function goToPinnedTab() {
+  const caps = activeChat.value?.capabilities
+  if (!caps?.pinnedHost) return
+  focusOrOpenTab({ host: caps.pinnedHost, tabId: caps.pinnedTabId, url: caps.pinnedUrl })
+}
 
 function scrollToBottom() {
   nextTick(() => {
@@ -133,6 +150,28 @@ function format(text) {
       </template>
     </AppHeader>
 
+    <!-- Once a chat has messages the picker is gone; this keeps the bound
+         target visible. It shows the PINNED host, not the live tab, and warns
+         when they drift apart. -->
+    <div
+      v-if="messages.length && activeChat?.capabilities?.cms4"
+      class="border-b border-border bg-surface px-3 py-1.5 flex items-center gap-1.5 text-[11px]"
+    >
+      <Icon name="mdiToyBrickOutline" :size="12" class="text-primary shrink-0" />
+      <span class="text-muted">{{ t('CMS4 tools') }}</span>
+      <span class="text-muted/40">·</span>
+      <code class="text-primary font-mono truncate">{{ boundHost || t('no tab') }}</code>
+      <BaseButton
+        v-if="tabDrifted"
+        variant="pill"
+        icon="mdiArrowLeftTop"
+        :icon-size="11"
+        class="shrink-0 ml-auto"
+        :tooltip="t('This chat stays on {pinned}. The current tab shows {current}.', { pinned: boundHost, current: activeTabHost })"
+        @click="goToPinnedTab"
+      >{{ t('Back to tab') }}</BaseButton>
+    </div>
+
     <div v-if="showHistory" class="border-b border-border bg-surface px-3 py-2 flex flex-col gap-1 max-h-44 overflow-y-auto">
       <p class="text-xs text-muted uppercase tracking-widest mb-1">{{ t('History') }}</p>
       <div v-for="c in chats" :key="c.id" class="flex items-center gap-1.5 group">
@@ -163,8 +202,27 @@ function format(text) {
       <component v-if="!messages.length && activeModule" :is="activeModule.view" />
 
       <template v-else>
+        <template v-for="msg in messages">
+
+        <!-- Real workflow status line (tool started / finished), not model reasoning -->
+        <div v-if="msg.kind === 'status'" :key="msg.id" class="flex items-center gap-2 pl-9 text-[11px]">
+          <span
+            v-if="msg.pending"
+            class="w-3 h-3 rounded-full border-2 border-primary/30 border-t-primary animate-spin shrink-0"
+          />
+          <Icon
+            v-else
+            :name="msg.collapsed ? 'mdiToyBrickOutline' : (msg.isError || msg.interrupted ? 'mdiAlertCircleOutline' : 'mdiCheckCircle')"
+            :size="12"
+            class="shrink-0"
+            :class="msg.collapsed ? 'text-muted/60' : (msg.isError || msg.interrupted ? 'text-error' : 'text-success')"
+          />
+          <span :class="msg.isError || msg.interrupted ? 'text-error' : 'text-muted'">{{ msg.content }}</span>
+        </div>
+
         <div
-          v-for="msg in messages" :key="msg.id"
+          v-else
+          :key="msg.id"
           class="flex gap-2.5 group"
           :class="msg.role === 'user' ? 'justify-end' : 'justify-start'"
         >
@@ -218,7 +276,9 @@ function format(text) {
           </div>
         </div>
 
-        <div v-if="isLoading" class="flex gap-2.5 justify-start">
+        </template>
+
+        <div v-if="isLoading" class="flex gap-2.5 justify-start items-center">
           <div class="w-7 h-7 rounded-xl flex items-center justify-center shrink-0" :style="accentStyle">
             <Icon name="mdiRobot" :size="15" color="white" />
           </div>
@@ -227,6 +287,14 @@ function format(text) {
             <span class="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style="animation-delay:150ms" />
             <span class="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style="animation-delay:300ms" />
           </div>
+          <BaseButton
+            v-if="canStop"
+            variant="pill"
+            icon="mdiStop"
+            :icon-size="12"
+            :tooltip="t('Stop')"
+            @click="stop"
+          >{{ t('Stop') }}</BaseButton>
         </div>
       </template>
     </div>

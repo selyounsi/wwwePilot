@@ -10,13 +10,46 @@ function now() {
   return new Date().toLocaleTimeString('de', { hour: '2-digit', minute: '2-digit' })
 }
 
+// Per-chat capability set, chosen before the first message. Kept on the chat
+// (not in module settings) so parallel chats can target different sites.
+// `pinnedHost` freezes the domain the chat works on: switching browser tabs
+// mid-conversation must never redirect an edit to a different website. The tab
+// id and url are kept only to jump back to (or reopen) that page.
+function defaultCapabilities() {
+  return { cms4: false, target: 'activeTab', pinnedHost: '', pinnedTabId: null, pinnedUrl: '' }
+}
+
 function newChatObj(provider) {
   return {
     id:       crypto.randomUUID(),
     provider,
     name:     `Chat ${new Date().toLocaleDateString('de', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`,
     messages: [],
+    capabilities: defaultCapabilities(),
   }
+}
+
+// Status lines are live progress; once a turn is history they only add noise and
+// eat into the localStorage budget. Collapse each turn's lines into one summary
+// when a stored chat is loaded.
+function collapseStatusLines(messages) {
+  if (!Array.isArray(messages)) return []
+  const out = []
+  const summaryFor = new Map()
+  for (const m of messages) {
+    if (m?.kind !== 'status') { out.push(m); continue }
+    const key = m.turnId ?? m.id
+    const existing = summaryFor.get(key)
+    if (existing) {
+      existing.tools.push(m.tool)
+      existing.msg.content = `${existing.tools.length}× ${existing.tools.join(', ')}`
+      continue
+    }
+    const msg = { ...m, pending: false, interrupted: false, content: m.tool ?? m.content, collapsed: true }
+    summaryFor.set(key, { msg, tools: [m.tool].filter(Boolean) })
+    out.push(msg)
+  }
+  return out
 }
 
 function loadChats(modules) {
@@ -28,7 +61,11 @@ function loadChats(modules) {
         const result = {}
         for (const m of modules) {
           result[m.id] = Array.isArray(parsed[m.id]) && parsed[m.id].length
-            ? parsed[m.id]
+            ? parsed[m.id].map(c => ({
+                ...c,
+                capabilities: { ...defaultCapabilities(), ...c.capabilities },
+                messages:     collapseStatusLines(c.messages),
+              }))
             : [newChatObj(m.id)]
         }
         return result
@@ -47,7 +84,7 @@ function saveChats(state) {
 // Lazy singletons — initialized on first useChat() call. Initializing at
 // module-top would deadlock against a circular import: useModuleLoader's
 // eager glob loads each module's views/Index.vue, and those import useChat.
-let modules, allChats, activeProvider, activeChatIds, isLoading, error, providers
+let modules, allChats, activeProvider, activeChatIds, isLoading, error, providers, abortCurrent
 
 function init() {
   if (modules) return
@@ -58,6 +95,7 @@ function init() {
   activeChatIds  = ref(Object.fromEntries(modules.map(m => [m.id, allChats.value[m.id]?.[0]?.id])))
   isLoading      = ref(false)
   error          = ref(null)
+  abortCurrent   = ref(null)
 
   // Auto-switch to the first enabled provider whenever the active one is
   // disabled in settings, so the chat view doesn't get stuck on an invisible
@@ -95,11 +133,73 @@ export function useChat() {
     saveChats(allChats.value)
   }
 
+  // Assistant turns are replayed as their raw blocks when available (tool calls
+  // + results), otherwise as plain text. Grouping by turnId prevents sending a
+  // turn twice — once as blocks, once as its streamed text messages.
+  function buildHistory() {
+    const out = []
+    const replayed = new Set()
+    for (const m of messages.value.slice(0, -1)) {
+      if (m.isError) continue
+      if (m.role === 'user') { out.push({ role: 'user', content: m.content }); continue }
+      if (m.turnId && replayed.has(m.turnId)) continue
+      if (m.blocks?.length) {
+        if (m.turnId) replayed.add(m.turnId)
+        out.push({ role: 'assistant', content: m.blocks })
+        continue
+      }
+      if (m.kind === 'status') continue
+      out.push({ role: 'assistant', content: m.content })
+    }
+    return out
+  }
+
   async function send(text) {
     if (!text.trim() || isLoading.value) return
     error.value = null
+    const history = buildHistory()
     push('user', text)
     isLoading.value = true
+
+    // Tracks in-flight tool status lines so `tool_end` can flip the same
+    // message to done instead of appending a second line.
+    const pendingTools = new Map()
+    const turnId = crypto.randomUUID()
+    let streamedAny = false
+
+    function onEvent(ev) {
+      const chat = activeChat.value
+      if (!chat) return
+      switch (ev?.type) {
+        case 'text':
+          if (!ev.text?.trim()) return
+          streamedAny = true
+          push('assistant', ev.text, { turnId })
+          break
+        case 'tool_start': {
+          const id = crypto.randomUUID()
+          pendingTools.set(ev.toolId ?? ev.name, id)
+          push('assistant', t('Using CMS tool {tool}…', { tool: ev.name }), {
+            id, kind: 'status', pending: true, tool: ev.name, turnId,
+          })
+          break
+        }
+        case 'tool_end': {
+          const msgId = pendingTools.get(ev.toolId ?? ev.name)
+          const msg   = msgId && chat.messages.find(m => m.id === msgId)
+          if (msg) {
+            msg.pending = false
+            msg.isError = !!ev.isError
+            msg.content = ev.isError
+              ? t('CMS tool {tool} failed', { tool: ev.name })
+              : t('CMS tool {tool} done', { tool: ev.name })
+            pendingTools.delete(ev.toolId ?? ev.name)
+            saveChats(allChats.value)
+          }
+          break
+        }
+      }
+    }
 
     try {
       const mod = activeModule.value
@@ -108,21 +208,61 @@ export function useChat() {
         return
       }
 
-      const history = messages.value.slice(0, -1).map(m => ({ role: m.role, content: m.content }))
-      const result  = await mod.checker({ text, history, chatId: activeChat.value.id })
+      const result = await mod.checker({
+        text,
+        history,
+        chatId:       activeChat.value.id,
+        capabilities: { ...activeChat.value.capabilities },
+        onEvent,
+        onAbortReady: (stop) => { abortCurrent.value = stop },
+      })
 
       if (result?.error) {
         error.value = result.error
         push('assistant', t('Error: {message}', { message: result.error }), { isError: true })
-      } else {
-        push('assistant', result?.reply ?? t('No response received.'))
+      } else if (result?.reply) {
+        // Streaming already pushed the text; only append when nothing arrived.
+        if (!streamedAny) push('assistant', result.reply, { turnId })
+      } else if (result?.aborted) {
+        if (!streamedAny) push('assistant', t('Stopped.'), { turnId })
+      } else if (!streamedAny) {
+        push('assistant', t('No response received.'), { turnId })
+      }
+
+      // Park the raw blocks on the turn's first message so the next request can
+      // replay the tool calls instead of only the narration.
+      if (result?.blocks?.length) {
+        const first = activeChat.value?.messages.find(m => m.turnId === turnId && m.kind !== 'status')
+        if (first) first.blocks = result.blocks
       }
     } catch (e) {
       error.value = e.message
       push('assistant', t('Sorry, an error occurred. Please try again.'), { isError: true })
     } finally {
+      // Never leave a spinner behind if the stream died mid-tool.
+      for (const msgId of pendingTools.values()) {
+        const msg = activeChat.value?.messages.find(m => m.id === msgId)
+        if (msg) { msg.pending = false; msg.interrupted = true }
+      }
+      pendingTools.clear()
+      saveChats(allChats.value)
+      abortCurrent.value = null
       isLoading.value = false
     }
+  }
+
+  function stop() {
+    abortCurrent.value?.()
+  }
+
+  function setCapabilities(patch) {
+    if (!activeChat.value) return
+    Object.assign(activeChat.value.capabilities, patch)
+    // Turning tools off releases the pin so the next activation re-reads the tab.
+    if (patch.cms4 === false) {
+      Object.assign(activeChat.value.capabilities, { pinnedHost: '', pinnedTabId: null, pinnedUrl: '' })
+    }
+    saveChats(allChats.value)
   }
 
   function setProvider(id) {
@@ -165,6 +305,8 @@ export function useChat() {
     enabledModules: providers.enabledModules,
     anyEnabled: providers.anyEnabled,
     chats, activeChat, activeModule, messages, isLoading, error, activeProvider,
-    send, clear, newChat, switchChat, deleteChat, copyMessage, setProvider,
+    canStop: computed(() => Boolean(abortCurrent.value)),
+    send, stop, clear, newChat, switchChat, deleteChat, copyMessage, setProvider,
+    setCapabilities,
   }
 }

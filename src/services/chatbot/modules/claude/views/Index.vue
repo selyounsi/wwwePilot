@@ -1,14 +1,22 @@
 <script setup>
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from '@/composables/i18n/useI18n.js'
 import { useChat } from '@/services/chatbot/composables/useChat.js'
 import { useClaudeSettings } from '../composables/useClaudeSettings.js'
-import { suggestions, welcomeText } from '../index.js'
+import { suggestions, cmsSuggestions, welcomeText } from '../index.js'
+import ChatCapabilities from '@/services/chatbot/components/ChatCapabilities.vue'
 
 const router = useRouter()
 const { t }  = useI18n()
-const { send } = useChat()
+const { send, activeChat, setCapabilities } = useChat()
 const { keyExists } = useClaudeSettings()
+
+// Starters follow the selected capability: page-oriented without tools,
+// site-oriented once the CMS4 tools can actually reach the CMS.
+const activeSuggestions = computed(() =>
+  activeChat.value?.capabilities?.cms4 ? cmsSuggestions : suggestions
+)
 </script>
 
 <template>
@@ -29,9 +37,16 @@ const { keyExists } = useClaudeSettings()
         <span class="text-alert/80">{{ t('Add API key to use Claude') }}</span>
       </button>
     </div>
+    <div v-if="activeChat" class="w-full text-left mt-1">
+      <ChatCapabilities
+        :capabilities="activeChat.capabilities"
+        @update="setCapabilities"
+      />
+    </div>
+
     <div class="flex flex-col gap-2 mt-1 w-full">
       <button
-        v-for="s in suggestions" :key="s"
+        v-for="s in activeSuggestions" :key="s"
         @click="send(t(s))"
         class="group flex items-center gap-3 text-xs text-left px-4 py-3 bg-surface border border-border rounded-2xl hover:border-primary/40 hover:bg-surface-soft-hover transition-all"
       >
