@@ -87,14 +87,14 @@ The extension has an auto-update system against the backend:
 
 ## Backend locally (Docker)
 
-The backend runs in the `everwise-ever-backend-1` Docker container,
+The backend runs in the `everwise-ever-api-1` Docker container,
 not as `npm run dev`. Source is baked into the image (no volume
 mount). **Backend code changes require an image rebuild**:
 
 ```bash
 cd ../backend
-docker compose up -d --build ever-backend
-docker logs --tail 30 everwise-ever-backend-1   # check migrations + mount
+docker compose up -d --build ever-api
+docker logs --tail 30 everwise-ever-api-1   # check migrations + mount
 ```
 
 Without `--build` neither schema migrations nor new routes take

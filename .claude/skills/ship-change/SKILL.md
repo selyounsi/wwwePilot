@@ -25,8 +25,8 @@ telling the user it's done.
 1. **Rebuild the image — code is baked in, no volume mount:**
    ```bash
    cd backend
-   docker compose up -d --build ever-backend
-   docker logs --tail 30 everwise-ever-backend-1
+   docker compose up -d --build ever-api
+   docker logs --tail 30 everwise-ever-api-1
    ```
    Without `--build` the old code keeps running → new routes 404,
    migrations don't run. This is the default reflex when a new
