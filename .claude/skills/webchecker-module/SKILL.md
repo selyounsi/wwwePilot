@@ -107,6 +107,18 @@ first matching `when` wins.
   strings; add `de` entries in `modules/<id>/translations/translations.json`
   (`{ "de": { "English key": "Deutscher Text" }, "en": {} }`).
 
+## Docs first — most answers live there
+
+| Frage | Doc |
+|---|---|
+| Page-context helpers (apiConfig, was in index.js erlaubt ist) | [docs/module-api.md](../../../docs/module-api.md) |
+| Neues Modul Schritt fuer Schritt | [docs/creating-a-module.md](../../../docs/creating-a-module.md) |
+| Wie Seiten erkannt werden (CMS4/Shop/…) | [docs/page-detector.md](../../../docs/page-detector.md) |
+| Re-Check-Flow, Tab-Handling, Site-Check | [docs/check-flow.md](../../../docs/check-flow.md) |
+| Check-Types (Audit-Profile + manuelle Tasks) | [docs/check-types.md](../../../docs/check-types.md) |
+| Uebersetzungen (t() / window.__t) | [docs/i18n.md](../../../docs/i18n.md) |
+| Was Modul X genau prueft | `modules/<x>/README.md` |
+
 ## Checklist
 
 1. Create/edit files per anatomy above; keep README.md current.

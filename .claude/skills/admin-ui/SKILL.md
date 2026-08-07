@@ -104,6 +104,21 @@ the module's `translations/translations.json`
 (`{ "de": { "Key": "Übersetzung" }, "en": {} }`). Admin-module
 translation files are auto-globbed.
 
+## Docs first — most answers live there
+
+| Frage | Doc |
+|---|---|
+| DataTable + Zell-Helper (Badges, Farben) | [docs/ui-data-table.md](../../../docs/ui-data-table.md) |
+| FormField / Modal / Cards / KPI / Tabs | [docs/ui-forms.md](../../../docs/ui-forms.md) |
+| Globale UI-Bausteine (Übersicht) | [docs/ui-components.md](../../../docs/ui-components.md) |
+| Bestehende Admin-Seiten (Referenzliste) | [docs/admin-modules.md](../../../docs/admin-modules.md) |
+| Power-Tools-Seite | [docs/admin-power-tools.md](../../../docs/admin-power-tools.md) |
+| Spellcheck-Verwaltung | [docs/admin-spellcheck.md](../../../docs/admin-spellcheck.md) |
+| Gruppen + Sichtbarkeits-Filterung (3 Dimensionen, OR) | [docs/groups.md](../../../docs/groups.md) |
+| Reports-Workflow | [docs/reports.md](../../../docs/reports.md) |
+| Quick-Info (Service + Admin-Seite) | [docs/quick-info.md](../../../docs/quick-info.md) |
+| Check-Types (Profile + manuelle Tasks) | [docs/check-types.md](../../../docs/check-types.md) |
+
 ## Checklist
 
 1. Backend endpoint exists? (else `backend-service` skill first)

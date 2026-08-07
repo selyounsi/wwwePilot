@@ -7,14 +7,23 @@ keep code and documentation in English.
 ## What this repo is
 
 **EverWise** — an in-house Chrome extension (Manifest V3, Side Panel).
-Vue 3 + Vite + Tailwind v4. Two services:
+Vue 3 + Vite + Tailwind v4. Three services (auto-discovered via Vite
+glob) plus the admin backend in its own tab:
 
-- **web-checker** — DOM audits (13 modules: accessibility, console,
-  contrast, headings, images, links, overview, performance, privacy,
-  sitemap, spellcheck, structured-data, validation) — single-page or
-  site-wide
-- **chatbot** — AI assistant with provider modules (EverWise backend,
-  Claude API)
+```
+src/services/
+  web-checker/           ← DOM audits, single-page or site-wide (skill: webchecker-module)
+    modules/             ← 13: accessibility, console, contrast, headings,
+                           images, links, overview, performance, privacy,
+                           sitemap, spellcheck, structured-data, validation
+  chatbot/               ← KI-Assistent (skill: chatbot-claude)
+    modules/claude/      ← Claude API provider — MCP/CMS4 tools, backend-owned
+                           request config, per-chat capabilities + domain pinning
+    modules/everwise/    ← WorkingGuide provider (n8n via backend proxy)
+  quick-info/            ← per-URL admin-defined field extractor
+                           (docs/quick-info.md; admin page via admin-ui skill)
+src/admin/modules/       ← admin backend pages (skill: admin-ui)
+```
 
 **Repo location**: locally under the multi-repo root (folder currently
 named `wwweBar`), sibling of `../backend/`. GitHub slugs:
@@ -234,6 +243,12 @@ Read first, then ask:
 | Translation system | [docs/i18n.md](docs/i18n.md) |
 | Login / OIDC | [docs/auth.md](docs/auth.md) |
 | Chatbot providers on/off | [docs/chatbot-providers.md](docs/chatbot-providers.md) |
+| How pages get detected (CMS4/Shop/…) | [docs/page-detector.md](docs/page-detector.md) |
+| Quick-info service (extractor + admin) | [docs/quick-info.md](docs/quick-info.md) |
+| Reports workflow | [docs/reports.md](docs/reports.md) |
+| Existing admin pages (reference list) | [docs/admin-modules.md](docs/admin-modules.md) |
+| Admin power tools | [docs/admin-power-tools.md](docs/admin-power-tools.md) |
+| Spellcheck administration | [docs/admin-spellcheck.md](docs/admin-spellcheck.md) |
 | Claude actions (full list) | [docs/claude-actions.md](docs/claude-actions.md) |
 | Claude API key onboarding (employee-facing) | [docs/claude-api-key.md](docs/claude-api-key.md) |
 | Live-editor bridge + CMS4 detection | [docs/live-editor.md](docs/live-editor.md) |
