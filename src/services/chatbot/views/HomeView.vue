@@ -7,7 +7,7 @@ import { useActiveTab, focusOrOpenTab } from '@/composables/useActiveTab.js'
 import ProviderToggle from '../components/ProviderToggle.vue'
 
 const {
-  anyEnabled,
+  anyEnabled, enabledModules,
   chats, activeChat, activeModule, messages, isLoading, canStop,
   send, stop, newChat, switchChat, deleteChat, deleteAllChats, retryLast,
   copyMessage,
@@ -166,24 +166,10 @@ function format(text) {
 
     <template v-else>
     <AppHeader showBack>
-      <template #below>
+      <!-- Only worth a header row when there is something to switch; with a
+           single provider the subtitle already names the assistant. -->
+      <template v-if="enabledModules.length > 1" #below>
         <ProviderToggle />
-        <div class="flex-1" />
-        <BaseButton
-          variant="header-icon"
-          icon="mdiHistory"
-          :icon-size="15"
-          :tooltip="t('History')"
-          :active="showHistory"
-          @click="showHistory = !showHistory"
-        />
-        <BaseButton
-          variant="header-icon"
-          icon="mdiPlus"
-          :icon-size="15"
-          :tooltip="t('New chat')"
-          @click="newChat(); showHistory = false"
-        />
       </template>
     </AppHeader>
 
@@ -207,43 +193,6 @@ function format(text) {
         :tooltip="t('This chat stays on {pinned}. The current tab shows {current}.', { pinned: boundHost, current: activeTabHost })"
         @click="goToPinnedTab"
       >{{ t('Back to tab') }}</BaseButton>
-    </div>
-
-    <div v-if="showHistory" class="border-b border-border bg-surface px-3 py-2 flex flex-col gap-1 max-h-56 overflow-y-auto">
-      <div class="flex items-center justify-between mb-1">
-        <p class="text-xs text-muted uppercase tracking-widest">{{ t('History') }}</p>
-        <BaseButton
-          v-if="chats.length > 1 || chats[0]?.messages.length"
-          variant="pill"
-          :icon="confirmClear ? 'mdiAlertOutline' : 'mdiDeleteSweepOutline'"
-          :icon-size="12"
-          :class="confirmClear ? 'text-error!' : ''"
-          @click="handleDeleteAll"
-        >{{ confirmClear ? t('Really delete all?') : t('Delete all') }}</BaseButton>
-      </div>
-      <div v-for="c in chats" :key="c.id" class="flex items-center gap-1.5">
-        <button
-          @click="switchChat(c.id); showHistory = false"
-          class="flex-1 min-w-0 text-left px-3 py-2 rounded-xl transition-colors"
-          :class="c.id === activeChat?.id
-            ? 'bg-primary/10 border border-primary/30'
-            : 'hover:bg-surface-soft border border-transparent'"
-        >
-          <span
-            class="block text-xs truncate"
-            :class="c.id === activeChat?.id ? 'text-primary' : 'text-light'"
-          >{{ chatTitle(c) }}</span>
-          <span class="block text-muted/60 mt-0.5" style="font-size:10px">{{ chatMeta(c) }}</span>
-        </button>
-        <BaseButton
-          variant="icon-error"
-          icon="mdiTrashCanOutline"
-          :icon-size="13"
-          :tooltip="t('Delete chat')"
-          class="shrink-0"
-          @click="deleteChat(c.id)"
-        />
-      </div>
     </div>
 
     <div ref="messagesEl" data-chat-messages class="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-1.5">
@@ -356,6 +305,44 @@ function format(text) {
       </template>
     </div>
 
+    <!-- History drawer sits right above its trigger in the input row -->
+    <div v-if="showHistory" class="border-t border-border bg-surface px-3 py-2 flex flex-col gap-1 max-h-56 overflow-y-auto">
+      <div class="flex items-center justify-between mb-1">
+        <p class="text-xs text-muted uppercase tracking-widest">{{ t('History') }}</p>
+        <BaseButton
+          v-if="chats.length > 1 || chats[0]?.messages.length"
+          variant="pill"
+          :icon="confirmClear ? 'mdiAlertOutline' : 'mdiDeleteSweepOutline'"
+          :icon-size="12"
+          :class="confirmClear ? 'text-error!' : ''"
+          @click="handleDeleteAll"
+        >{{ confirmClear ? t('Really delete all?') : t('Delete all') }}</BaseButton>
+      </div>
+      <div v-for="c in chats" :key="c.id" class="flex items-center gap-1.5">
+        <button
+          @click="switchChat(c.id); showHistory = false"
+          class="flex-1 min-w-0 text-left px-3 py-2 rounded-xl transition-colors"
+          :class="c.id === activeChat?.id
+            ? 'bg-primary/10 border border-primary/30'
+            : 'hover:bg-surface-soft border border-transparent'"
+        >
+          <span
+            class="block text-xs truncate"
+            :class="c.id === activeChat?.id ? 'text-primary' : 'text-light'"
+          >{{ chatTitle(c) }}</span>
+          <span class="block text-muted/60 mt-0.5" style="font-size:10px">{{ chatMeta(c) }}</span>
+        </button>
+        <BaseButton
+          variant="icon-error"
+          icon="mdiTrashCanOutline"
+          :icon-size="13"
+          :tooltip="t('Delete chat')"
+          class="shrink-0"
+          @click="deleteChat(c.id)"
+        />
+      </div>
+    </div>
+
     <div class="px-4 pb-5 pt-3 border-t border-border bg-surface">
       <div
         class="flex gap-2 items-end bg-background border rounded-2xl px-3.5 py-2.5 transition-colors duration-150"
@@ -382,7 +369,24 @@ function format(text) {
       </div>
       <div class="flex items-center justify-between mt-1.5 px-0.5">
         <p class="text-xs text-muted">{{ t('Enter to send · Shift+Enter for new line') }}</p>
-        <p v-if="nearLimit" class="text-xs text-alert">{{ charCount }}/{{ charLimit }}</p>
+        <div class="flex items-center gap-1">
+          <p v-if="nearLimit" class="text-xs text-alert mr-1">{{ charCount }}/{{ charLimit }}</p>
+          <BaseButton
+            variant="icon"
+            icon="mdiHistory"
+            :icon-size="14"
+            :tooltip="t('History')"
+            :active="showHistory"
+            @click="showHistory = !showHistory"
+          />
+          <BaseButton
+            variant="icon"
+            icon="mdiPlus"
+            :icon-size="14"
+            :tooltip="t('New chat')"
+            @click="newChat(); showHistory = false"
+          />
+        </div>
       </div>
     </div>
     </template>

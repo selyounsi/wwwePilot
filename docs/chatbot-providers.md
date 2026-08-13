@@ -30,9 +30,12 @@ const {
 ```
 
 Der Provider-Switcher (`ProviderToggle.vue`) zeigt bei mehreren aktiven
-Providern klickbare Tabs; bleibt nur **ein** Provider übrig, wird daraus ein
-statischer Chip mit Icon + Name (seit 0.0.124). So bleibt sichtbar, mit wem
-man spricht, und die Header-Zeile wirkt neben den Aktions-Icons nicht leer.
+Providern klickbare Tabs im Header. Bleibt nur **ein** Provider übrig,
+entfällt die komplette Header-Zeile (seit 0.0.125) — die Header-Subtitle
+nennt den Assistenten ohnehin. Die Aktionen „Verlauf" und „Neuer Chat"
+liegen deshalb nicht im Header, sondern unten in der Eingabezeile neben dem
+Enter-Hinweis; das Verlauf-Panel öffnet als Drawer direkt über dem
+Eingabefeld.
 
 ### Hydration
 
@@ -64,6 +67,12 @@ Default-Provider.
   Abstand innerhalb der Gruppe. User-Nachrichten haben keinen Avatar und
   eine gefüllte Primary-Bubble.
 - **Input:** Autofokus; der Zeichenzähler erscheint erst ab 80 % des Limits.
+  Rechts daneben sitzen „Verlauf" und „Neuer Chat" (seit 0.0.125 unten statt
+  im Header).
+- **Vorschlags-Chips (WorkingGuide):** zusätzlich „Was ist die aktuelle
+  Version der Initial Files?" und „Wie erstelle ich ein gutes
+  WebSupport-Ticket?" — beide gegen den Bot verifiziert (nutzt dafür
+  Changelog-Doku bzw. Ticket-Doku).
 
 ## Auswirkungen auf andere UI-Stellen
 

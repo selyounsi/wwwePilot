@@ -9,7 +9,8 @@ export const welcomeText = 'Ask me about the Working Guide or project types.'
 export const suggestions = [
   'What different project types are there?',
   'How does a typical project work?',
-  'What are the most important quality standards?',
+  'What is the current version of the Initial Files?',
+  'How do I write a good WebSupport ticket?',
 ]
 
 // The backend proxy answers 502 both when n8n is down and when it is
