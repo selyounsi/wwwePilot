@@ -9,8 +9,7 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <!-- With a single provider the whole header row is omitted by the parent —
-       the header subtitle already names the assistant. -->
+  <!-- single provider: parent omits the whole header row, the subtitle already names the assistant -->
   <div v-if="enabledModules.length > 1" class="flex items-center gap-1 bg-black/10 rounded-xl p-0.5">
     <button
       v-for="m in enabledModules" :key="m.id"

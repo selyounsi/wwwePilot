@@ -226,8 +226,7 @@ export function useChat() {
 
       if (result?.error) {
         error.value = result.error
-        // Providers return a human-readable message; the view renders it as a
-        // system-style error row, so no "Error:" prefix here.
+        // providers return human-readable messages, the view renders them as error rows
         push('assistant', result.error, { isError: true })
       } else if (result?.reply) {
         // Streaming already pushed the text; only append when nothing arrived.
@@ -310,8 +309,7 @@ export function useChat() {
     newChat()
   }
 
-  // Re-runs the last user message after a failed turn. Trailing error/status
-  // messages are dropped first so retries don't stack duplicate bubbles.
+  /** Re-runs the last user message; trailing error rows are dropped so retries don't stack. */
   function retryLast() {
     const chat = activeChat.value
     if (!chat || isLoading.value) return

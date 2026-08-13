@@ -13,8 +13,7 @@ export const suggestions = [
   'How do I write a good WebSupport ticket?',
 ]
 
-// The backend proxy answers 502 both when n8n is down and when it is
-// unreachable — for the user that is the same situation.
+/** Maps proxy/upstream HTTP status to a human-readable chat error. */
 function friendlyError(t, status) {
   if (status === 502 || status === 503 || status === 504) {
     return t('The WorkingGuide service is currently unavailable. Please try again in a moment.')

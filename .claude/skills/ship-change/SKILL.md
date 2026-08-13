@@ -41,9 +41,12 @@ telling the user it's done.
   matching file in `extension/docs/` / `backend/docs/` or the module's
   `README.md`; create a new doc if none fits.
 - **Code comments: NONE by default.** Only where the WHY is truly
-  non-obvious — then ONE short English line, never multi-line essays.
-  Before finishing, re-read your diff and delete every comment that
-  restates the code. UI strings stay German via `t()`.
+  non-obvious — then **exactly ONE short English line**, never wrapped
+  across two or more lines. Docblocks (`/** … */`) are allowed on
+  functions only, also one line where possible. Before finishing,
+  re-read your diff and delete every comment that restates the code or
+  spans multiple lines (user re-reinforced 2026-08-13: "extrem wichtig").
+  UI strings stay German via `t()`.
 - **Commits & pushes allowed proactively** (user grant 2026-08-05) —
   but an extension push to `main` IS a release (webhook build + update
   banner for all employees): push deliberately and state it in the

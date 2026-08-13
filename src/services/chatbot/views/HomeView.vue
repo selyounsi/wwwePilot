@@ -40,8 +40,7 @@ const tabDrifted = computed(() => {
   return Boolean(pinned && activeTabHost.value && activeTabHost.value !== pinned)
 })
 
-// Consecutive messages of the same kind render as one visual group: avatar and
-// extra spacing only on the first message, tight spacing inside the group.
+// consecutive same-kind messages form one visual group (avatar + spacing only on the first)
 const rows = computed(() => {
   let prevKey = null
   return messages.value.map(msg => {
@@ -166,8 +165,7 @@ function format(text) {
 
     <template v-else>
     <AppHeader showBack>
-      <!-- Only worth a header row when there is something to switch; with a
-           single provider the subtitle already names the assistant. -->
+      <!-- header row only when there is something to switch -->
       <template v-if="enabledModules.length > 1" #below>
         <ProviderToggle />
       </template>
@@ -348,9 +346,7 @@ function format(text) {
         class="flex gap-2 items-end bg-background border rounded-2xl px-3.5 py-2.5 transition-colors duration-150"
         :class="input.trim() ? 'border-primary' : 'border-primary/30'"
       >
-        <!-- self-center keeps the single line vertically centered next to the
-             taller send button; once the textarea outgrows the button it fills
-             the row anyway and the button stays pinned to the bottom. -->
+        <!-- self-center: single line centers beside the taller send button, multiline still pins it bottom -->
         <textarea
           ref="inputEl"
           v-model="input"
