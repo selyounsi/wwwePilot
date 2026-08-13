@@ -31,7 +31,9 @@ Im Web-Checker erscheint der Default-Type mit einem ★-Prefix im
 Dropdown und ist initial vorausgewählt. Wenn der Admin ihn deaktiviert
 und keine anderen Types existieren, ist das Dropdown leer — der
 Web-Checker fällt dann auf den Legacy-Modus zurück (alle Module, kein
-Type).
+Type). Die Type-Beschreibung wird in der Sidebar seit 0.0.134 nicht
+mehr unter dem Dropdown angezeigt (unnötige Höhe) — sie bleibt ein
+Admin-Feld für die Verwaltungsansicht.
 
 ## Warum
 

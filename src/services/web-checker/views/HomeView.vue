@@ -122,7 +122,7 @@ const hasCheck = computed(() => !!state.checkedTabId)
 
     <div class="flex-1 px-4 py-4 flex flex-col gap-2 overflow-y-auto">
       <div v-if="showTypeSelector" class="bg-surface-soft border border-border rounded-lg px-3 py-2 mb-1">
-        <label class="text-[10px] uppercase tracking-wide text-muted/70 block mb-1">
+        <label class="text-xs uppercase tracking-wide text-muted/80 block mb-1">
           {{ t('Check type') }}
         </label>
         <SelectField v-model="selectedSlug" dense full-width>
@@ -131,9 +131,6 @@ const hasCheck = computed(() => !!state.checkedTabId)
             {{ ct.isDefault ? `★ ${ct.name}` : ct.name }}
           </option>
         </SelectField>
-        <p v-if="activeType?.type?.description" class="mt-1 text-[10px] text-muted/70">
-          {{ activeType.type.description }}
-        </p>
       </div>
 
       <div class="flex items-center justify-between gap-2">
