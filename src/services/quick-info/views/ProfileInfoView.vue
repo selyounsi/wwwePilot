@@ -72,13 +72,6 @@ defineExpose({ runExtraction: () => runExtraction(props.profile, props.tabId) })
 
 <template>
   <div class="space-y-3">
-    <div class="px-1">
-      <div class="text-xs font-semibold">{{ profile.name }}</div>
-      <div v-if="profile.description" class="text-[10px] text-muted/70 mt-0.5">
-        {{ profile.description }}
-      </div>
-    </div>
-
     <BaseCard
       v-for="section in profile.sections"
       :key="section.id"

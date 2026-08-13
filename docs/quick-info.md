@@ -13,7 +13,9 @@ the service itself based on the active tab's URL:
 
 The user never picks a mode. The header title swaps between
 **"Quick Info"** and **"Quick Page Info"** to advertise the active
-mode; one refresh button drives whichever flow is current.
+mode. Titelzeile + Aktionen (Pin, Aktualisieren) rendert seit 0.0.130
+die `HomeView` einheitlich über beiden Modi — die Kind-Views tragen
+keine eigenen Titel mehr; ein Refresh-Button treibt beide Flows.
 
 Everything in the Quick-Info mode is admin-configured in the backend —
 sidebar users cannot edit profiles, sections or rules. Quick-Page-Info
@@ -137,8 +139,16 @@ to all; otherwise role / user-listing / group match.
 | Admin API client | `extension/src/admin/modules/quick-info/composables/useAdminQuickInfo.js` |
 
 The sidebar re-runs the active mode automatically on every tab-URL
-change (via `useActiveTab`'s `chrome.tabs.onUpdated` listener) and
-exposes a single manual refresh button in the header.
+change (via `useActiveTab`'s `chrome.tabs.onUpdated` listener). Die
+Aktionen sitzen seit 0.0.130 rechts in der Content-Titelzeile (im
+Lime-Header war das Icon kaum sichtbar): **Aktualisieren** plus ein
+**Pin-Schloss**. Schloss zu = `HomeView` friert Tab-ID/URL als Snapshot
+ein und reicht die eingefrorenen Werte an die Kind-Views durch —
+Tab-Wechsel propagieren nicht, der fixierte Host wird unter der
+Subtitle angezeigt. Schloss auf = die Live-Werte fließen wieder und
+die Views aktualisieren sich sofort auf den aktiven Tab. Der Pin
+friert auch die Modus-Wahl ein (Profil-Matching läuft gegen die
+eingefrorene URL).
 
 ## Adding a profile (quick guide)
 

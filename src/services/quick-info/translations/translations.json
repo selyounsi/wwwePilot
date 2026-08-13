@@ -4,6 +4,8 @@
     "Quick Page Info": "Quick Page Info",
     "Page-specific quick view": "Seiten-spezifische Schnellansicht",
     "Refresh": "Aktualisieren",
+    "Pinned — tab switches are ignored. Click to follow the active tab again.": "Fixiert — Tab-Wechsel werden ignoriert. Klicken, um wieder dem aktiven Tab zu folgen.",
+    "Following the active tab. Click to pin the current page.": "Folgt dem aktiven Tab. Klicken, um die aktuelle Seite zu fixieren.",
     "Loading profiles…": "Profile werden geladen…",
     "No quick-info profile matches the current URL.": "Kein Quick-Info-Profil passt zur aktuellen URL.",
     "Copied": "Kopiert",

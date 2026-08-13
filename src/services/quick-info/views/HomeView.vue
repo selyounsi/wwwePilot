@@ -17,7 +17,23 @@ const { state: profilesState, fetchProfiles, matchProfile } = useQuickInfoProfil
 const profileEnabled  = computed(() => isEnabled('module.quick-info.profile'))
 const detectorEnabled = computed(() => isEnabled('module.quick-info.detector'))
 
-const matched = computed(() => matchProfile(tabUrl.value))
+// pinned = frozen snapshot of tab id + url, tab switches stop propagating
+const pinned    = ref(false)
+const frozenTab = ref({ id: null, url: '' })
+
+const effTabId  = computed(() => pinned.value ? frozenTab.value.id  : tabId.value)
+const effTabUrl = computed(() => pinned.value ? frozenTab.value.url : tabUrl.value)
+
+const pinnedHost = computed(() => {
+  try { return pinned.value ? new URL(frozenTab.value.url).host : '' } catch { return '' }
+})
+
+function togglePin() {
+  if (!pinned.value) frozenTab.value = { id: tabId.value, url: tabUrl.value }
+  pinned.value = !pinned.value
+}
+
+const matched = computed(() => matchProfile(effTabUrl.value))
 
 // Mode resolution:
 //   - profile-mode wins when a profile matches AND its flag is enabled
@@ -35,6 +51,15 @@ const headerTitle = computed(() => {
   return t('Quick Info')
 })
 
+const contentTitle = computed(() =>
+  mode.value === 'profile' ? matched.value?.name : t('Quick Page Info')
+)
+const contentSubtitle = computed(() =>
+  mode.value === 'profile'
+    ? (matched.value?.description ?? '')
+    : t('No profile configured for this URL — showing page detection.')
+)
+
 const profileRef = ref(null)
 const pageRef    = ref(null)
 
@@ -51,18 +76,38 @@ async function onRefresh() {
 
 <template>
   <div class="min-h-screen bg-background flex flex-col">
-    <AppHeader showBack :title="headerTitle">
-      <BaseButton
-        v-if="mode !== 'blocked'"
-        variant="icon"
-        icon="mdiRefresh"
-        :icon-size="16"
-        :tooltip="t('Refresh')"
-        @click="onRefresh"
-      />
-    </AppHeader>
+    <AppHeader showBack :title="headerTitle" />
 
     <div class="flex-1 px-3 py-3 space-y-3">
+      <!-- shared content header: title left, pin + refresh actions right -->
+      <div v-if="mode !== 'blocked'" class="px-1 flex items-start gap-1.5">
+        <div class="flex-1 min-w-0">
+          <div class="text-xs font-semibold truncate">{{ contentTitle }}</div>
+          <div v-if="contentSubtitle" class="text-[10px] text-muted/70 mt-0.5 truncate">{{ contentSubtitle }}</div>
+          <div v-if="pinned" class="flex items-center gap-1 mt-1 text-[10px] text-primary min-w-0">
+            <Icon name="mdiPin" :size="10" class="shrink-0" />
+            <code class="truncate font-mono">{{ pinnedHost }}</code>
+          </div>
+        </div>
+        <BaseButton
+          variant="square-sm"
+          :icon="pinned ? 'mdiLock' : 'mdiLockOpenVariantOutline'"
+          :icon-size="14"
+          :active="pinned"
+          :tooltip="pinned
+            ? t('Pinned — tab switches are ignored. Click to follow the active tab again.')
+            : t('Following the active tab. Click to pin the current page.')"
+          @click="togglePin"
+        />
+        <BaseButton
+          variant="square-sm"
+          icon="mdiRefresh"
+          :icon-size="14"
+          :tooltip="t('Refresh')"
+          @click="onRefresh"
+        />
+      </div>
+
       <div v-if="profilesState.loading && !profilesState.profiles.length && profileEnabled" class="text-xs text-muted px-2 py-3">
         {{ t('Loading profiles…') }}
       </div>
@@ -71,15 +116,15 @@ async function onRefresh() {
         v-else-if="mode === 'profile'"
         ref="profileRef"
         :profile="matched"
-        :tab-id="tabId"
-        :tab-url="tabUrl"
+        :tab-id="effTabId"
+        :tab-url="effTabUrl"
       />
 
       <PageInfoView
         v-else-if="mode === 'page'"
         ref="pageRef"
-        :tab-id="tabId"
-        :tab-url="tabUrl"
+        :tab-id="effTabId"
+        :tab-url="effTabUrl"
       />
 
       <div v-else class="text-xs text-muted/70 px-2 py-6 text-center">

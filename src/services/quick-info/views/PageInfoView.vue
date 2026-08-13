@@ -143,13 +143,6 @@ defineExpose({
 
 <template>
   <div class="space-y-3">
-    <div class="px-1">
-      <div class="text-xs font-semibold">{{ t('Quick Page Info') }}</div>
-      <div class="text-[10px] text-muted/70 mt-0.5">
-        {{ t('No profile configured for this URL — showing page detection.') }}
-      </div>
-    </div>
-
     <!-- Detected page -->
     <section>
       <h3 class="text-[10px] uppercase tracking-wide text-muted/70 px-1 mb-1 font-medium">{{ t('Detected page') }}</h3>
