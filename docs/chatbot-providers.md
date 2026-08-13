@@ -29,8 +29,10 @@ const {
 } = useChatbotProviders()
 ```
 
-Der Provider-Switcher (`ProviderToggle.vue`) blendet sich automatisch aus, wenn
-nur ein Provider aktiv ist — kein nutzloser Button.
+Der Provider-Switcher (`ProviderToggle.vue`) zeigt bei mehreren aktiven
+Providern klickbare Tabs; bleibt nur **ein** Provider übrig, wird daraus ein
+statischer Chip mit Icon + Name (seit 0.0.124). So bleibt sichtbar, mit wem
+man spricht, und die Header-Zeile wirkt neben den Aktions-Icons nicht leer.
 
 ### Hydration
 
