@@ -14,7 +14,7 @@ src/services/chatbot/
       background.js      ← THE ONLY FILE that talks to Anthropic
       composables/       ← useClaudeSettings (key), useMcpConfig (backend config)
       views/             ← chat + SettingsView (key onboarding, CMS-tools toggle)
-    everwise/            ← WorkingGuide provider (n8n via backend proxy)
+    workingguide/        ← WorkingGuide provider (n8n via backend proxy)
 ```
 
 Docs that answer most questions before code-reading:

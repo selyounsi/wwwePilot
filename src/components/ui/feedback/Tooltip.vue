@@ -47,7 +47,14 @@ function showTip() {
     document.body.appendChild(tip)
     tipEl = tip
     requestAnimationFrame(() => {
+      // The trigger can leave the DOM between hover and this frame (e.g. a
+      // delete button removing its own row) — drop the tip instead of throwing.
       const target = wrapper.value?.firstElementChild ?? wrapper.value
+      if (!target?.isConnected) {
+        tip.remove()
+        if (tipEl === tip) tipEl = null
+        return
+      }
       position(tip, target)
       tip.style.opacity = '1'
     })

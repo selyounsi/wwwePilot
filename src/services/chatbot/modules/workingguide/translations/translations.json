@@ -1,0 +1,14 @@
+{
+  "de": {
+    "WorkingGuide": "WorkingGuide",
+    "Ask me about the Working Guide or project types.": "Stell mir eine Frage zum Working Guide oder zu Projekttypen.",
+    "What different project types are there?": "Was gibt es für unterschiedliche Projekttypen?",
+    "How does a typical project work?": "Wie läuft ein typisches Projekt ab?",
+    "What are the most important quality standards?": "Was sind die wichtigsten Qualitätsstandards?",
+    "The WorkingGuide service is currently unavailable. Please try again in a moment.": "Der WorkingGuide-Dienst ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.",
+    "Your session has expired. Please sign in again.": "Deine Sitzung ist abgelaufen. Bitte melde dich neu an.",
+    "The request failed (HTTP {status}). Please try again.": "Die Anfrage ist fehlgeschlagen (HTTP {status}). Bitte versuche es erneut.",
+    "The WorkingGuide service could not be reached. Check your connection and try again.": "Der WorkingGuide-Dienst war nicht erreichbar. Prüfe deine Verbindung und versuche es erneut."
+  },
+  "en": {}
+}

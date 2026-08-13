@@ -8,7 +8,7 @@ Input-Layout, Verlaufs-Verwaltung) angefasst werden muss.
 
 | Provider | Modul | Logik |
 |---|---|---|
-| **WorkingGuide** | [`modules/everwise/`](modules/everwise/) | `fetch` an `/api/chatbot` (Backend-Proxy zum n8n-Workflow). Antwortet auf Working-Guide- und Projekttypen-Fragen. Ordnername bleibt `everwise/`, damit gespeicherte Chats ihre Provider-ID behalten. |
+| **WorkingGuide** | [`modules/workingguide/`](modules/workingguide/) | `fetch` an `/api/chatbot` (Backend-Proxy zum n8n-Workflow). Antwortet auf Working-Guide- und Projekttypen-Fragen. (Bis 0.0.122 hieß der Ordner `everwise/`; Rename in der Dev-Phase, gespeicherte Chats der alten ID verfallen.) |
 | **Claude** | [`modules/claude/`](modules/claude/) | `fetch` an Anthropics API mit eigenem API-Key. Key wird über die Modul-Settings-Page gesetzt — kein Modal mehr. |
 
 Toggle oben unter dem AppHeader wechselt zwischen den Providern. Jeder Provider

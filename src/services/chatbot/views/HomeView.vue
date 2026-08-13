@@ -7,20 +7,24 @@ import { useActiveTab, focusOrOpenTab } from '@/composables/useActiveTab.js'
 import ProviderToggle from '../components/ProviderToggle.vue'
 
 const {
-  modules, enabledModules, anyEnabled,
-  chats, activeChat, activeModule, messages, isLoading, activeProvider, canStop,
-  send, stop, clear, newChat, switchChat, deleteChat, copyMessage, setProvider,
+  anyEnabled,
+  chats, activeChat, activeModule, messages, isLoading, canStop,
+  send, stop, newChat, switchChat, deleteChat, deleteAllChats, retryLast,
+  copyMessage,
 } = useChat()
 const { t } = useI18n()
 const router = useRouter()
 
-const input       = ref('')
-const messagesEl  = ref(null)
-const showHistory = ref(false)
-const copiedId    = ref(null)
-const charLimit   = 1000
-const charCount   = computed(() => input.value.length)
-const nearLimit   = computed(() => charCount.value > charLimit * 0.8)
+const input        = ref('')
+const inputEl      = ref(null)
+const messagesEl   = ref(null)
+const showHistory  = ref(false)
+const copiedId     = ref(null)
+const confirmClear = ref(false)
+let confirmTimer   = null
+const charLimit    = 1000
+const charCount    = computed(() => input.value.length)
+const nearLimit    = computed(() => charCount.value > charLimit * 0.8)
 
 const accentStyle = computed(() => ({
   backgroundColor: activeModule.value?.accentColor ?? 'var(--color-primary)',
@@ -35,6 +39,51 @@ const tabDrifted = computed(() => {
   const pinned = activeChat.value?.capabilities?.pinnedHost
   return Boolean(pinned && activeTabHost.value && activeTabHost.value !== pinned)
 })
+
+// Consecutive messages of the same kind render as one visual group: avatar and
+// extra spacing only on the first message, tight spacing inside the group.
+const rows = computed(() => {
+  let prevKey = null
+  return messages.value.map(msg => {
+    const key = msg.kind === 'status' ? 'status' : msg.isError ? 'error' : msg.role
+    const groupStart = key !== prevKey
+    prevKey = key
+    return { msg, groupStart }
+  })
+})
+
+const lastMessageId = computed(() => messages.value[messages.value.length - 1]?.id)
+
+function chatTitle(c) {
+  return c.name || t('New chat')
+}
+
+function chatMeta(c) {
+  const parts = []
+  if (c.createdAt) {
+    const d = new Date(c.createdAt)
+    const sameDay = d.toDateString() === new Date().toDateString()
+    parts.push(sameDay
+      ? d.toLocaleTimeString('de', { hour: '2-digit', minute: '2-digit' })
+      : d.toLocaleDateString('de', { day: '2-digit', month: '2-digit', year: '2-digit' }))
+  }
+  const n = c.messages.length
+  parts.push(n === 1 ? t('1 message') : t('{n} messages', { n }))
+  return parts.join(' · ')
+}
+
+function handleDeleteAll() {
+  if (!confirmClear.value) {
+    confirmClear.value = true
+    clearTimeout(confirmTimer)
+    confirmTimer = setTimeout(() => confirmClear.value = false, 5000)
+    return
+  }
+  clearTimeout(confirmTimer)
+  confirmClear.value = false
+  deleteAllChats()
+  showHistory.value = false
+}
 
 function goToPinnedTab() {
   const caps = activeChat.value?.capabilities
@@ -54,13 +103,15 @@ function scrollToBottom() {
 onMounted(() => {
   scrollToBottom()
   setTimeout(scrollToBottom, 150)
+  inputEl.value?.focus()
 })
 watch(messages, scrollToBottom, { deep: true })
 
 async function handleSend() {
   const text = input.value.trim()
-  if (!text) return
+  if (!text || isLoading.value) return
   input.value = ''
+  inputEl.value?.focus()
   await send(text)
   scrollToBottom()
 }
@@ -76,12 +127,6 @@ async function handleCopy(msg) {
   await copyMessage(msg.content)
   copiedId.value = msg.id
   setTimeout(() => copiedId.value = null, 1500)
-}
-
-function retry() {
-  const lastUser = [...messages.value].reverse().find(m => m.role === 'user')
-  if (!lastUser || isLoading.value) return
-  send(lastUser.content)
 }
 
 function escapeHtml(text) {
@@ -134,18 +179,10 @@ function format(text) {
         />
         <BaseButton
           variant="header-icon"
-          icon="mdiPencilOutline"
+          icon="mdiPlus"
           :icon-size="15"
           :tooltip="t('New chat')"
-          @click="newChat"
-        />
-        <BaseButton
-          v-if="messages.length"
-          variant="header-icon"
-          icon="mdiClose"
-          :icon-size="15"
-          :tooltip="t('Clear chat')"
-          @click="clear"
+          @click="newChat(); showHistory = false"
         />
       </template>
     </AppHeader>
@@ -172,40 +209,57 @@ function format(text) {
       >{{ t('Back to tab') }}</BaseButton>
     </div>
 
-    <div v-if="showHistory" class="border-b border-border bg-surface px-3 py-2 flex flex-col gap-1 max-h-44 overflow-y-auto">
-      <p class="text-xs text-muted uppercase tracking-widest mb-1">{{ t('History') }}</p>
-      <div v-for="c in chats" :key="c.id" class="flex items-center gap-1.5 group">
+    <div v-if="showHistory" class="border-b border-border bg-surface px-3 py-2 flex flex-col gap-1 max-h-56 overflow-y-auto">
+      <div class="flex items-center justify-between mb-1">
+        <p class="text-xs text-muted uppercase tracking-widest">{{ t('History') }}</p>
+        <BaseButton
+          v-if="chats.length > 1 || chats[0]?.messages.length"
+          variant="pill"
+          :icon="confirmClear ? 'mdiAlertOutline' : 'mdiDeleteSweepOutline'"
+          :icon-size="12"
+          :class="confirmClear ? 'text-error!' : ''"
+          @click="handleDeleteAll"
+        >{{ confirmClear ? t('Really delete all?') : t('Delete all') }}</BaseButton>
+      </div>
+      <div v-for="c in chats" :key="c.id" class="flex items-center gap-1.5">
         <button
           @click="switchChat(c.id); showHistory = false"
-          class="flex-1 text-left text-xs px-3 py-2 rounded-xl transition-colors truncate"
+          class="flex-1 min-w-0 text-left px-3 py-2 rounded-xl transition-colors"
           :class="c.id === activeChat?.id
-            ? 'bg-primary/10 text-primary border border-primary/30'
-            : 'hover:bg-surface-soft text-muted hover:text-light'"
+            ? 'bg-primary/10 border border-primary/30'
+            : 'hover:bg-surface-soft border border-transparent'"
         >
-          {{ c.name }}
-          <span class="text-muted/40 ml-1">({{ c.messages.length }})</span>
+          <span
+            class="block text-xs truncate"
+            :class="c.id === activeChat?.id ? 'text-primary' : 'text-light'"
+          >{{ chatTitle(c) }}</span>
+          <span class="block text-muted/60 mt-0.5" style="font-size:10px">{{ chatMeta(c) }}</span>
         </button>
         <BaseButton
-          v-if="chats.length > 1"
           variant="icon-error"
-          icon="mdiClose"
-          :icon-size="12"
+          icon="mdiTrashCanOutline"
+          :icon-size="13"
           :tooltip="t('Delete chat')"
-          class="opacity-0 group-hover:opacity-100"
+          class="shrink-0"
           @click="deleteChat(c.id)"
         />
       </div>
     </div>
 
-    <div ref="messagesEl" data-chat-messages class="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-4">
+    <div ref="messagesEl" data-chat-messages class="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-1.5">
 
       <component v-if="!messages.length && activeModule" :is="activeModule.view" />
 
       <template v-else>
-        <template v-for="msg in messages">
+        <template v-for="({ msg, groupStart }, i) in rows">
 
         <!-- Real workflow status line (tool started / finished), not model reasoning -->
-        <div v-if="msg.kind === 'status'" :key="msg.id" class="flex items-center gap-2 pl-9 text-[11px]">
+        <div
+          v-if="msg.kind === 'status'"
+          :key="msg.id"
+          class="flex items-center gap-2 pl-9 text-[11px]"
+          :class="{ 'mt-3': groupStart && i > 0 }"
+        >
           <span
             v-if="msg.pending"
             class="w-3 h-3 rounded-full border-2 border-primary/30 border-t-primary animate-spin shrink-0"
@@ -220,28 +274,46 @@ function format(text) {
           <span :class="msg.isError || msg.interrupted ? 'text-error' : 'text-muted'">{{ msg.content }}</span>
         </div>
 
+        <!-- Failed turns render as a system notice, not as a chat bubble -->
+        <div
+          v-else-if="msg.isError"
+          :key="msg.id"
+          class="flex items-start gap-2.5 bg-error-soft border border-error/20 rounded-xl px-3.5 py-2.5 mr-6"
+          :class="{ 'mt-3': groupStart && i > 0 }"
+        >
+          <Icon name="mdiAlertCircleOutline" :size="14" class="text-error shrink-0 mt-px" />
+          <p class="flex-1 text-[11px] text-error leading-relaxed">{{ msg.content }}</p>
+          <BaseButton
+            v-if="msg.id === lastMessageId && !isLoading"
+            variant="pill"
+            icon="mdiRefresh"
+            :icon-size="11"
+            class="shrink-0"
+            @click="retryLast"
+          >{{ t('Try again') }}</BaseButton>
+        </div>
+
         <div
           v-else
           :key="msg.id"
           class="flex gap-2.5 group"
-          :class="msg.role === 'user' ? 'justify-end' : 'justify-start'"
+          :class="[msg.role === 'user' ? 'justify-end' : 'justify-start', { 'mt-3': groupStart && i > 0 }]"
         >
           <div
             v-if="msg.role === 'assistant'"
             class="w-7 h-7 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
+            :class="{ invisible: !groupStart }"
             :style="accentStyle"
           >
             <Icon name="mdiRobot" :size="15" color="white" />
           </div>
 
-          <div class="flex flex-col gap-1 max-w-[82%]" :class="msg.role === 'user' ? 'items-end' : 'items-start'">
+          <div class="flex flex-col gap-1 max-w-[85%]" :class="msg.role === 'user' ? 'items-end' : 'items-start'">
             <div
               class="rounded-2xl px-4 py-2.5 text-xs leading-relaxed"
               :class="msg.role === 'user'
-                ? 'bg-primary/10 text-light font-medium rounded-tr-sm border border-primary/60'
-                : msg.isError
-                  ? 'bg-error-soft text-error border border-error/20 rounded-tl-sm'
-                  : 'bg-surface border border-border text-light rounded-tl-sm'"
+                ? 'bg-primary text-black/85 font-medium rounded-br-md'
+                : 'bg-surface border border-border text-light rounded-tl-md'"
               v-html="format(msg.content)"
             />
 
@@ -257,32 +329,17 @@ function format(text) {
                 :tooltip="copiedId === msg.id ? t('Copied!') : t('Copy')"
                 @click="handleCopy(msg)"
               />
-              <BaseButton
-                v-if="msg.isError"
-                variant="icon-alert"
-                icon="mdiRefresh"
-                :icon-size="11"
-                :tooltip="t('Try again')"
-                @click="retry"
-              />
             </div>
-          </div>
-
-          <div
-            v-if="msg.role === 'user'"
-            class="w-7 h-7 rounded-xl bg-light/10 border border-light/20 flex items-center justify-center shrink-0 mt-0.5 text-light"
-          >
-            <Icon name="mdiAccount" :size="15" />
           </div>
         </div>
 
         </template>
 
-        <div v-if="isLoading" class="flex gap-2.5 justify-start items-center">
+        <div v-if="isLoading" class="flex gap-2.5 justify-start items-center mt-3">
           <div class="w-7 h-7 rounded-xl flex items-center justify-center shrink-0" :style="accentStyle">
             <Icon name="mdiRobot" :size="15" color="white" />
           </div>
-          <div class="bg-surface border border-border rounded-2xl rounded-tl-sm px-4 py-3.5 flex items-center gap-1.5">
+          <div class="bg-surface border border-border rounded-2xl rounded-tl-md px-4 py-3.5 flex items-center gap-1.5">
             <span class="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style="animation-delay:0ms" />
             <span class="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style="animation-delay:150ms" />
             <span class="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style="animation-delay:300ms" />
@@ -305,6 +362,7 @@ function format(text) {
         :class="input.trim() ? 'border-primary' : 'border-primary/30'"
       >
         <textarea
+          ref="inputEl"
           v-model="input"
           @keydown="handleKeydown"
           :maxlength="charLimit"
@@ -324,9 +382,7 @@ function format(text) {
       </div>
       <div class="flex items-center justify-between mt-1.5 px-0.5">
         <p class="text-xs text-muted">{{ t('Enter to send · Shift+Enter for new line') }}</p>
-        <p class="text-xs transition-colors" :class="nearLimit ? 'text-alert' : 'text-muted/40'">
-          {{ charCount }}/{{ charLimit }}
-        </p>
+        <p v-if="nearLimit" class="text-xs text-alert">{{ charCount }}/{{ charLimit }}</p>
       </div>
     </div>
     </template>

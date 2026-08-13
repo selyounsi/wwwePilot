@@ -21,10 +21,12 @@ function defaultCapabilities() {
 
 function newChatObj(provider) {
   return {
-    id:       crypto.randomUUID(),
+    id:        crypto.randomUUID(),
     provider,
-    name:     `Chat ${new Date().toLocaleDateString('de', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`,
-    messages: [],
+    // Named after the first user message (see send()); '' renders as "New chat".
+    name:      '',
+    createdAt: Date.now(),
+    messages:  [],
     capabilities: defaultCapabilities(),
   }
 }
@@ -154,11 +156,16 @@ export function useChat() {
     return out
   }
 
-  async function send(text) {
+  async function send(text, { resend = false } = {}) {
     if (!text.trim() || isLoading.value) return
     error.value = null
     const history = buildHistory()
-    push('user', text)
+    if (!resend) {
+      if (activeChat.value && !activeChat.value.name) {
+        activeChat.value.name = text.trim().replace(/\s+/g, ' ').slice(0, 48)
+      }
+      push('user', text)
+    }
     isLoading.value = true
 
     // Tracks in-flight tool status lines so `tool_end` can flip the same
@@ -219,7 +226,9 @@ export function useChat() {
 
       if (result?.error) {
         error.value = result.error
-        push('assistant', t('Error: {message}', { message: result.error }), { isError: true })
+        // Providers return a human-readable message; the view renders it as a
+        // system-style error row, so no "Error:" prefix here.
+        push('assistant', result.error, { isError: true })
       } else if (result?.reply) {
         // Streaming already pushed the text; only append when nothing arrived.
         if (!streamedAny) push('assistant', result.reply, { turnId })
@@ -296,6 +305,23 @@ export function useChat() {
     saveChats(allChats.value)
   }
 
+  function deleteAllChats() {
+    allChats.value[activeProvider.value] = []
+    newChat()
+  }
+
+  // Re-runs the last user message after a failed turn. Trailing error/status
+  // messages are dropped first so retries don't stack duplicate bubbles.
+  function retryLast() {
+    const chat = activeChat.value
+    if (!chat || isLoading.value) return
+    const idx = chat.messages.findLastIndex(m => m.role === 'user')
+    if (idx === -1) return
+    chat.messages.splice(idx + 1)
+    saveChats(allChats.value)
+    return send(chat.messages[idx].content, { resend: true })
+  }
+
   async function copyMessage(text) {
     await navigator.clipboard.writeText(text).catch(() => {})
   }
@@ -306,7 +332,7 @@ export function useChat() {
     anyEnabled: providers.anyEnabled,
     chats, activeChat, activeModule, messages, isLoading, error, activeProvider,
     canStop: computed(() => Boolean(abortCurrent.value)),
-    send, stop, clear, newChat, switchChat, deleteChat, copyMessage, setProvider,
-    setCapabilities,
+    send, stop, clear, newChat, switchChat, deleteChat, deleteAllChats, retryLast,
+    copyMessage, setProvider, setCapabilities,
   }
 }

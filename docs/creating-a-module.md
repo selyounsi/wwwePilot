@@ -160,7 +160,7 @@ export default async function send({ text, history, chatId }) {
 ```
 
 Plus `views/Index.vue` für den Empty-State. Vorlagen:
-[`chatbot/modules/everwise/`](../src/services/chatbot/modules/everwise/),
+[`chatbot/modules/workingguide/`](../src/services/chatbot/modules/workingguide/),
 [`chatbot/modules/claude/`](../src/services/chatbot/modules/claude/).
 
 ## Weiter

@@ -19,7 +19,7 @@ src/services/
   chatbot/               ← KI-Assistent (skill: chatbot-claude)
     modules/claude/      ← Claude API provider — MCP/CMS4 tools, backend-owned
                            request config, per-chat capabilities + domain pinning
-    modules/everwise/    ← WorkingGuide provider (n8n via backend proxy)
+    modules/workingguide/ ← WorkingGuide provider (n8n via backend proxy)
   quick-info/            ← per-URL admin-defined field extractor
                            (docs/quick-info.md; admin page via admin-ui skill)
 src/admin/modules/       ← admin backend pages (skill: admin-ui)

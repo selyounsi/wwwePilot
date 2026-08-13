@@ -146,7 +146,7 @@ import MyItem from '../components/MyItem.vue'
 </template>
 ```
 
-**Chatbot-Provider:** Empty-State-Komponente — siehe `chatbot/modules/everwise/views/Index.vue` und `chatbot/modules/claude/views/Index.vue`.
+**Chatbot-Provider:** Empty-State-Komponente — siehe `chatbot/modules/workingguide/views/Index.vue` und `chatbot/modules/claude/views/Index.vue`.
 
 ---
 

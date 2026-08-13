@@ -1,7 +1,7 @@
 # Chatbot-Provider
 
-Die Chat-Service-Architektur erlaubt mehrere Provider parallel (aktuell `everwise`
-und `claude`). Jeder Provider lebt unter
+Die Chat-Service-Architektur erlaubt mehrere Provider parallel (aktuell
+`workingguide` und `claude`). Jeder Provider lebt unter
 `src/services/chatbot/modules/<id>/` und folgt dem Provider-Modul-Vertrag in
 [module-api.md](./module-api.md#chatbot-provider-modul).
 
@@ -37,6 +37,31 @@ nur ein Provider aktiv ist — kein nutzloser Button.
 `whenChatbotProvidersHydrated()` wird in [main.js](../src/main.js) abgewartet,
 bevor die App mountet — sonst rendert der Chat mit dem falschen
 Default-Provider.
+
+## Chat-UI: Verläufe, Titel, Fehler (0.0.123)
+
+- **Auto-Titel:** Ein Chat wird nach der ersten User-Nachricht benannt
+  (max. 48 Zeichen). Bis dahin heißt er „Neuer Chat". `createdAt` steht am
+  Chat-Objekt; der Verlauf zeigt heute die Uhrzeit, sonst das Datum, plus
+  Nachrichtenzahl.
+- **Verlauf-Panel:** Löschen pro Chat ist immer sichtbar (kein Hover-Reveal
+  mehr, auch beim letzten Chat). „Alle löschen" ist zweistufig — der Button
+  wird 5 s scharf („Wirklich alle löschen?") und löscht erst beim zweiten
+  Klick (`deleteAllChats()`).
+- **Fehler sind System-Zeilen, keine Chat-Bubbles:** `msg.isError` rendert
+  als Hinweis-Box mit Icon; der „Erneut versuchen"-Button hängt direkt daran
+  (nur an der letzten Nachricht). `retryLast()` entfernt erst die Fehlerzeile
+  nach der letzten User-Nachricht und sendet dann mit `resend: true` — die
+  User-Bubble wird nicht dupliziert.
+- **Provider liefern menschenlesbare Fehlertexte:** `workingguide/index.js`
+  mappt Status (502/503/504 → Dienst nicht erreichbar, 401/403 → Session
+  abgelaufen) statt `HTTP 502` durchzureichen. `useChat` zeigt `result.error`
+  unverändert an.
+- **Nachrichten-Gruppierung:** Aufeinanderfolgende Nachrichten gleicher Art
+  bilden eine visuelle Gruppe — Assistant-Avatar nur an der ersten, engerer
+  Abstand innerhalb der Gruppe. User-Nachrichten haben keinen Avatar und
+  eine gefüllte Primary-Bubble.
+- **Input:** Autofokus; der Zeichenzähler erscheint erst ab 80 % des Limits.
 
 ## Auswirkungen auf andere UI-Stellen
 
