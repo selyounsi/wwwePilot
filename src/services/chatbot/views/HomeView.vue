@@ -348,6 +348,9 @@ function format(text) {
         class="flex gap-2 items-end bg-background border rounded-2xl px-3.5 py-2.5 transition-colors duration-150"
         :class="input.trim() ? 'border-primary' : 'border-primary/30'"
       >
+        <!-- self-center keeps the single line vertically centered next to the
+             taller send button; once the textarea outgrows the button it fills
+             the row anyway and the button stays pinned to the bottom. -->
         <textarea
           ref="inputEl"
           v-model="input"
@@ -355,7 +358,7 @@ function format(text) {
           :maxlength="charLimit"
           :placeholder="t('Write a message…')"
           rows="1"
-          class="flex-1 bg-transparent text-xs outline-none resize-none text-light placeholder:text-muted leading-relaxed"
+          class="flex-1 self-center bg-transparent text-xs outline-none resize-none text-light placeholder:text-muted leading-relaxed"
           style="field-sizing: content; max-height: 120px"
         />
         <BaseButton
