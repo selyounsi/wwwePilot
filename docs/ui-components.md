@@ -5,6 +5,10 @@ werden. Auto-Discovery über [`components/ui/index.js`](../src/components/ui/ind
 glob't `*.vue` rekursiv und registriert sie als globale Komponenten —
 kein expliziter `import` an der Call-Site nötig.
 
+`<Icon name="mdi…">` löst den Pfad seit 0.0.132 als `computed` auf —
+dynamisch gebundene Namen (Schloss-Toggle, Copy→Check) wechseln damit
+reaktiv; vorher blieb das beim Setup aufgelöste Icon stehen.
+
 ## `<BaseButton>` — der zentrale Button
 
 Eine Komponente für alles. Variant-Prop entscheidet über Stil. Optional

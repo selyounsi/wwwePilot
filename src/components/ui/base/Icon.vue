@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue'
 import { ICONS } from 'virtual:icons'
 
 const props = defineProps({
@@ -7,7 +8,8 @@ const props = defineProps({
   color: { type: String, default: 'currentColor' },
 })
 
-const path = ICONS[props.name] ?? null
+// computed so icons swap when a bound name changes (lock toggle, copy→check)
+const path = computed(() => ICONS[props.name] ?? null)
 </script>
 
 <!-- icon catalogue: https://pictogrammers.com/library/mdi/ -->
