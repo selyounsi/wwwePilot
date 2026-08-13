@@ -121,7 +121,7 @@ const hasCheck = computed(() => !!state.checkedTabId)
     <AppHeader showBack />
 
     <div class="flex-1 px-4 py-4 flex flex-col gap-2 overflow-y-auto">
-      <div v-if="showTypeSelector" class="bg-surface-soft border border-border rounded-lg px-3 py-2 mb-1">
+      <div v-if="showTypeSelector" class="mb-1">
         <label class="text-xs uppercase tracking-wide text-muted/80 block mb-1">
           {{ t('Check type') }}
         </label>

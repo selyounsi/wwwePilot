@@ -33,7 +33,8 @@ und keine anderen Types existieren, ist das Dropdown leer — der
 Web-Checker fällt dann auf den Legacy-Modus zurück (alle Module, kein
 Type). Die Type-Beschreibung wird in der Sidebar seit 0.0.134 nicht
 mehr unter dem Dropdown angezeigt (unnötige Höhe) — sie bleibt ein
-Admin-Feld für die Verwaltungsansicht.
+Admin-Feld für die Verwaltungsansicht. Der Selector rendert seit
+0.0.135 ohne umgebende Box, nur Label + Select.
 
 ## Warum
 
