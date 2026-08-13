@@ -58,8 +58,8 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
         ‹
       </BaseButton>
       <div class="flex-1 min-w-0">
-        <h1 class="text-lg font-bold leading-tight">{{ resolvedTitle }}</h1>
-        <p v-if="resolvedSubtitle" class="text-xs text-black/50 mt-0.5">{{ resolvedSubtitle }}</p>
+        <h1 class="text-lg font-bold leading-tight truncate">{{ resolvedTitle }}</h1>
+        <p v-if="resolvedSubtitle" class="text-xs text-black/50 mt-0.5 truncate">{{ resolvedSubtitle }}</p>
       </div>
       <slot />
       <QuickNav />
