@@ -23,11 +23,25 @@ export default async function check() {
     // 'inline-style-disabled',
   ]
 
-  const root = document.documentElement.cloneNode(true)
-  for (const sel of IGNORE_SELECTORS) {
-    try { root.querySelectorAll(sel).forEach(el => el.remove()) } catch {}
+  // Validate the server response, like external validators: the live DOM
+  // carries runtime markup (widget <template> clones, extension artifacts)
+  // that yields false positives and line numbers nobody can look up.
+  let html = ''
+  try {
+    const res = await fetch(location.href, { credentials: 'include', cache: 'no-cache' })
+    if (res.ok) html = await res.text()
+  } catch {}
+
+  if (!html) {
+    // fallback: DOM snapshot; templates are inert fragments, their ids are no duplicates
+    const root = document.documentElement.cloneNode(true)
+    root.querySelectorAll('template').forEach(el => el.remove())
+    for (const sel of IGNORE_SELECTORS) {
+      try { root.querySelectorAll(sel).forEach(el => el.remove()) } catch {}
+    }
+    html = '<!DOCTYPE html>\n' + root.outerHTML
   }
-  const html  = '<!DOCTYPE html>\n' + root.outerHTML
+
   const reply = await runInBackground('VALIDATE_HTML', { html })
 
   const { errors, addItem, finish } = createCheckResult()

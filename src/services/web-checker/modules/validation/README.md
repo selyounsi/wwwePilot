@@ -40,7 +40,13 @@ real-world Issues. Standard-Ruleset (in `background.js` konfigurierbar):
 ## Wo es läuft
 
 100% browser-only:
-1. Page-Checker holt `document.documentElement.outerHTML` (mit `<!DOCTYPE>`-Prefix)
+1. Page-Checker fetcht das **Quell-HTML** der aktuellen URL (seit 0.0.136 —
+   wie externe Validatoren; Zeilennummern passen damit zu „Quelltext
+   anzeigen"). Schlägt der Fetch fehl, Fallback auf den DOM-Snapshot
+   (`outerHTML`), dabei werden `<template>`-Elemente entfernt: deren Inhalt
+   ist per Spec ein inertes Fragment, IDs darin sind keine Duplikate —
+   htmlhint als Text-Linter wüsste das nicht (False-Positive `id-unique`
+   bei Widget-Templates, z. B. Wishlist).
 2. Schickt via `runInBackground('VALIDATE_HTML', { html })` an den Service Worker
 3. SW lädt HTMLHint (npm-bundle, ~30KB) und ruft `HTMLHint.verify(html, ruleset)`
 4. Ergebnisse zurück an Page, formatieren als Items
@@ -86,9 +92,10 @@ in den ersten Validation-Commits).
 
 ## Einschränkungen
 
-- HTMLHint sieht den **gerenderten DOM** (`outerHTML`), nicht den
-  Server-HTML. Browser-Korrekturen (auto-close, normalisierte Attribute)
-  sind dadurch schon angewendet.
+- Primär wird das **Server-HTML** geprüft (seit 0.0.136); rein per
+  JavaScript injiziertes Markup taucht nicht mehr in Befunden auf. Nur im
+  Fetch-Fallback gilt der gerenderte DOM (Browser-Korrekturen bereits
+  angewendet, `ignoreSelectors` greifen nur dort).
 - Element-Lookup pro Befund ist nur für `inline-style-disabled`
   implementiert (Stylesheet-Wert lässt sich aus der Meldung parsen). Andere
   Regeln zeigen weiterhin nur Zeile/Spalte und scrollen Klick → an den

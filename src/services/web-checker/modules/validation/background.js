@@ -21,8 +21,9 @@ const RULESET = {
   'tag-pair':                   true,
   'tag-self-close':             false, // void-elements without /> are valid HTML5
   'spec-char-escape':           true,
-  // Style/script content (informational warnings)
-  'inline-style-disabled':      'warn',
+  // CMS output is full of generated inline styles nobody can fix — and the
+  // W3C validator does not flag them either (valid HTML). Off since 0.0.136.
+  'inline-style-disabled':      false,
   'inline-script-disabled':     'warn',
   'style-disabled':             false,
   'script-disabled':            false,
