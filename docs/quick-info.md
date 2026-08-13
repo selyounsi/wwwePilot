@@ -150,6 +150,26 @@ die Views aktualisieren sich sofort auf den aktiven Tab. Der Pin
 friert auch die Modus-Wahl ein (Profil-Matching läuft gegen die
 eingefrorene URL).
 
+## Quick Links (Platzhalter + Auflösung)
+
+Admin-definierte URL-Templates (Flag `module.quick-info.quick-links`),
+aufgelöst in [`useQuickLinks.js`](../src/services/quick-info/composables/useQuickLinks.js)
+gegen den aktiven Tab + Detector-Kontext:
+
+| Platzhalter | Wert |
+|---|---|
+| `<url>` / `<origin>` / `<host>` / `<path>` | aus der Tab-URL |
+| `<domain>` | Host ohne `www.` |
+| `<counterId>` / `<cms>` | aus dem Page-Detector |
+| `<liveDomain>` | aus Demo-Hosts abgeleitet (`selyounsi-demosite-com.…` → `selyounsi-demosite.com`) |
+
+Regeln: Referenziert ein Template einen **leeren** Platzhalter, wird der
+Link ausgeblendet; unbekannte Platzhalter bleiben wörtlich stehen (Tippfehler
+fallen auf). **DFS-Sonderfall (seit 0.0.133):** Auf `*.dfsweb.site` wird ein
+führendes `worker-` vor der Ableitung aller Platzhalter entfernt — DFS
+serviert jede Seite doppelt, registriert (CMS4-Backend etc.) ist nur der
+Host ohne Präfix.
+
 ## Adding a profile (quick guide)
 
 1. Admin → Quick info → New profile

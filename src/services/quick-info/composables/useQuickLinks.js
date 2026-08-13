@@ -77,19 +77,28 @@ function liveDomainFromDemo(host) {
  * `<liveDomain>` on a non-demo host — so the caller can hide the link.
  * Unknown placeholders are left intact so admins notice typos.
  */
+// DFS serves every site twice; only the host WITHOUT the worker- prefix is registered
+function stripDfsWorkerPrefix(u) {
+  if (u.hostname.endsWith('.dfsweb.site') && u.hostname.startsWith('worker-')) {
+    u.hostname = u.hostname.slice('worker-'.length)
+  }
+  return u
+}
+
 function resolve(urlTemplate, ctx = {}) {
   if (!urlTemplate) return null
-  let host = '', origin = '', path = '', domain = ''
+  let host = '', origin = '', path = '', domain = '', url = ctx.url ?? ''
   try {
-    const u = new URL(ctx.url ?? '')
+    const u = stripDfsWorkerPrefix(new URL(ctx.url ?? ''))
     host   = u.host
     origin = u.origin
     path   = (u.pathname + u.search) || '/'
     domain = host.replace(/^www\./, '')
+    url    = u.href
   } catch { /* leave defaults */ }
 
   const map = {
-    url:        ctx.url ?? '',
+    url,
     host,
     origin,
     path,
