@@ -48,7 +48,7 @@ VITE_BACKEND_URL=https://example.com
 
 ### Backend (optional)
 
-Spellcheck, PageSpeed und der EverWise-Chatbot brauchen ein eigenes Backend
+Spellcheck, PageSpeed und der WorkingGuide-Chatbot brauchen ein eigenes Backend
 (separates Projekt). Ohne Backend funktionieren alle DOM-basierten Module
 trotzdem (Headings, Images, Links, Contrast, Validation, Accessibility, ...).
 
