@@ -90,19 +90,19 @@ async function onRefresh() {
           </div>
         </div>
         <BaseButton
-          variant="square-sm"
+          variant="icon"
           :icon="pinned ? 'mdiLock' : 'mdiLockOpenVariantOutline'"
-          :icon-size="14"
-          :active="pinned"
+          :icon-size="15"
+          :class="pinned ? 'text-primary!' : ''"
           :tooltip="pinned
             ? t('Pinned — tab switches are ignored. Click to follow the active tab again.')
             : t('Following the active tab. Click to pin the current page.')"
           @click="togglePin"
         />
         <BaseButton
-          variant="square-sm"
+          variant="icon"
           icon="mdiRefresh"
-          :icon-size="14"
+          :icon-size="15"
           :tooltip="t('Refresh')"
           @click="onRefresh"
         />
