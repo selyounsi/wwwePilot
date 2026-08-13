@@ -289,9 +289,9 @@ function format(text) {
             <Icon name="mdiRobot" :size="15" color="white" />
           </div>
           <div class="bg-surface border border-border rounded-2xl rounded-tl-md px-4 py-3.5 flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style="animation-delay:0ms" />
-            <span class="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style="animation-delay:150ms" />
-            <span class="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style="animation-delay:300ms" />
+            <span class="w-1.5 h-1.5 bg-primary/60 rounded-full animate-pulse" style="animation-delay:0ms" />
+            <span class="w-1.5 h-1.5 bg-primary/60 rounded-full animate-pulse" style="animation-delay:300ms" />
+            <span class="w-1.5 h-1.5 bg-primary/60 rounded-full animate-pulse" style="animation-delay:600ms" />
           </div>
           <BaseButton
             v-if="canStop"
